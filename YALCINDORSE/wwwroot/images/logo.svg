@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a3a6b"/>
+      <stop offset="100%" style="stop-color:#2a5298"/>
+    </linearGradient>
+  </defs>
+  <!-- Eagle wings -->
+  <path d="M100 20 L30 70 Q10 85 25 90 L60 80 Q80 75 100 60 Q120 75 140 80 L175 90 Q190 85 170 70 Z" fill="url(#g1)"/>
+  <path d="M100 45 L55 78 Q70 82 85 75 L100 65 L115 75 Q130 82 145 78 Z" fill="#0f2548"/>
+  <!-- Head -->
+  <path d="M100 20 Q95 10 92 15 Q90 20 95 28 L100 20 L105 28 Q110 20 108 15 Q105 10 100 20Z" fill="url(#g1)"/>
+  <!-- Text YALCIN -->
+  <text x="100" y="125" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="28" fill="#1a3a6b" letter-spacing="4">YALCIN</text>
+  <!-- Text TRAILER -->
+  <text x="100" y="152" text-anchor="middle" font-family="Arial,sans-serif" font-weight="400" font-size="18" fill="#2a5298" letter-spacing="6">TRAILER</text>
+</svg>

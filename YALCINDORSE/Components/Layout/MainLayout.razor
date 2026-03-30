@@ -1,0 +1,78 @@
+@inherits LayoutComponentBase
+@using YALCINDORSE.Services
+@inject AuthService Auth
+
+<div class="app-container">
+    <!-- Header Bar -->
+    <div class="app-header">
+        <img src="images/logo.svg" alt="Yalcin Trailer" class="header-logo" />
+        <div class="header-spacer"></div>
+        <div class="header-user">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>@Auth.FullName</span>
+        </div>
+        <button class="btn-header-logout" @onclick="DoLogout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Cikis</span>
+        </button>
+    </div>
+
+    <!-- Ribbon Tabs -->
+    <div class="ribbon-tabs">
+        <button class="ribbon-tab @(activeTab == "satis" ? "active" : "")" @onclick='() => activeTab = "satis"'>
+            Satis
+        </button>
+    </div>
+
+    <!-- Ribbon Content -->
+    <div class="ribbon-content">
+        @if (activeTab == "satis")
+        {
+            <div class="ribbon-cards">
+                <NavLink class="ribbon-card" href="satis/yeni-teklif" Match="NavLinkMatch.All">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                        <line x1="9" y1="15" x2="15" y2="15"/>
+                    </svg>
+                    <span class="ribbon-card-label">Yeni Teklif</span>
+                </NavLink>
+
+                <NavLink class="ribbon-card" href="satis/teklif-listesi" Match="NavLinkMatch.All">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <span class="ribbon-card-label">Teklif Listesi</span>
+                </NavLink>
+            </div>
+        }
+    </div>
+
+    <!-- Page Content -->
+    <div class="main-content">
+        <div class="page-content">
+            @Body
+        </div>
+    </div>
+</div>
+
+@code {
+    private string activeTab = "satis";
+
+    private void DoLogout()
+    {
+        Auth.Logout();
+    }
+}
