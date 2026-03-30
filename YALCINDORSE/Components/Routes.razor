@@ -1,29 +1,34 @@
 @using YALCINDORSE.Services
 @using YALCINDORSE.Components.Pages
 @inject AuthService Auth
+@inject ThemeService Theme
 
-@if (!Auth.IsAuthenticated)
-{
-    <Login />
-}
-else
-{
-    <Router AppAssembly="@typeof(MauiProgram).Assembly">
-        <Found Context="routeData">
-            <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
-            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-        </Found>
-    </Router>
-}
+<div class="@($"app-root {Theme.CurrentTheme}")">
+    @if (!Auth.IsAuthenticated)
+    {
+        <Login />
+    }
+    else
+    {
+        <Router AppAssembly="@typeof(MauiProgram).Assembly">
+            <Found Context="routeData">
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </Found>
+        </Router>
+    }
+</div>
 
 @code {
     protected override void OnInitialized()
     {
         Auth.OnAuthStateChanged += StateHasChanged;
+        Theme.OnThemeChanged += StateHasChanged;
     }
 
     public void Dispose()
     {
         Auth.OnAuthStateChanged -= StateHasChanged;
+        Theme.OnThemeChanged -= StateHasChanged;
     }
 }

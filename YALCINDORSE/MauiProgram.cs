@@ -21,6 +21,8 @@ namespace YALCINDORSE
             // Database & Services
             builder.Services.AddSingleton<DatabaseHelper>();
             builder.Services.AddSingleton<AuthService>();
+            builder.Services.AddSingleton<ThemeService>();
+            builder.Services.AddTransient<UserService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();
