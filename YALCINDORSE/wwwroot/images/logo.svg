@@ -1,17 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 280" role="img" aria-label="Yalcin Trailer">
   <defs>
-    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a3a6b"/>
-      <stop offset="100%" style="stop-color:#2a5298"/>
+    <linearGradient id="yl-wing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2f3f92"/>
+      <stop offset="100%" stop-color="#1e285f"/>
     </linearGradient>
   </defs>
-  <!-- Eagle wings -->
-  <path d="M100 20 L30 70 Q10 85 25 90 L60 80 Q80 75 100 60 Q120 75 140 80 L175 90 Q190 85 170 70 Z" fill="url(#g1)"/>
-  <path d="M100 45 L55 78 Q70 82 85 75 L100 65 L115 75 Q130 82 145 78 Z" fill="#0f2548"/>
-  <!-- Head -->
-  <path d="M100 20 Q95 10 92 15 Q90 20 95 28 L100 20 L105 28 Q110 20 108 15 Q105 10 100 20Z" fill="url(#g1)"/>
-  <!-- Text YALCIN -->
-  <text x="100" y="125" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="28" fill="#1a3a6b" letter-spacing="4">YALCIN</text>
-  <!-- Text TRAILER -->
-  <text x="100" y="152" text-anchor="middle" font-family="Arial,sans-serif" font-weight="400" font-size="18" fill="#2a5298" letter-spacing="6">TRAILER</text>
+
+  <g fill="url(#yl-wing)">
+    <path d="M210 70C179 67 154 48 133 21C143 57 158 86 188 108C195 95 203 82 210 70Z"/>
+    <path d="M208 82C177 84 150 74 120 52C137 86 156 110 186 123C191 109 198 95 208 82Z"/>
+    <path d="M204 97C174 103 146 99 109 83C132 110 155 128 186 137C191 124 197 110 204 97Z"/>
+    <path d="M199 112C169 122 142 122 102 112C127 136 153 149 184 148C188 136 193 123 199 112Z"/>
+    <path d="M194 128C167 140 140 146 97 145C125 164 151 170 181 160C184 149 188 139 194 128Z"/>
+  </g>
+
+  <g fill="url(#yl-wing)" transform="translate(420 0) scale(-1 1)">
+    <path d="M210 70C179 67 154 48 133 21C143 57 158 86 188 108C195 95 203 82 210 70Z"/>
+    <path d="M208 82C177 84 150 74 120 52C137 86 156 110 186 123C191 109 198 95 208 82Z"/>
+    <path d="M204 97C174 103 146 99 109 83C132 110 155 128 186 137C191 124 197 110 204 97Z"/>
+    <path d="M199 112C169 122 142 122 102 112C127 136 153 149 184 148C188 136 193 123 199 112Z"/>
+    <path d="M194 128C167 140 140 146 97 145C125 164 151 170 181 160C184 149 188 139 194 128Z"/>
+  </g>
+
+  <path d="M210 50C199 66 193 85 192 106C198 96 204 89 210 83C216 89 222 96 228 106C227 85 221 66 210 50Z" fill="#283579"/>
+  <path d="M210 74C193 109 178 133 159 152C177 146 194 136 210 120C226 136 243 146 261 152C242 133 227 109 210 74Z" fill="#1d2657"/>
+
+  <text x="210" y="212" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="60" letter-spacing="8" fill="#283579">YALCIN</text>
+  <text x="210" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-weight="600" font-size="22" letter-spacing="12" fill="#283579">TRAILER</text>
 </svg>
