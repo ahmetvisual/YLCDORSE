@@ -285,8 +285,8 @@ namespace YALCINDORSE.Services
                         SalesRepId = reader.IsDBNull(9) ? null : reader.GetInt32(9),
                         IsActive = reader.GetBoolean(10),
                         Notes = reader.IsDBNull(11) ? null : reader.GetString(11),
-                        CreatedDate = reader.GetDateTime(12),
-                        CreatedBy = reader.GetString(13),
+                        CreatedDate = reader.IsDBNull(12) ? DateTime.Now : reader.GetDateTime(12),
+                        CreatedBy = reader.IsDBNull(13) ? "system" : reader.GetString(13),
                         ModifiedDate = reader.IsDBNull(14) ? null : reader.GetDateTime(14),
                         ModifiedBy = reader.IsDBNull(15) ? null : reader.GetString(15)
                     };
