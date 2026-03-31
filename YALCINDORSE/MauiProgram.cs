@@ -22,7 +22,9 @@ namespace YALCINDORSE
             builder.Services.AddSingleton<DatabaseHelper>();
             builder.Services.AddSingleton<AuthService>();
             builder.Services.AddSingleton<ThemeService>();
+            builder.Services.AddSingleton<DesktopWindowService>();
             builder.Services.AddTransient<UserService>();
+            builder.Services.AddTransient<CustomerService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

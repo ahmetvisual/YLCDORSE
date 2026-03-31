@@ -1,0 +1,19 @@
+@using YALCINDORSE.Services
+@implements IDisposable
+@inject ThemeService Theme
+
+<div class="@($"app-root {Theme.CurrentTheme}")">
+    <CariKartlari StandaloneWindow="true" />
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Theme.OnThemeChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Theme.OnThemeChanged -= StateHasChanged;
+    }
+}
