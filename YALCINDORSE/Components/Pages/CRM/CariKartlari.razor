@@ -351,8 +351,18 @@
     protected override async Task OnInitializedAsync()
     {
         currentCustomer = CustomerSvc.CreateDraft();
-        await LoadSalesRepsAsync();
-        await LoadCustomersAsync(true);
+        try
+        {
+            await LoadSalesRepsAsync();
+            await LoadCustomersAsync(true);
+        }
+        catch (Exception ex)
+        {
+            isLoadingList = false;
+            isLoadingDetail = false;
+            message = $"Veritabani hatasi: {ex.Message} (Lutfen baglantiyi veya tablolari kontrol edin)";
+            messageSuccess = false;
+        }
     }
 
     private async Task LoadSalesRepsAsync()
@@ -386,8 +396,18 @@
 
     private async Task ReloadAsync()
     {
-        await LoadSalesRepsAsync();
-        await LoadCustomersAsync(selectedCustomerId == null);
+        try
+        {
+            await LoadSalesRepsAsync();
+            await LoadCustomersAsync(selectedCustomerId == null);
+        }
+        catch (Exception ex)
+        {
+            isLoadingList = false;
+            isLoadingDetail = false;
+            message = $"Yenileme sirasinda hata: {ex.Message}";
+            messageSuccess = false;
+        }
     }
 
     private void CreateNewCustomer()

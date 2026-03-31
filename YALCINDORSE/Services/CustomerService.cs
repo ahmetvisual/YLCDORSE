@@ -173,8 +173,18 @@ namespace YALCINDORSE.Services
                 using var conn = _db.GetConnection();
                 await conn.OpenAsync();
 
-                using var cmd = new NpgsqlCommand(SchemaSql, conn);
-                await cmd.ExecuteNonQueryAsync();
+                try
+                {
+                    using var cmd = new NpgsqlCommand(SchemaSql, conn);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+                catch (Exception)
+                {
+                    // Tablolarin sahibi olmadigimizda (must be owner hatasi) veya yetki kisitlamalarinda
+                    // sorma/olusturma hatalarini gormezden gelip devam ediyoruz.
+                    // Tablolari sistem admin'inin (postgres vb.) olusturdugu varsayilmaktadir.
+                }
+
                 _schemaEnsured = true;
             }
             finally
