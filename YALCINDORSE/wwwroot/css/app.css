@@ -1,4 +1,6 @@
 /* ===== YALCIN TRAILER ERP - Theme ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
     --yl-primary: #1a3a6b;
     --yl-primary-dark: #0f2548;
@@ -15,10 +17,10 @@
     --yl-success: #28a745;
     --yl-danger: #dc3545;
     --yl-warning: #ffc107;
-    /* Compact density */
-    --yl-font-base: clamp(12px, 0.85vw, 14px);
-    --yl-font-sm: 0.8125rem;
-    --yl-font-xs: 0.75rem;
+    /* High Readability & Accessibility */
+    --yl-font-base: 16px;
+    --yl-font-sm: 0.875rem;
+    --yl-font-xs: 0.8125rem;
     --yl-icon-sm: 16px;
     --yl-icon-md: 20px;
     --yl-header-height: 40px;
@@ -200,8 +202,9 @@
 }
 
 html, body {
-    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     font-size: var(--yl-font-base);
+    line-height: 1.5;
     background-color: var(--yl-bg);
     color: var(--yl-text);
     height: 100%;
