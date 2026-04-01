@@ -1,0 +1,25 @@
+@using YALCINDORSE.Services
+@implements IDisposable
+@inject ThemeService Theme
+
+<div class="@($"app-root {Theme.CurrentTheme}")">
+    <DynamicComponent Type="@ComponentType" Parameters="@ComponentParameters" />
+</div>
+
+@code {
+    [Parameter]
+    public Type ComponentType { get; set; } = default!;
+
+    [Parameter]
+    public Dictionary<string, object> ComponentParameters { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Theme.OnThemeChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Theme.OnThemeChanged -= StateHasChanged;
+    }
+}

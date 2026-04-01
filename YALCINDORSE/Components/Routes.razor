@@ -3,6 +3,8 @@
 @inject AuthService Auth
 @inject ThemeService Theme
 
+@inject DesktopWindowService WindowService
+
 <div class="@($"app-root {Theme.CurrentTheme}")">
     @if (!Auth.IsAuthenticated)
     {
@@ -22,13 +24,22 @@
 @code {
     protected override void OnInitialized()
     {
-        Auth.OnAuthStateChanged += StateHasChanged;
+        Auth.OnAuthStateChanged += HandleAuthStateChanged;
         Theme.OnThemeChanged += StateHasChanged;
+    }
+
+    private void HandleAuthStateChanged()
+    {
+        if (Auth.IsAuthenticated)
+        {
+            WindowService.MaximizeMainWindow();
+        }
+        StateHasChanged();
     }
 
     public void Dispose()
     {
-        Auth.OnAuthStateChanged -= StateHasChanged;
+        Auth.OnAuthStateChanged -= HandleAuthStateChanged;
         Theme.OnThemeChanged -= StateHasChanged;
     }
 }

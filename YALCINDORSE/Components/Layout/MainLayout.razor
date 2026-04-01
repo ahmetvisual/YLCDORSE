@@ -95,7 +95,7 @@
             @if (activeMenu == "satis")
             {
                 <div class="toolbar-dropdown">
-                    <NavLink class="toolbar-dropdown-item" href="satis/yeni-teklif" Match="NavLinkMatch.All" @onclick="CloseMenu">
+                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenYeniTeklif">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>
@@ -103,8 +103,8 @@
                             <line x1="9" y1="15" x2="15" y2="15"/>
                         </svg>
                         <span>Yeni Teklif</span>
-                    </NavLink>
-                    <NavLink class="toolbar-dropdown-item" href="satis/teklif-listesi" Match="NavLinkMatch.All" @onclick="CloseMenu">
+                    </button>
+                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenTeklifListesi">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>
@@ -113,7 +113,7 @@
                             <polyline points="10 9 9 9 8 9"/>
                         </svg>
                         <span>Teklif Listesi</span>
-                    </NavLink>
+                    </button>
                 </div>
             }
         </div>
@@ -174,6 +174,20 @@
             Nav.NavigateTo("/crm/cari-kartlar");
     }
 
+    private void OpenYeniTeklif()
+    {
+        activeMenu = null;
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.YeniTeklif>("Yeni Teklif", 1200, 800))
+            Nav.NavigateTo("/satis/yeni-teklif");
+    }
+
+    private void OpenTeklifListesi()
+    {
+        activeMenu = null;
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.TeklifListesi>("Teklif Listesi", 1300, 800))
+            Nav.NavigateTo("/satis/teklif-listesi");
+    }
+
     private void CloseAllMenus()
     {
         activeMenu = null;
@@ -185,7 +199,8 @@
     private void GoToUserManagement()
     {
         showProfileMenu = false;
-        Nav.NavigateTo("/yonetim/kullanicilar");
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Yonetim.KullaniciYonetimi>("Kullanıcı Yönetimi", 1000, 700))
+            Nav.NavigateTo("/yonetim/kullanicilar");
     }
 
     private void ToggleTheme()
