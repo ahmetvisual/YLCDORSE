@@ -18,9 +18,9 @@
     --yl-danger: #dc3545;
     --yl-warning: #ffc107;
     /* High Readability & Accessibility */
-    --yl-font-base: 16px;
-    --yl-font-sm: 0.875rem;
-    --yl-font-xs: 0.8125rem;
+    --yl-font-base: 13.5px;
+    --yl-font-sm: 0.85rem;
+    --yl-font-xs: 0.78rem;
     --yl-icon-sm: 16px;
     --yl-icon-md: 20px;
     --yl-header-height: 40px;
@@ -252,7 +252,23 @@
 html, body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     font-size: var(--yl-font-base);
-    line-height: 1.5;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+h3 {
+    font-size: 1.05rem;
+}
+
+h4 {
+    font-size: 0.95rem;
+}
     background-color: var(--yl-bg);
     color: var(--yl-text);
     height: 100%;
@@ -1258,8 +1274,8 @@ html, body {
 }
 
 .profile-avatar {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     background: var(--yl-bg);
     border-radius: 50%;
     display: flex;
@@ -1275,8 +1291,8 @@ html, body {
 
 .profile-name {
     color: var(--yl-text);
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.82rem;
+    font-weight: 400;
 }
 
 .profile-chevron {
@@ -1448,7 +1464,8 @@ html, body {
 
 .panel-title h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--yl-primary);
 }
 
@@ -1524,7 +1541,7 @@ html, body {
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88rem;
+    font-size: 0.85rem;
 }
 
 .data-table th {
@@ -1720,10 +1737,10 @@ html, body {
 
 .form-col label {
     display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--yl-text);
-    margin-bottom: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--yl-text-light);
+    margin-bottom: 4px;
 }
 
 .form-input {
@@ -1776,9 +1793,10 @@ html, body {
 }
 
 .crm-header-subtitle {
-    margin: 4px 0 0;
+    margin: 2px 0 0;
     color: var(--yl-text-light);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
+    font-weight: 400;
 }
 
 .crm-header-actions {
@@ -2201,12 +2219,13 @@ html, body {
 
 /* Buttons */
 .btn-secondary {
-    padding: 8px 18px;
+    padding: 6px 14px;
     background: var(--yl-bg);
     color: var(--yl-text);
     border: 1px solid var(--yl-border);
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 400;
     cursor: pointer;
     transition: background 0.15s;
 }
@@ -2216,12 +2235,12 @@ html, body {
 }
 
 .btn-primary-action {
-    padding: 8px 18px;
+    padding: 6px 14px;
     background: var(--yl-primary);
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.15s;
@@ -2237,7 +2256,7 @@ html, body {
 }
 
 .btn-danger-action {
-    padding: 8px 18px;
+    padding: 6px 14px;
     background: var(--yl-danger);
     color: white;
     border: none;
