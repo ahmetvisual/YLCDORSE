@@ -647,6 +647,10 @@ h4 {
     padding: 8px 0;
 }
 
+.sidebar-collapsed .sidebar-nav {
+    overflow: visible;
+}
+
 .sidebar-nav::-webkit-scrollbar {
     width: 3px;
 }
