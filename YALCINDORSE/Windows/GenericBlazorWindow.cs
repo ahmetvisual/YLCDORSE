@@ -19,7 +19,8 @@ namespace YALCINDORSE.Windows
             var rootParams = new Dictionary<string, object?>
             {
                 { "ComponentType", componentType },
-                { "ComponentParameters", parameters ?? new Dictionary<string, object>() }
+                { "ComponentParameters", parameters ?? new Dictionary<string, object>() },
+                { "WindowTitle", title }
             };
 
             blazorWebView.RootComponents.Add(new RootComponent

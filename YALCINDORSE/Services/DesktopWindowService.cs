@@ -50,6 +50,12 @@ namespace YALCINDORSE.Services
                         var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
                         var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
                         
+                        // Title bar'i gizle, border'i koru
+                        if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
+                        {
+                            presenter.SetBorderAndTitleBar(true, false);
+                        }
+
                         var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
                         if (displayArea != null && appWindow != null)
                         {
