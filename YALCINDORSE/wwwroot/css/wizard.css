@@ -76,7 +76,7 @@
 
 /* Wizard Content - Kompakt */
 .wizard-content {
-    background: #fff;
+    background: var(--yl-white);
     border: 1px solid var(--yl-border);
     border-radius: var(--yl-radius-lg);
     padding: var(--yl-space-md) 14px;
@@ -164,7 +164,7 @@
     padding: 4px 7px;
     border-radius: var(--yl-radius-sm);
     border: 1px solid var(--yl-border);
-    background: #fff;
+    background: var(--yl-white);
     color: var(--yl-text);
     font-size: 0.78rem;
     transition: border-color 0.2s;
@@ -234,7 +234,7 @@
     font-weight: 600;
     cursor: pointer;
     border: 1px solid var(--yl-border);
-    background: #fff;
+    background: var(--yl-white);
     color: var(--yl-text);
     transition: all var(--yl-transition-fast);
 }
@@ -315,7 +315,7 @@
 
 .item-desc input:focus {
     border-color: var(--yl-border);
-    background: #fff;
+    background: var(--yl-white);
     outline: none;
 }
 
@@ -333,7 +333,7 @@
 
 .item-qty input:focus, .item-unit input:focus, .item-price input:focus {
     border-color: var(--yl-border);
-    background: #fff;
+    background: var(--yl-white);
     outline: none;
 }
 
@@ -408,7 +408,7 @@
 }
 
 .quick-modal-content {
-    background: #fff;
+    background: var(--yl-white);
     border-radius: 8px;
     width: 380px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.15);
