@@ -1,6 +1,6 @@
 /* QUOTES MASTER DETAIL GRID */
 .quote-grid-container {
-    background: #fff;
+    background: var(--yl-white);
     border: 1px solid var(--yl-border);
     border-radius: var(--yl-radius-xl);
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
@@ -93,7 +93,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.8rem;
-    background: #fff;
+    background: var(--yl-white);
     border: 1px solid var(--yl-border);
     border-radius: 6px;
     overflow: hidden;
@@ -184,7 +184,7 @@
 }
 
 .quick-modal-content {
-    background: #fff;
+    background: var(--yl-white);
     border-radius: var(--yl-radius-xl);
     width: 400px;
     max-width: 90%;

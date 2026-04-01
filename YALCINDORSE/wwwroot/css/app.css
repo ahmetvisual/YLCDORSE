@@ -12,7 +12,7 @@
     --yl-sidebar-active: #2a5298;
     --yl-text: #333;
     --yl-text-light: #6c757d;
-    --yl-white: #ffffff;
+    --yl-white: #f5f6f8;
     --yl-border: #dee2e6;
     --yl-success: #28a745;
     --yl-danger: #dc3545;
@@ -1895,7 +1895,7 @@ h4 {
 .crm-customer-item {
     border: 1px solid var(--yl-border);
     border-radius: 10px;
-    background: #fff;
+    background: var(--yl-white);
     padding: 12px;
     display: flex;
     flex-direction: column;
