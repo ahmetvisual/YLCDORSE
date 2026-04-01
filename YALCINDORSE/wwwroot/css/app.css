@@ -549,8 +549,10 @@ html, body {
 }
 
 .header-logo {
-    height: 45px;
-    width: auto;
+    height: 28px;
+    width: 40px;
+    object-fit: cover;
+    object-position: top center;
     filter: brightness(0) invert(1);
 }
 
