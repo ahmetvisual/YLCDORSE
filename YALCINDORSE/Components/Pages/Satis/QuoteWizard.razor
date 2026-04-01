@@ -54,11 +54,23 @@
                     </div>
                     <div class="wizard-field">
                         <label>Satis Tipi</label>
-                        <select @bind="quote.SatisTipi">
-                            <option value="NewProduction">Yeni Uretim</option>
-                            <option value="SecondHand">Ikinci El</option>
-                            <option value="SparePart">Yedek Parca</option>
-                        </select>
+                        @{ var satisTipiOptions = new[] { ("NewProduction","Yeni Uretim"), ("SecondHand","Ikinci El"), ("SparePart","Yedek Parca") }; }
+                        <div class="custom-select" @onfocusout='() => CloseDropdown("satisTipi")'>
+                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("satisTipi")'>
+                                <span>@(satisTipiOptions.FirstOrDefault(o => o.Item1 == quote.SatisTipi).Item2 ?? "Seciniz")</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            @if (openDropdown == "satisTipi")
+                            {
+                                <div class="custom-select-dropdown">
+                                    @foreach (var (val, label) in satisTipiOptions)
+                                    {
+                                        <button class="custom-select-option @(quote.SatisTipi == val ? "selected" : "")"
+                                                @onmousedown="() => { quote.SatisTipi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
 
                     <!-- Satir 2: Musteri | Teklif Tipi + Aks -->
@@ -98,13 +110,23 @@
                     <div class="wizard-field-pair">
                         <div class="wizard-field">
                             <label>Teklif Tipi</label>
-                            <select @bind="quote.TeklifTipi">
-                                <option value="">— Seciniz —</option>
-                                <option value="LB">LB</option>
-                                <option value="KB">KB</option>
-                                <option value="SHC">SHC</option>
-                                <option value="PLT">PLT</option>
-                            </select>
+                            @{ var teklifTipiOptions = new[] { ("","— Seciniz —"), ("LB","LB"), ("KB","KB"), ("SHC","SHC"), ("PLT","PLT") }; }
+                            <div class="custom-select" @onfocusout='() => CloseDropdown("teklifTipi")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("teklifTipi")'>
+                                    <span>@(teklifTipiOptions.FirstOrDefault(o => o.Item1 == quote.TeklifTipi).Item2 ?? "— Seciniz —")</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "teklifTipi")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        @foreach (var (val, label) in teklifTipiOptions)
+                                        {
+                                            <button class="custom-select-option @(quote.TeklifTipi == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.TeklifTipi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
                         <div class="wizard-field">
                             <label>Aks Sayisi</label>
@@ -135,58 +157,109 @@
                     </div>
                     <div class="wizard-field">
                         <label>Puan</label>
-                        <select @bind="quote.Puan">
-                            <option value="WARM">WARM</option>
-                            <option value="HOT">HOT</option>
-                            <option value="COLD">COLD</option>
-                        </select>
+                        @{ var puanOptions = new[] { ("WARM","WARM"), ("HOT","HOT"), ("COLD","COLD") }; }
+                        <div class="custom-select" @onfocusout='() => CloseDropdown("puan")'>
+                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("puan")'>
+                                <span>@(string.IsNullOrEmpty(quote.Puan) ? "Seciniz" : quote.Puan)</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            @if (openDropdown == "puan")
+                            {
+                                <div class="custom-select-dropdown">
+                                    @foreach (var (val, label) in puanOptions)
+                                    {
+                                        <button class="custom-select-option @(quote.Puan == val ? "selected" : "")"
+                                                @onmousedown="() => { quote.Puan = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
 
                     <!-- Satir 4: Teklif Kanali | Satici -->
                     <div class="wizard-field">
                         <label>Teklif Kanali</label>
-                        <select @bind="quote.TeklifKanali">
-                            <option value="">— Seciniz —</option>
-                            <option value="BAYI">Bayi</option>
-                            <option value="ZIYARET">Ziyaret</option>
-                            <option value="ONLINE">Online</option>
-                            <option value="WHATSAPP">WhatsApp</option>
-                            <option value="EMAIL">E-Mail</option>
-                            <option value="WEB_SITESI">Web Sitesi</option>
-                            <option value="FUAR">Fuar</option>
-                        </select>
+                        @{ var kanalOptions = new[] { ("","— Seciniz —"), ("BAYI","Bayi"), ("ZIYARET","Ziyaret"), ("ONLINE","Online"), ("WHATSAPP","WhatsApp"), ("EMAIL","E-Mail"), ("WEB_SITESI","Web Sitesi"), ("FUAR","Fuar") }; }
+                        <div class="custom-select" @onfocusout='() => CloseDropdown("kanal")'>
+                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("kanal")'>
+                                <span>@(kanalOptions.FirstOrDefault(o => o.Item1 == quote.TeklifKanali).Item2 ?? "— Seciniz —")</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            @if (openDropdown == "kanal")
+                            {
+                                <div class="custom-select-dropdown">
+                                    @foreach (var (val, label) in kanalOptions)
+                                    {
+                                        <button class="custom-select-option @(quote.TeklifKanali == val ? "selected" : "")"
+                                                @onmousedown="() => { quote.TeklifKanali = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
                     <div class="wizard-field">
                         <label>Satici</label>
-                        <select @bind="quote.SaticiId">
-                            <option value="">— Seciniz —</option>
-                            @foreach (var sr in salesReps)
+                        <div class="custom-select" @onfocusout='() => CloseDropdown("satici")'>
+                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("satici")'>
+                                <span>@(quote.SaticiId > 0 ? salesReps.FirstOrDefault(s => s.Id == quote.SaticiId)?.FullName ?? "— Seciniz —" : "— Seciniz —")</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            @if (openDropdown == "satici")
                             {
-                                <option value="@sr.Id">@sr.FullName</option>
+                                <div class="custom-select-dropdown">
+                                    <button class="custom-select-option @(quote.SaticiId == 0 ? "selected" : "")"
+                                            @onmousedown="() => { quote.SaticiId = 0; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                    @foreach (var sr in salesReps)
+                                    {
+                                        <button class="custom-select-option @(quote.SaticiId == sr.Id ? "selected" : "")"
+                                                @onmousedown="() => { quote.SaticiId = sr.Id; openDropdown = null; }" @onmousedown:preventDefault>@sr.FullName</button>
+                                    }
+                                </div>
                             }
-                        </select>
+                        </div>
                     </div>
 
                     <!-- Satir 5: Dil + Para Birimi | Notlar (span 2 satir) -->
                     <div class="wizard-field-pair">
                         <div class="wizard-field">
                             <label>Dil</label>
-                            <select @bind="quote.Dil">
-                                <option value="TR">Turkce</option>
-                                <option value="EN">English</option>
-                                <option value="DE">Deutsch</option>
-                                <option value="FR">Francais</option>
-                                <option value="RU">Russian</option>
-                            </select>
+                            @{ var dilOptions = new[] { ("TR","Turkce"), ("EN","English"), ("DE","Deutsch"), ("FR","Francais"), ("RU","Russian") }; }
+                            <div class="custom-select" @onfocusout='() => CloseDropdown("dil")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("dil")'>
+                                    <span>@(dilOptions.FirstOrDefault(o => o.Item1 == quote.Dil).Item2 ?? "Turkce")</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "dil")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        @foreach (var (val, label) in dilOptions)
+                                        {
+                                            <button class="custom-select-option @(quote.Dil == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.Dil = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
                         <div class="wizard-field">
                             <label>Para Birimi</label>
-                            <select @bind="quote.ParaBirimi">
-                                <option value="EUR">EUR</option>
-                                <option value="USD">USD</option>
-                                <option value="TRY">TRY</option>
-                                <option value="GBP">GBP</option>
-                            </select>
+                            @{ var paraOptions = new[] { ("EUR","EUR"), ("USD","USD"), ("TRY","TRY"), ("GBP","GBP") }; }
+                            <div class="custom-select" @onfocusout='() => CloseDropdown("para")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("para")'>
+                                    <span>@(string.IsNullOrEmpty(quote.ParaBirimi) ? "EUR" : quote.ParaBirimi)</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "para")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        @foreach (var (val, label) in paraOptions)
+                                        {
+                                            <button class="custom-select-option @(quote.ParaBirimi == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.ParaBirimi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
                     </div>
                     <div class="wizard-field wizard-field-stretch">
@@ -211,12 +284,23 @@
                 <div class="wizard-grid3">
                     <div class="wizard-field">
                         <label>Odeme Sistemi</label>
-                        <select @bind="quote.OdemeSistemi">
-                            <option value="">— Seciniz —</option>
-                            <option value="PESIN">Pesin</option>
-                            <option value="VADELI">Vadeli</option>
-                            <option value="KARTI">Karti</option>
-                        </select>
+                        @{ var odemeOptions = new[] { ("","— Seciniz —"), ("PESIN","Pesin"), ("VADELI","Vadeli"), ("KARTI","Karti") }; }
+                        <div class="custom-select" @onfocusout='() => CloseDropdown("odeme")'>
+                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("odeme")'>
+                                <span>@(odemeOptions.FirstOrDefault(o => o.Item1 == quote.OdemeSistemi).Item2 ?? "— Seciniz —")</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            @if (openDropdown == "odeme")
+                            {
+                                <div class="custom-select-dropdown">
+                                    @foreach (var (val, label) in odemeOptions)
+                                    {
+                                        <button class="custom-select-option @(quote.OdemeSistemi == val ? "selected" : "")"
+                                                @onmousedown="() => { quote.OdemeSistemi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
                     <div class="wizard-field">
                         <label>Iskonto Aciklama</label>
@@ -382,6 +466,9 @@
     private bool isSaving;
     private string? errorMessage;
 
+    // Custom dropdown state
+    private string? openDropdown = null;
+
     // Customer search
     private string customerSearchText = "";
     private bool showCustomerDropdown = false;
@@ -414,6 +501,17 @@
                 days--;
         }
         return current;
+    }
+
+    private void ToggleDropdown(string name)
+    {
+        openDropdown = openDropdown == name ? null : name;
+        showCustomerDropdown = false;
+    }
+
+    private void CloseDropdown(string name)
+    {
+        _ = Task.Delay(150).ContinueWith(_ => InvokeAsync(() => { if (openDropdown == name) { openDropdown = null; StateHasChanged(); } }));
     }
 
     private List<CustomerListItemModel> GetFilteredCustomers()
