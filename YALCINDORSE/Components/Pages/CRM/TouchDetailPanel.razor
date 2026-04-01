@@ -1,0 +1,510 @@
+@using YALCINDORSE.Services
+@inject TouchService TouchSvc
+@inject QuoteService QuoteSvc
+@inject AuthService Auth
+
+<div class="touch-panel-header">
+    <div class="touch-panel-title">
+        <span style="color:#185FA5;font-weight:700">@quote?.TeklifNo</span>
+        @if (quote != null)
+        {
+            <span class="yl-chip @GetPuanChipClass(quote.Puan)">@quote.Puan</span>
+            <span class="yl-chip @GetDurumChipClass(quote.Durum)">@quote.Durum</span>
+        }
+        <button class="touch-panel-close" @onclick="OnClose">&#10005;</button>
+    </div>
+    <div class="touch-panel-sub">
+        @quote?.Musteri
+        @if (!string.IsNullOrEmpty(quote?.Ilgili)) { <span> &middot; @quote.Ilgili</span> }
+    </div>
+</div>
+
+<div class="touch-panel-body">
+    @if (isLoading)
+    {
+        <div style="text-align:center;padding:30px;color:var(--yl-text-light)">Yukleniyor...</div>
+    }
+    else if (quote != null)
+    {
+        <!-- Teklif Bilgileri -->
+        <div style="margin-bottom:18px">
+            <div class="touch-section-title">Teklif Bilgileri</div>
+            <div class="touch-info-grid">
+                <div class="touch-info-item">
+                    <label>Talep Tarihi</label>
+                    <span>@quote.TalepTarihi.ToString("dd.MM.yyyy")</span>
+                </div>
+                <div class="touch-info-item">
+                    <label>Gecerlilik</label>
+                    <span>@quote.GecerlilikTarihi.ToString("dd.MM.yyyy")</span>
+                </div>
+                <div class="touch-info-item">
+                    <label>Net Tutar</label>
+                    <span style="font-weight:700;color:#0C447C">
+                        @(quote.NetTutar > 0 ? $"{quote.NetTutar:N0} {quote.Para}" : "—")
+                    </span>
+                </div>
+                <div class="touch-info-item">
+                    <label>Satici</label>
+                    <span>@(quote.Satici ?? "—")</span>
+                </div>
+                <div class="touch-info-item">
+                    <label>Kaynak</label>
+                    <span>@(quote.Kaynak)</span>
+                </div>
+                <div class="touch-info-item">
+                    <label>Satis Tipi</label>
+                    <span>@(quote.SatisTipi)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sonraki Temas Banner -->
+        @if (nextTouchDate.HasValue && quote.Durum != "CLOSED" && quote.Durum != "ORDER")
+        {
+            var isOverdue = nextTouchDate < DateTime.Today;
+            var isToday = nextTouchDate?.Date == DateTime.Today;
+            var bannerClass = isOverdue ? "touch-next-overdue" : isToday ? "touch-next-today" : "touch-next-ok";
+            var bannerLabel = isOverdue ? "TEMAS TARIHI GECMIS!" : isToday ? "BUGUN TEMAS YAPILMALI" : "Sonraki Temas";
+
+            <div class="touch-next-banner @bannerClass">
+                <div>
+                    <div class="banner-label">@bannerLabel</div>
+                    <div class="banner-date">@nextTouchDate?.ToString("dd.MM.yyyy")</div>
+                </div>
+            </div>
+        }
+
+        <!-- Kronolojik Gecmis -->
+        <div style="margin-bottom:18px">
+            <div class="touch-section-title">
+                Kronolojik Gecmis
+                <span style="font-weight:400">@timeline.Count(t => t.EntryType == "TOUCH") temas &middot; @timeline.Count(t => t.EntryType == "REVISION") revizyon</span>
+            </div>
+
+            <div class="touch-timeline">
+                @if (timeline.Count == 0)
+                {
+                    <div style="font-size:0.78rem;color:var(--yl-text-light);padding:10px 0">Henuz kayit yok.</div>
+                }
+
+                @{ int touchSeq = 0; }
+                @foreach (var entry in timeline)
+                {
+                    if (entry.EntryType == "REVISION")
+                    {
+                        <div class="tl-entry">
+                            <div class="tl-line"></div>
+                            <div class="tl-dot tl-dot-revision">@entry.Tipi</div>
+                            <div class="tl-card tl-card-revision">
+                                <div class="tl-card-header">
+                                    <span class="tl-date">Revizyon @entry.Tipi</span>
+                                    <span style="font-size:0.65rem;color:#185FA5">@entry.Tarih.ToString("dd.MM.yyyy")</span>
+                                    @if (entry.Fiyat.HasValue)
+                                    {
+                                        <span class="tl-revision-price" style="color:#0C447C">@($"{entry.Fiyat:N0}") EUR</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(entry.Aciklama))
+                                {
+                                    <div class="tl-revision-note">@entry.Aciklama</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        touchSeq++;
+                        var typeName = entry.Tipi switch {
+                            "CALL" => "Arama",
+                            "MAIL" => "Mail",
+                            "VISIT" => "Ziyaret",
+                            "NOTE" => "Not",
+                            "MEETING" => "Toplanti",
+                            _ => entry.Tipi ?? ""
+                        };
+                        var typeClass = "tl-type-" + (entry.Tipi?.ToLower() ?? "note");
+
+                        <div class="tl-entry">
+                            <div class="tl-line"></div>
+                            <div class="tl-dot">@touchSeq</div>
+                            <div class="tl-card">
+                                <div class="tl-card-header">
+                                    <span class="tl-date">@entry.Tarih.ToString("dd.MM.yyyy")</span>
+                                    @if (!string.IsNullOrEmpty(entry.KisiAdi))
+                                    {
+                                        <span class="tl-who">@entry.KisiAdi</span>
+                                    }
+                                    <span class="@typeClass">@typeName</span>
+                                    @if (entry.YonetimDahil)
+                                    {
+                                        <span class="tl-mgmt-badge">Yonetim</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(entry.Aciklama))
+                                {
+                                    <div class="tl-note-text">@entry.Aciklama</div>
+                                }
+                                @if (entry.SonrakiTemas.HasValue)
+                                {
+                                    <div class="tl-next-touch">Sonraki: @entry.SonrakiTemas?.ToString("dd.MM.yyyy")</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Aksiyon Butonlari -->
+        @if (!showTouchForm && !showRevisionForm)
+        {
+            <div class="touch-actions">
+                <button class="touch-btn touch-btn-primary" @onclick="ShowTouchForm">+ Touch Ekle</button>
+                <button class="touch-btn" @onclick="ShowRevisionForm">+ Revizyon Ekle</button>
+                <button class="touch-btn" @onclick="ShowStatusUpdate">Durum Guncelle</button>
+            </div>
+        }
+
+        <!-- Touch Ekleme Formu -->
+        @if (showTouchForm)
+        {
+            <div class="touch-form" style="margin-top:12px">
+                <div class="touch-form-title">Yeni Touch — @quote.TeklifNo</div>
+                <div class="touch-form-grid3">
+                    <div class="touch-form-row">
+                        <label>Temas Tarihi</label>
+                        <input type="date" @bind="newTouch.TemasTarihi" @bind:format="yyyy-MM-dd" />
+                    </div>
+                    <div class="touch-form-row">
+                        <label>Temas Turu</label>
+                        <select @bind="newTouch.TemasTipi">
+                            <option value="CALL">Arama</option>
+                            <option value="MAIL">Mail</option>
+                            <option value="VISIT">Ziyaret</option>
+                            <option value="NOTE">Not</option>
+                            <option value="MEETING">Toplanti</option>
+                        </select>
+                    </div>
+                    <div class="touch-form-row">
+                        <label>Sonraki Temas</label>
+                        <input type="date" @bind="newTouch.SonrakiTemasTarihi" @bind:format="yyyy-MM-dd" />
+                    </div>
+                </div>
+                <div class="touch-form-grid2">
+                    <div class="touch-form-row">
+                        <label>Durum Guncelle</label>
+                        <select @bind="newTouch.DurumGuncelleme">
+                            <option value="">Degistirme</option>
+                            <option value="HOT">HOT</option>
+                            <option value="WARM">WARM</option>
+                            <option value="COLD">COLD</option>
+                            <option value="OPEN">OPEN</option>
+                            <option value="ORDER">ORDER</option>
+                            <option value="CLOSED">CLOSED</option>
+                        </select>
+                    </div>
+                    <div class="touch-form-row">
+                        <label>Yonetim Dahil?</label>
+                        <select @bind="newTouch.YonetimDahilMi">
+                            <option value="false">Hayir</option>
+                            <option value="true">Evet</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="touch-form-row">
+                    <label>Temas Notu *</label>
+                    <textarea @bind="newTouch.Not" placeholder="Gorusme detaylari, musteri geri bildirimi, kararlar..."></textarea>
+                </div>
+                @if (!string.IsNullOrEmpty(touchError))
+                {
+                    <div style="color:#A32D2D;font-size:0.78rem;margin-bottom:8px">@touchError</div>
+                }
+                <div class="touch-form-actions">
+                    <button class="touch-btn" @onclick="CancelTouchForm">Iptal</button>
+                    <button class="touch-btn touch-btn-primary" @onclick="SaveTouch" disabled="@isSaving">
+                        @(isSaving ? "Kaydediliyor..." : "Kaydet")
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Revizyon Ekleme Formu -->
+        @if (showRevisionForm)
+        {
+            <div class="touch-form touch-form-revision" style="margin-top:12px">
+                <div class="touch-form-title">Yeni Revizyon — R@(nextRevisionNo)</div>
+                <div class="touch-form-grid2">
+                    <div class="touch-form-row">
+                        <label>Gonderim Tarihi</label>
+                        <input type="date" @bind="newRevision.RevizyonTarihi" @bind:format="yyyy-MM-dd" />
+                    </div>
+                    <div class="touch-form-row">
+                        <label>Yeni Fiyat (EUR)</label>
+                        <input type="number" @bind="newRevision.Fiyat" />
+                    </div>
+                </div>
+                <div class="touch-form-row">
+                    <label>Model Guncelleme</label>
+                    <input type="text" @bind="newRevision.ModelGuncelleme" />
+                </div>
+                <div class="touch-form-row">
+                    <label>Revizyon Sebebi / Degisiklikler *</label>
+                    <textarea @bind="newRevision.Neden" placeholder="Eklenen/cikarilan maddeler, tasarim degisiklikleri, fiyat degisiklik sebebi..."></textarea>
+                </div>
+                @if (!string.IsNullOrEmpty(revisionError))
+                {
+                    <div style="color:#A32D2D;font-size:0.78rem;margin-bottom:8px">@revisionError</div>
+                }
+                <div class="touch-form-actions">
+                    <button class="touch-btn" @onclick="CancelRevisionForm">Iptal</button>
+                    <button class="touch-btn touch-btn-primary" @onclick="SaveRevision" disabled="@isSaving">
+                        @(isSaving ? "Kaydediliyor..." : "Revizyon Ekle")
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Durum Guncelleme -->
+        @if (showStatusModal)
+        {
+            <div class="touch-form" style="margin-top:12px">
+                <div class="touch-form-title">Durum Guncelle</div>
+                <div class="touch-form-grid2">
+                    <div class="touch-form-row">
+                        <label>Yeni Durum</label>
+                        <select @bind="newStatus">
+                            <option value="Draft">Draft</option>
+                            <option value="Sent">Sent</option>
+                            <option value="OPEN">OPEN</option>
+                            <option value="ORDER">ORDER</option>
+                            <option value="CLOSED">CLOSED</option>
+                        </select>
+                    </div>
+                    <div class="touch-form-row">
+                        <label>Yeni Puan</label>
+                        <select @bind="newPuan">
+                            <option value="">Degistirme</option>
+                            <option value="HOT">HOT</option>
+                            <option value="WARM">WARM</option>
+                            <option value="COLD">COLD</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="touch-form-actions">
+                    <button class="touch-btn" @onclick="() => showStatusModal = false">Iptal</button>
+                    <button class="touch-btn touch-btn-primary" @onclick="SaveStatusUpdate" disabled="@isSaving">Guncelle</button>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public int TeklifId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnDataChanged { get; set; }
+
+    private QuoteListItemModel? quote;
+    private List<TimelineEntryModel> timeline = new();
+    private DateTime? nextTouchDate;
+    private bool isLoading = true;
+    private bool isSaving;
+
+    // Touch form
+    private bool showTouchForm;
+    private TouchModel newTouch = new();
+    private string touchError = "";
+
+    // Revision form
+    private bool showRevisionForm;
+    private RevisionModel newRevision = new();
+    private string revisionError = "";
+    private int nextRevisionNo;
+
+    // Status update
+    private bool showStatusModal;
+    private string newStatus = "";
+    private string newPuan = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (TeklifId > 0)
+            await LoadDetail();
+    }
+
+    private async Task LoadDetail()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var allQuotes = await QuoteSvc.GetQuotesAsync();
+            quote = allQuotes.FirstOrDefault(q => q.Id == TeklifId);
+
+            timeline = await TouchSvc.GetTimelineAsync(TeklifId);
+
+            var touches = await TouchSvc.GetTouchesForQuoteAsync(TeklifId);
+            var lastTouch = touches.LastOrDefault();
+            nextTouchDate = lastTouch?.SonrakiTemasTarihi;
+
+            var revisions = await TouchSvc.GetRevisionsAsync(TeklifId);
+            nextRevisionNo = revisions.Count > 0 ? revisions.Max(r => r.RevizyonNo) + 1 : 0;
+        }
+        catch { }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // -- Touch Form --
+    private void ShowTouchForm()
+    {
+        showTouchForm = true;
+        showRevisionForm = false;
+        showStatusModal = false;
+        newTouch = new TouchModel
+        {
+            TeklifId = TeklifId,
+            TemasTarihi = DateTime.Now,
+            TemasTipi = "CALL",
+            RevizyonNo = quote?.Rev ?? 0
+        };
+        touchError = "";
+    }
+
+    private void CancelTouchForm()
+    {
+        showTouchForm = false;
+        touchError = "";
+    }
+
+    private async Task SaveTouch()
+    {
+        if (string.IsNullOrWhiteSpace(newTouch.Not))
+        {
+            touchError = "Temas notu zorunludur.";
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            await TouchSvc.CreateTouchAsync(newTouch);
+            showTouchForm = false;
+            touchError = "";
+            await LoadDetail();
+            await OnDataChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            touchError = "Hata: " + ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    // -- Revision Form --
+    private void ShowRevisionForm()
+    {
+        showRevisionForm = true;
+        showTouchForm = false;
+        showStatusModal = false;
+        newRevision = new RevisionModel
+        {
+            TeklifId = TeklifId,
+            RevizyonTarihi = DateTime.Now,
+            Fiyat = quote?.NetTutar ?? 0
+        };
+        revisionError = "";
+    }
+
+    private void CancelRevisionForm()
+    {
+        showRevisionForm = false;
+        revisionError = "";
+    }
+
+    private async Task SaveRevision()
+    {
+        if (string.IsNullOrWhiteSpace(newRevision.Neden))
+        {
+            revisionError = "Revizyon sebebi zorunludur.";
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            await TouchSvc.CreateRevisionAsync(newRevision);
+            showRevisionForm = false;
+            revisionError = "";
+            await LoadDetail();
+            await OnDataChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            revisionError = "Hata: " + ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    // -- Status Update --
+    private void ShowStatusUpdate()
+    {
+        showStatusModal = true;
+        showTouchForm = false;
+        showRevisionForm = false;
+        newStatus = quote?.Durum ?? "Draft";
+        newPuan = "";
+    }
+
+    private async Task SaveStatusUpdate()
+    {
+        isSaving = true;
+        try
+        {
+            await TouchSvc.UpdateQuoteStatusAsync(TeklifId, newStatus);
+            if (!string.IsNullOrEmpty(newPuan))
+                await TouchSvc.UpdateQuotePuanAsync(TeklifId, newPuan);
+
+            showStatusModal = false;
+            await LoadDetail();
+            await OnDataChanged.InvokeAsync();
+        }
+        catch { }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private string GetDurumChipClass(string durum) => durum switch
+    {
+        "Draft" => "chip-draft",
+        "Sent" => "chip-sent",
+        "WaitingApproval" => "chip-waiting",
+        "Approved" => "chip-approved",
+        "Rejected" => "chip-rejected",
+        "ORDER" => "chip-order",
+        "CLOSED" => "chip-closed",
+        "OPEN" => "chip-open",
+        _ => "chip-draft"
+    };
+
+    private string GetPuanChipClass(string puan) => puan switch
+    {
+        "HOT" => "chip-hot",
+        "WARM" => "chip-warm",
+        "COLD" => "chip-cold",
+        _ => "chip-draft"
+    };
+}

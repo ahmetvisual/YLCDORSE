@@ -1,0 +1,335 @@
+@page "/crm/touch-crm"
+@using YALCINDORSE.Services
+@inject TouchService TouchSvc
+@inject QuoteService QuoteSvc
+@inject CustomerService CustomerSvc
+@inject AuthService Auth
+
+<div class="crm-shell">
+    <div class="crm-header">
+        <div>
+            <h2 style="margin:0;font-size:1.3rem;font-weight:700;color:var(--yl-primary)">Touch CRM</h2>
+            <p style="margin:2px 0 0;font-size:0.8rem;color:var(--yl-text-light)">Teklif temas takibi ve yonetimi</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div style="text-align:center;padding:40px;color:var(--yl-text-light)">Yukleniyor...</div>
+    }
+    else
+    {
+        <!-- KPI Kartlari -->
+        <div class="touch-kpi-row">
+            <div class="touch-kpi">
+                <div class="touch-kpi-label">Toplam Teklif</div>
+                <div class="touch-kpi-value">@kpi.ToplamTeklif</div>
+            </div>
+            <div class="touch-kpi">
+                <div class="touch-kpi-label">HOT</div>
+                <div class="touch-kpi-value kv-red">@kpi.HotSayisi</div>
+            </div>
+            <div class="touch-kpi">
+                <div class="touch-kpi-label">WARM</div>
+                <div class="touch-kpi-value kv-amber">@kpi.WarmSayisi</div>
+            </div>
+            <div class="touch-kpi">
+                <div class="touch-kpi-label">COLD</div>
+                <div class="touch-kpi-value kv-blue">@kpi.ColdSayisi</div>
+            </div>
+            <div class="touch-kpi">
+                <div class="touch-kpi-label">Siparis</div>
+                <div class="touch-kpi-value kv-green">@kpi.OrderSayisi</div>
+            </div>
+            <div class="touch-kpi">
+                <div class="touch-kpi-label">Geciken Temas</div>
+                <div class="touch-kpi-value kv-red">@kpi.GecikenTemasSayisi</div>
+                <div class="touch-kpi-sub">@kpi.HareketsizSayisi hareketsiz</div>
+            </div>
+            <div class="touch-kpi">
+                <div class="touch-kpi-label">Toplam Temas</div>
+                <div class="touch-kpi-value kv-blue">@kpi.ToplamTemas</div>
+            </div>
+        </div>
+
+        <!-- Filtre Cubugu -->
+        <div class="touch-filter-bar">
+            @foreach (var f in filters)
+            {
+                <button class="touch-chip-btn @(puanFilter == f.Key ? f.Value : "")"
+                        @onclick="() => SetPuanFilter(f.Key)">
+                    @(f.Key == "ALL" ? "Tumu" : f.Key)
+                </button>
+            }
+
+            <select class="touch-filter-select" @onchange="OnKanalChanged" style="margin-left:auto">
+                <option value="">Tum Kanallar</option>
+                <option value="BAYI">Bayi</option>
+                <option value="ZIYARET">Ziyaret</option>
+                <option value="ONLINE">Online</option>
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="EMAIL">E-Mail</option>
+                <option value="WEB_SITESI">Web Sitesi</option>
+                <option value="FUAR">Fuar</option>
+            </select>
+
+            <input class="touch-search" type="text" placeholder="Teklif no, musteri, stok kodu..."
+                   @bind="searchText" @bind:event="oninput" @bind:after="LoadQuotes" />
+        </div>
+
+        <!-- Ana Icerik: Liste + Detay -->
+        <div class="touch-layout">
+            <!-- Teklif Listesi -->
+            <div class="touch-list-panel @(selectedQuoteId > 0 ? "with-detail" : "")">
+                <div class="touch-table-wrap">
+                    <table class="touch-table">
+                        <thead>
+                            <tr>
+                                <th>Teklif No</th>
+                                <th>Musteri</th>
+                                <th style="text-align:center">Durum</th>
+                                <th style="text-align:center">Puan</th>
+                                <th style="text-align:center">Touch</th>
+                                <th>Son Temas</th>
+                                <th>Sonraki</th>
+                                <th style="text-align:center">Yon.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (quotes.Count == 0)
+                            {
+                                <tr><td colspan="8" style="text-align:center;padding:36px;color:var(--yl-text-light)">Teklif bulunamadi.</td></tr>
+                            }
+                            @foreach (var q in quotes)
+                            {
+                                var touchInfo = quoteTouchInfo.GetValueOrDefault(q.Id);
+                                var isActive = selectedQuoteId == q.Id;
+                                <tr class="@(isActive ? "active-row" : "")" @onclick="() => SelectQuote(q.Id)">
+                                    <td>
+                                        <div style="font-weight:700;color:#185FA5">@q.TeklifNo</div>
+                                        @if (q.Rev > 0)
+                                        {
+                                            <span style="font-size:0.65rem;background:#EEEDFE;color:#534AB7;padding:1px 5px;border-radius:8px">R@(q.Rev)</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div style="font-weight:600">@q.Musteri</div>
+                                        @if (!string.IsNullOrEmpty(q.MusteriKodu))
+                                        {
+                                            <div style="font-size:0.7rem;color:var(--yl-text-light)">@q.MusteriKodu</div>
+                                        }
+                                    </td>
+                                    <td style="text-align:center">
+                                        <span class="yl-chip @GetDurumChipClass(q.Durum)">@q.Durum</span>
+                                    </td>
+                                    <td style="text-align:center">
+                                        <span class="yl-chip @GetPuanChipClass(q.Puan)">@q.Puan</span>
+                                    </td>
+                                    <td style="text-align:center;font-weight:700;color:#185FA5">
+                                        @(touchInfo?.TouchCount ?? 0)
+                                    </td>
+                                    <td style="font-size:0.72rem;color:var(--yl-text-light)">
+                                        @(touchInfo?.LastTouchDate?.ToString("dd.MM.yyyy") ?? "—")
+                                    </td>
+                                    <td style="font-size:0.72rem">
+                                        @if (touchInfo?.NextTouchDate != null)
+                                        {
+                                            var isOverdue = touchInfo.NextTouchDate < DateTime.Today;
+                                            var isToday = touchInfo.NextTouchDate?.Date == DateTime.Today;
+                                            if (isOverdue)
+                                            {
+                                                <span class="overdue-dot"></span>
+                                            }
+                                            else if (isToday)
+                                            {
+                                                <span class="today-dot"></span>
+                                            }
+                                            <span style="@(isOverdue ? "color:#A32D2D;font-weight:700" : isToday ? "color:#854F0B;font-weight:700" : "")">
+                                                @touchInfo.NextTouchDate?.ToString("dd.MM.yyyy")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span>—</span>
+                                        }
+                                    </td>
+                                    <td style="text-align:center">
+                                        @if (touchInfo?.HasManagement == true)
+                                        {
+                                            <span style="color:#3B6D11;font-size:1rem">&#10003;</span>
+                                        }
+                                        else
+                                        {
+                                            <span>—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Detay Paneli -->
+            @if (selectedQuoteId > 0)
+            {
+                <div class="touch-detail-panel">
+                    <TouchDetailPanel TeklifId="selectedQuoteId"
+                                      OnClose="CloseDetail"
+                                      OnDataChanged="OnDetailChanged" />
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private DashboardKpiModel kpi = new();
+    private List<QuoteListItemModel> quotes = new();
+    private Dictionary<int, QuoteTouchSummary> quoteTouchInfo = new();
+    private int selectedQuoteId;
+    private string puanFilter = "ALL";
+    private string kanalFilter = "";
+    private string searchText = "";
+
+    private Dictionary<string, string> filters = new()
+    {
+        { "ALL", "active-all" },
+        { "HOT", "active-hot" },
+        { "WARM", "active-warm" },
+        { "COLD", "active-cold" },
+        { "OPEN", "active-open" },
+        { "ORDER", "active-order" },
+        { "CLOSED", "active-closed" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            kpi = await TouchSvc.GetDashboardKpisAsync();
+            await LoadQuotes();
+        }
+        catch { }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadQuotes()
+    {
+        var durumFilter = puanFilter == "ALL" ? "" : "";
+        var puanParam = puanFilter == "ALL" ? "" : puanFilter;
+
+        // Puan aslinda Durum yerine Puan filtresi olarak kullaniliyor
+        // ama ORDER ve CLOSED durum filtresi
+        if (puanFilter == "ORDER" || puanFilter == "CLOSED" || puanFilter == "OPEN")
+        {
+            durumFilter = puanFilter;
+            puanParam = "";
+        }
+
+        quotes = await QuoteSvc.GetQuotesAsync(searchText, durumFilter);
+
+        // Puan filtresi uygula (client-side)
+        if (!string.IsNullOrEmpty(puanParam))
+            quotes = quotes.Where(q => q.Puan == puanParam).ToList();
+
+        // Kanal filtresi (client-side)
+        if (!string.IsNullOrEmpty(kanalFilter))
+            quotes = quotes.Where(q => q.TeklifKanali == kanalFilter).ToList();
+
+        // Her teklif icin temas ozet bilgisini yukle
+        quoteTouchInfo.Clear();
+        foreach (var q in quotes)
+        {
+            try
+            {
+                var touches = await TouchSvc.GetTouchesForQuoteAsync(q.Id);
+                var lastTouch = touches.LastOrDefault();
+                quoteTouchInfo[q.Id] = new QuoteTouchSummary
+                {
+                    TouchCount = touches.Count,
+                    LastTouchDate = lastTouch?.TemasTarihi,
+                    NextTouchDate = lastTouch?.SonrakiTemasTarihi,
+                    HasManagement = touches.Any(t => t.YonetimDahilMi)
+                };
+            }
+            catch
+            {
+                quoteTouchInfo[q.Id] = new QuoteTouchSummary();
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private void SetPuanFilter(string puan)
+    {
+        puanFilter = puan;
+        _ = LoadQuotes();
+    }
+
+    private void OnKanalChanged(ChangeEventArgs e)
+    {
+        kanalFilter = e.Value?.ToString() ?? "";
+        _ = LoadQuotes();
+    }
+
+    private async Task SelectQuote(int quoteId)
+    {
+        selectedQuoteId = quoteId;
+        StateHasChanged();
+    }
+
+    private void CloseDetail()
+    {
+        selectedQuoteId = 0;
+        StateHasChanged();
+    }
+
+    private async Task OnDetailChanged()
+    {
+        await LoadData();
+    }
+
+    private string GetDurumChipClass(string durum) => durum switch
+    {
+        "Draft" => "chip-draft",
+        "Sent" => "chip-sent",
+        "WaitingApproval" => "chip-waiting",
+        "Approved" => "chip-approved",
+        "Rejected" => "chip-rejected",
+        "ORDER" => "chip-order",
+        "CLOSED" => "chip-closed",
+        "OPEN" => "chip-open",
+        _ => "chip-draft"
+    };
+
+    private string GetPuanChipClass(string puan) => puan switch
+    {
+        "HOT" => "chip-hot",
+        "WARM" => "chip-warm",
+        "COLD" => "chip-cold",
+        _ => "chip-draft"
+    };
+
+    private class QuoteTouchSummary
+    {
+        public int TouchCount { get; set; }
+        public DateTime? LastTouchDate { get; set; }
+        public DateTime? NextTouchDate { get; set; }
+        public bool HasManagement { get; set; }
+    }
+}
