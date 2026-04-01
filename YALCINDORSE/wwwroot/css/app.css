@@ -595,13 +595,14 @@ html, body {
     border-bottom: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
     min-height: 52px;
+    overflow: hidden;
 }
 
 .sidebar-logo {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: 4px;
     flex-shrink: 0;
 }
 
@@ -993,8 +994,8 @@ html, body {
 }
 
 .sidebar-collapsed .sidebar-logo {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
 }
 
 /* Mobile hamburger - hidden on desktop */
