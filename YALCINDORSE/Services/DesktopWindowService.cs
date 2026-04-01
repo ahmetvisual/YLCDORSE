@@ -6,13 +6,9 @@ namespace YALCINDORSE.Services
 {
     public class DesktopWindowService
     {
-        // Türüne (Type) göre açık pencereleri takip eden sözlük
         private readonly ConcurrentDictionary<Type, Window> _openWindows = new();
 
-        /// <summary>
-        /// Sadece tek bir kopyası açık kalacak şekilde bir Blazor sayfasını MDI penceresi olarak açar.
-        /// </summary>
-        public bool OpenWindow<TComponent>(string title, int width = 1200, int height = 800, Dictionary<string, object>? parameters = null) 
+        public bool OpenWindow<TComponent>(string title, int width = 1200, int height = 800, Dictionary<string, object>? parameters = null)
             where TComponent : Microsoft.AspNetCore.Components.IComponent
         {
 #if WINDOWS || MACCATALYST
@@ -20,12 +16,8 @@ namespace YALCINDORSE.Services
             {
                 var componentType = typeof(TComponent);
 
-                // Eğer bu tipte bir pencere zaten açıksa, odaklan ve yeni açma
                 if (_openWindows.TryGetValue(componentType, out var existingWindow))
-                {
-                    // MAUI tarafında var olan pencereyi öne çıkarma mantığı (şimdilik sadece geri dönüyor)
                     return;
-                }
 
                 var page = new GenericBlazorWindow(title, componentType, parameters);
                 var newWindow = new Window(page)
@@ -43,70 +35,7 @@ namespace YALCINDORSE.Services
                 newWindow.Created += (s, e) =>
                 {
 #if WINDOWS
-                    var uiWindow = newWindow.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-                    if (uiWindow != null)
-                    {
-                        var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(uiWindow);
-                        var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
-                        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-                        
-                        // Native title bar'i tamamen kaldır, border'i koru
-                        if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter owPresenter)
-                        {
-                            owPresenter.SetBorderAndTitleBar(true, false);
-                        }
-
-                        // Ust 34px'i native drag alani olarak tanimla (InputNonClientPointerSource)
-                        // Bu API WebView2'den ONCE calisir, sifir gecikme ile surukleme saglar
-                        try
-                        {
-                            var nonClientSrc = Microsoft.UI.Input.InputNonClientPointerSource.GetForWindowId(windowId);
-                            var scale = uiWindow.Content?.XamlRoot?.RasterizationScale ?? 1.0;
-                            var dragH = (int)(34 * scale);
-                            var btnW = (int)(112 * scale);
-                            var winW = appWindow.Size.Width;
-
-                            nonClientSrc.SetRegionRects(
-                                Microsoft.UI.Input.NonClientRegionKind.Caption,
-                                new[] { new global::Windows.Graphics.RectInt32(0, 0, winW - btnW, dragH) }
-                            );
-
-                            // Pencere boyutu degisince drag alani guncelle
-                            appWindow.Changed += (sender, args) =>
-                            {
-                                if (args.DidSizeChange && sender is Microsoft.UI.Windowing.AppWindow aw)
-                                {
-                                    try
-                                    {
-                                        nonClientSrc.SetRegionRects(
-                                            Microsoft.UI.Input.NonClientRegionKind.Caption,
-                                            new[] { new global::Windows.Graphics.RectInt32(0, 0, aw.Size.Width - btnW, dragH) }
-                                        );
-                                    }
-                                    catch { }
-                                }
-                            };
-                        }
-                        catch { }
-
-                        var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
-                        if (displayArea != null && appWindow != null)
-                        {
-                            var centeredPosition = new global::Windows.Graphics.PointInt32(
-                                (displayArea.WorkArea.Width - appWindow.Size.Width) / 2,
-                                (displayArea.WorkArea.Height - appWindow.Size.Height) / 2
-                            );
-                            appWindow.Move(centeredPosition);
-                        }
-
-                        // Alt pencerenin hiçbir zaman Ana pencerenin (Anasayfanın) arkasına düşmemesi için (Owner yapılması)
-                        var mainWindow = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-                        if (mainWindow != null && mainWindow != uiWindow)
-                        {
-                            var mainHandle = WinRT.Interop.WindowNative.GetWindowHandle(mainWindow);
-                            SetOwner(windowHandle, mainHandle);
-                        }
-                    }
+                    SetupCustomTitleBar(newWindow);
 #endif
                 };
 
@@ -120,7 +49,6 @@ namespace YALCINDORSE.Services
 #endif
         }
 
-        // Eski uyumluluk için (Cari kartları MDI'si de buraya bağlıyoruz)
         public bool OpenCustomerCardsWindow()
         {
             return OpenWindow<YALCINDORSE.Components.Pages.CRM.CariKartlari>("Cari Kartlar", 1440, 920);
@@ -137,10 +65,9 @@ namespace YALCINDORSE.Services
                     var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(window);
                     var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
                     var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-                    
+
                     if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
                     {
-                        // Başarılı girişten sonra ana uygulamanın tüm pencerelerini/başlığını açıyoruz (Login çerçevesizdi)
                         presenter.SetBorderAndTitleBar(true, true);
                         presenter.IsResizable = true;
                         presenter.IsMaximizable = true;
@@ -152,11 +79,86 @@ namespace YALCINDORSE.Services
         }
 
 #if WINDOWS
+        private void SetupCustomTitleBar(Window mauiWindow)
+        {
+            var uiWindow = mauiWindow.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+            if (uiWindow == null) return;
+
+            var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(uiWindow);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+
+            // --- Native title bar'i Blazor icerigine genislet ---
+            var titleBar = appWindow.TitleBar;
+            titleBar.ExtendsContentIntoTitleBar = true;
+
+            // Sistem caption butonlarini tamamen gizle (kendi butonlarimizi kullaniyoruz)
+            var transparent = Microsoft.UI.ColorHelper.FromArgb(0, 0, 0, 0);
+            titleBar.ButtonBackgroundColor = transparent;
+            titleBar.ButtonInactiveBackgroundColor = transparent;
+            titleBar.ButtonHoverBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(30, 255, 255, 255);
+            titleBar.ButtonPressedBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(50, 255, 255, 255);
+            titleBar.ButtonForegroundColor = transparent;
+            titleBar.ButtonHoverForegroundColor = transparent;
+            titleBar.ButtonPressedForegroundColor = transparent;
+            titleBar.ButtonInactiveForegroundColor = transparent;
+
+            // Yukseklik: Blazor titlebar 34px, bunu native olarak ayarla
+            titleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+
+            // Drag alani ayarla
+            UpdateDragRects(appWindow, uiWindow);
+
+            // Pencere boyutu degisince drag alanini guncelle
+            appWindow.Changed += (sender, args) =>
+            {
+                if (args.DidSizeChange && sender is Microsoft.UI.Windowing.AppWindow aw)
+                {
+                    UpdateDragRects(aw, uiWindow);
+                }
+            };
+
+            // Pencereyi ortala
+            var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
+            if (displayArea != null)
+            {
+                appWindow.Move(new global::Windows.Graphics.PointInt32(
+                    (displayArea.WorkArea.Width - appWindow.Size.Width) / 2,
+                    (displayArea.WorkArea.Height - appWindow.Size.Height) / 2
+                ));
+            }
+
+            // Owner ayarla (alt pencere ana pencerenin arkasina dusmesin)
+            var mainWindow = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+            if (mainWindow != null && mainWindow != uiWindow)
+            {
+                var mainHandle = WinRT.Interop.WindowNative.GetWindowHandle(mainWindow);
+                SetOwner(windowHandle, mainHandle);
+            }
+        }
+
+        private void UpdateDragRects(Microsoft.UI.Windowing.AppWindow appWindow, Microsoft.UI.Xaml.Window uiWindow)
+        {
+            try
+            {
+                var scale = uiWindow.Content?.XamlRoot?.RasterizationScale ?? 1.0;
+                var titleBarH = (int)(34 * scale);
+                var btnAreaW = (int)(120 * scale); // 3 buton alani
+                var winW = appWindow.Size.Width;
+
+                // Buton alani passthrough (tiklanabilir), geri kalan caption (suruklenebilir)
+                appWindow.TitleBar.SetDragRectangles(new[] {
+                    new global::Windows.Graphics.RectInt32(0, 0, Math.Max(winW - btnAreaW, 0), titleBarH)
+                });
+            }
+            catch { }
+        }
+
         private const int GWLP_HWNDPARENT = -8;
-        
+
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-        
+
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
