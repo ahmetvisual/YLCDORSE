@@ -598,8 +598,8 @@ html, body {
 }
 
 .sidebar-logo-wrapper {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 20px;
     overflow: hidden;
     flex-shrink: 0;
     display: flex;
@@ -608,10 +608,10 @@ html, body {
 }
 
 .sidebar-logo {
-    width: 36px;
+    width: 46px;
     height: auto;
     filter: brightness(0) invert(1);
-    margin-top: -1px;
+    margin-top: 0;
 }
 
 .sidebar-brand-text {
@@ -891,21 +891,25 @@ html, body {
     display: none;
 }
 
-/* Collapsed state - align icons to center */
+/* Collapsed state - fixed width icon centering */
 .sidebar-collapsed .sidebar-item,
 .sidebar-collapsed .sidebar-group-header,
 .sidebar-collapsed .sidebar-toggle-btn,
 .sidebar-collapsed .sidebar-theme-toggle {
     padding: 10px 0;
-    justify-content: center;
     gap: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: var(--yl-sidebar-collapsed-width);
 }
 
 .sidebar-collapsed .sidebar-item svg,
 .sidebar-collapsed .sidebar-group-header svg.sidebar-group-icon,
 .sidebar-collapsed .sidebar-toggle-btn svg,
 .sidebar-collapsed .sidebar-theme-toggle svg {
-    margin: 0;
+    width: 20px;
+    height: 20px;
 }
 
 .sidebar-collapsed .sidebar-group-items .sidebar-item {
@@ -913,9 +917,12 @@ html, body {
 }
 
 .sidebar-collapsed .sidebar-header {
+    display: flex;
     justify-content: center;
-    padding: 12px 0;
+    align-items: center;
+    padding: 14px 0;
     gap: 0;
+    width: var(--yl-sidebar-collapsed-width);
 }
 
 /* Mobile hamburger - hidden on desktop */
