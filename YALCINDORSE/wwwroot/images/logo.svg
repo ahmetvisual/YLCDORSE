@@ -1,30 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 280" role="img" aria-label="Yalcin Trailer">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100" role="img" aria-label="Yalcin Trailer">
   <defs>
-    <linearGradient id="yl-wing" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2f3f92"/>
-      <stop offset="100%" stop-color="#1e285f"/>
+    <linearGradient id="yl-g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a2e8a"/>
+      <stop offset="100%" stop-color="#0f1d6b"/>
     </linearGradient>
   </defs>
 
-  <g fill="url(#yl-wing)">
-    <path d="M210 70C179 67 154 48 133 21C143 57 158 86 188 108C195 95 203 82 210 70Z"/>
-    <path d="M208 82C177 84 150 74 120 52C137 86 156 110 186 123C191 109 198 95 208 82Z"/>
-    <path d="M204 97C174 103 146 99 109 83C132 110 155 128 186 137C191 124 197 110 204 97Z"/>
-    <path d="M199 112C169 122 142 122 102 112C127 136 153 149 184 148C188 136 193 123 199 112Z"/>
-    <path d="M194 128C167 140 140 146 97 145C125 164 151 170 181 160C184 149 188 139 194 128Z"/>
+  <!-- Kartal Kanadi - Sol -->
+  <g fill="url(#yl-g)">
+    <!-- Sol kanat tuyleri -->
+    <path d="M50 14C42 12 35 6 28 0C32 10 37 20 44 26C46 22 48 18 50 14Z"/>
+    <path d="M49 20C41 21 35 17 28 10C33 22 38 28 44 31C46 28 47 24 49 20Z"/>
+    <path d="M48 27C40 29 34 27 26 20C31 30 36 35 43 37C45 33 46 30 48 27Z"/>
+    <path d="M46 33C39 37 33 37 25 32C30 39 35 43 42 42C43 39 45 36 46 33Z"/>
+    <path d="M44 39C38 43 32 45 24 43C29 48 35 50 41 47C42 44 43 42 44 39Z"/>
+
+    <!-- Sag kanat tuyleri (yansima) -->
+    <path d="M62 14C70 12 77 6 84 0C80 10 75 20 68 26C66 22 64 18 62 14Z"/>
+    <path d="M63 20C71 21 77 17 84 10C79 22 74 28 68 31C66 28 65 24 63 20Z"/>
+    <path d="M64 27C72 29 78 27 86 20C81 30 76 35 69 37C67 33 66 30 64 27Z"/>
+    <path d="M66 33C73 37 79 37 87 32C82 39 77 43 70 42C69 39 67 36 66 33Z"/>
+    <path d="M68 39C74 43 80 45 88 43C83 48 77 50 71 47C70 44 69 42 68 39Z"/>
+
+    <!-- V sekli - merkez govde -->
+    <path d="M56 10C53 16 51 23 50 30C54 25 57 21 56 10Z"/>
+    <path d="M56 10C59 16 61 23 62 30C58 25 55 21 56 10Z"/>
+    <path d="M56 18C50 30 44 38 37 44C44 41 51 36 56 28C61 36 68 41 75 44C68 38 62 30 56 18Z"/>
   </g>
 
-  <g fill="url(#yl-wing)" transform="translate(420 0) scale(-1 1)">
-    <path d="M210 70C179 67 154 48 133 21C143 57 158 86 188 108C195 95 203 82 210 70Z"/>
-    <path d="M208 82C177 84 150 74 120 52C137 86 156 110 186 123C191 109 198 95 208 82Z"/>
-    <path d="M204 97C174 103 146 99 109 83C132 110 155 128 186 137C191 124 197 110 204 97Z"/>
-    <path d="M199 112C169 122 142 122 102 112C127 136 153 149 184 148C188 136 193 123 199 112Z"/>
-    <path d="M194 128C167 140 140 146 97 145C125 164 151 170 181 160C184 149 188 139 194 128Z"/>
-  </g>
+  <!-- YALCIN yazisi -->
+  <text x="56" y="70" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-weight="800" font-size="24" letter-spacing="3" fill="#1a2e8a">YALCIN</text>
 
-  <path d="M210 50C199 66 193 85 192 106C198 96 204 89 210 83C216 89 222 96 228 106C227 85 221 66 210 50Z" fill="#283579"/>
-  <path d="M210 74C193 109 178 133 159 152C177 146 194 136 210 120C226 136 243 146 261 152C242 133 227 109 210 74Z" fill="#1d2657"/>
-
-  <text x="210" y="212" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="60" letter-spacing="8" fill="#283579">YALCIN</text>
-  <text x="210" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-weight="600" font-size="22" letter-spacing="12" fill="#283579">TRAILER</text>
+  <!-- TRAILER yazisi -->
+  <text x="56" y="84" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-weight="600" font-size="10" letter-spacing="5" fill="#1a2e8a">TRAILER</text>
 </svg>

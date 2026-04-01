@@ -35,7 +35,45 @@ namespace YALCINDORSE.Services
                 newWindow.Created += (s, e) =>
                 {
 #if WINDOWS
-                    SetupCustomTitleBar(newWindow);
+                    var uiWindow = newWindow.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+                    if (uiWindow != null)
+                    {
+                        var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(uiWindow);
+                        var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
+                        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+
+                        // Title bar rengini degistir (koyu mavi)
+                        appWindow.TitleBar.BackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 15, 37, 72);
+                        appWindow.TitleBar.ForegroundColor = Microsoft.UI.Colors.White;
+                        appWindow.TitleBar.InactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 20, 45, 85);
+                        appWindow.TitleBar.InactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 180, 180, 180);
+                        appWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 15, 37, 72);
+                        appWindow.TitleBar.ButtonForegroundColor = Microsoft.UI.Colors.White;
+                        appWindow.TitleBar.ButtonHoverBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 30, 60, 110);
+                        appWindow.TitleBar.ButtonHoverForegroundColor = Microsoft.UI.Colors.White;
+                        appWindow.TitleBar.ButtonPressedBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 10, 25, 55);
+                        appWindow.TitleBar.ButtonPressedForegroundColor = Microsoft.UI.Colors.White;
+                        appWindow.TitleBar.ButtonInactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 20, 45, 85);
+                        appWindow.TitleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 180, 180, 180);
+
+                        // Pencereyi ortala
+                        var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
+                        if (displayArea != null)
+                        {
+                            appWindow.Move(new global::Windows.Graphics.PointInt32(
+                                (displayArea.WorkArea.Width - appWindow.Size.Width) / 2,
+                                (displayArea.WorkArea.Height - appWindow.Size.Height) / 2
+                            ));
+                        }
+
+                        // Owner ayarla
+                        var mainWindow = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+                        if (mainWindow != null && mainWindow != uiWindow)
+                        {
+                            var mainHandle = WinRT.Interop.WindowNative.GetWindowHandle(mainWindow);
+                            SetOwner(windowHandle, mainHandle);
+                        }
+                    }
 #endif
                 };
 
@@ -79,81 +117,6 @@ namespace YALCINDORSE.Services
         }
 
 #if WINDOWS
-        private void SetupCustomTitleBar(Window mauiWindow)
-        {
-            var uiWindow = mauiWindow.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-            if (uiWindow == null) return;
-
-            var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(uiWindow);
-            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
-            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-
-            // --- Native title bar'i Blazor icerigine genislet ---
-            var titleBar = appWindow.TitleBar;
-            titleBar.ExtendsContentIntoTitleBar = true;
-
-            // Sistem caption butonlarini tamamen gizle (kendi butonlarimizi kullaniyoruz)
-            var transparent = Microsoft.UI.ColorHelper.FromArgb(0, 0, 0, 0);
-            titleBar.ButtonBackgroundColor = transparent;
-            titleBar.ButtonInactiveBackgroundColor = transparent;
-            titleBar.ButtonHoverBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(30, 255, 255, 255);
-            titleBar.ButtonPressedBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(50, 255, 255, 255);
-            titleBar.ButtonForegroundColor = transparent;
-            titleBar.ButtonHoverForegroundColor = transparent;
-            titleBar.ButtonPressedForegroundColor = transparent;
-            titleBar.ButtonInactiveForegroundColor = transparent;
-
-            // Yukseklik: Blazor titlebar 34px, bunu native olarak ayarla
-            titleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
-
-            // Drag alani ayarla
-            UpdateDragRects(appWindow, uiWindow);
-
-            // Pencere boyutu degisince drag alanini guncelle
-            appWindow.Changed += (sender, args) =>
-            {
-                if (args.DidSizeChange && sender is Microsoft.UI.Windowing.AppWindow aw)
-                {
-                    UpdateDragRects(aw, uiWindow);
-                }
-            };
-
-            // Pencereyi ortala
-            var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
-            if (displayArea != null)
-            {
-                appWindow.Move(new global::Windows.Graphics.PointInt32(
-                    (displayArea.WorkArea.Width - appWindow.Size.Width) / 2,
-                    (displayArea.WorkArea.Height - appWindow.Size.Height) / 2
-                ));
-            }
-
-            // Owner ayarla (alt pencere ana pencerenin arkasina dusmesin)
-            var mainWindow = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-            if (mainWindow != null && mainWindow != uiWindow)
-            {
-                var mainHandle = WinRT.Interop.WindowNative.GetWindowHandle(mainWindow);
-                SetOwner(windowHandle, mainHandle);
-            }
-        }
-
-        private void UpdateDragRects(Microsoft.UI.Windowing.AppWindow appWindow, Microsoft.UI.Xaml.Window uiWindow)
-        {
-            try
-            {
-                var scale = uiWindow.Content?.XamlRoot?.RasterizationScale ?? 1.0;
-                var titleBarH = (int)(34 * scale);
-                var btnAreaW = (int)(120 * scale); // 3 buton alani
-                var winW = appWindow.Size.Width;
-
-                // Buton alani passthrough (tiklanabilir), geri kalan caption (suruklenebilir)
-                appWindow.TitleBar.SetDragRectangles(new[] {
-                    new global::Windows.Graphics.RectInt32(0, 0, Math.Max(winW - btnAreaW, 0), titleBarH)
-                });
-            }
-            catch { }
-        }
-
         private const int GWLP_HWNDPARENT = -8;
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]

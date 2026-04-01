@@ -3,20 +3,6 @@
 @inject ThemeService Theme
 
 <div class="@($"app-root {Theme.CurrentTheme}")">
-    <div class="window-titlebar">
-        <span class="window-titlebar-text">@WindowTitle</span>
-        <div class="window-titlebar-controls">
-            <button class="window-ctrl-btn minimize" title="Kucult">
-                <svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5"/></svg>
-            </button>
-            <button class="window-ctrl-btn maximize" title="Buyut">
-                <svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
-            </button>
-            <button class="window-ctrl-btn close" title="Kapat">
-                <svg viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" stroke-width="1.5"/><line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" stroke-width="1.5"/></svg>
-            </button>
-        </div>
-    </div>
     <DynamicComponent Type="@ComponentType" Parameters="@ComponentParameters" />
 </div>
 
