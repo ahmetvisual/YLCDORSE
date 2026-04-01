@@ -597,13 +597,21 @@ html, body {
     min-height: 52px;
 }
 
-.sidebar-logo {
-    width: 32px;
-    height: 22px;
-    object-fit: cover;
-    object-position: top center;
-    filter: brightness(0) invert(1);
+.sidebar-logo-wrapper {
+    width: 18px;
+    height: 18px;
+    overflow: hidden;
     flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.sidebar-logo {
+    width: 36px;
+    height: auto;
+    filter: brightness(0) invert(1);
+    margin-top: -1px;
 }
 
 .sidebar-brand-text {
@@ -883,14 +891,21 @@ html, body {
     display: none;
 }
 
-/* Collapsed state - center icons */
+/* Collapsed state - align icons to center */
 .sidebar-collapsed .sidebar-item,
 .sidebar-collapsed .sidebar-group-header,
 .sidebar-collapsed .sidebar-toggle-btn,
 .sidebar-collapsed .sidebar-theme-toggle {
-    justify-content: center;
     padding: 10px 0;
+    justify-content: center;
     gap: 0;
+}
+
+.sidebar-collapsed .sidebar-item svg,
+.sidebar-collapsed .sidebar-group-header svg.sidebar-group-icon,
+.sidebar-collapsed .sidebar-toggle-btn svg,
+.sidebar-collapsed .sidebar-theme-toggle svg {
+    margin: 0;
 }
 
 .sidebar-collapsed .sidebar-group-items .sidebar-item {
