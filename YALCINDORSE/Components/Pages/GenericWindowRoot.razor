@@ -1,9 +1,10 @@
 @using YALCINDORSE.Services
 @implements IDisposable
 @inject ThemeService Theme
+@inject IJSRuntime JS
 
 <div class="@($"app-root {Theme.CurrentTheme}")">
-    <div class="window-titlebar" @onpointerdown="StartDrag">
+    <div class="window-titlebar">
         <span class="window-titlebar-text">@WindowTitle</span>
         <div class="window-titlebar-controls">
             <button class="window-ctrl-btn minimize" @onclick="MinimizeWindow" title="Kucult">
@@ -40,79 +41,76 @@
         Theme.OnThemeChanged -= StateHasChanged;
     }
 
-    private void StartDrag()
-    {
-#if WINDOWS
-        try
-        {
-            var window = Application.Current?.Windows.LastOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-            if (window != null)
-            {
-                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                // SendMessage WM_NCLBUTTONDOWN HTCAPTION
-                SendMessage(hwnd, 0x00A1, 0x0002, 0);
-            }
-        }
-        catch { }
-#endif
-    }
-
     private void MinimizeWindow()
     {
 #if WINDOWS
-        try
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            var window = Application.Current?.Windows.LastOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-            if (window != null)
+            try
             {
-                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                ShowWindow(hwnd, 6); // SW_MINIMIZE
+                var mauiWindow = GetCurrentMauiWindow();
+                if (mauiWindow?.Handler?.PlatformView is Microsoft.UI.Xaml.Window uiWin)
+                {
+                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(uiWin);
+                    ShowWindow(hwnd, 6); // SW_MINIMIZE
+                }
             }
-        }
-        catch { }
+            catch { }
+        });
 #endif
     }
 
     private void MaximizeWindow()
     {
 #if WINDOWS
-        try
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            var window = Application.Current?.Windows.LastOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-            if (window != null)
+            try
             {
-                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                var wId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-                var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(wId);
-                if (appWindow?.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
+                var mauiWindow = GetCurrentMauiWindow();
+                if (mauiWindow?.Handler?.PlatformView is Microsoft.UI.Xaml.Window uiWin)
                 {
-                    if (p.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized)
-                        p.Restore();
-                    else
-                        p.Maximize();
+                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(uiWin);
+                    var wId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+                    var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(wId);
+                    if (appWindow?.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
+                    {
+                        if (p.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized)
+                            p.Restore();
+                        else
+                            p.Maximize();
+                    }
                 }
             }
-        }
-        catch { }
+            catch { }
+        });
 #endif
     }
 
     private void CloseWindow()
     {
 #if WINDOWS
-        try
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            var window = Application.Current?.Windows.LastOrDefault();
-            if (window != null)
-                Application.Current?.CloseWindow(window);
-        }
-        catch { }
+            try
+            {
+                var mauiWindow = GetCurrentMauiWindow();
+                if (mauiWindow != null)
+                    Application.Current?.CloseWindow(mauiWindow);
+            }
+            catch { }
+        });
 #endif
     }
 
 #if WINDOWS
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    private Window? GetCurrentMauiWindow()
+    {
+        // Son acilan pencere (bu pencere)
+        var windows = Application.Current?.Windows;
+        if (windows == null || windows.Count <= 1) return windows?.FirstOrDefault();
+        return windows.LastOrDefault();
+    }
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
