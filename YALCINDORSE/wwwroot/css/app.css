@@ -1184,10 +1184,10 @@ html, body {
 
 .form-input {
     width: 100%;
-    padding: 7px 10px;
-    border: 1.5px solid var(--yl-border);
-    border-radius: 6px;
-    font-size: var(--yl-font-sm);
+    padding: 4px 8px;
+    border: 1px solid var(--yl-border);
+    border-radius: 4px;
+    font-size: 0.8rem;
     outline: none;
     transition: border-color 0.2s;
     background: var(--yl-white);
@@ -1212,15 +1212,15 @@ html, body {
 
 .crm-workspace-panel {
     background: var(--yl-white);
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    height: calc(100vh - var(--yl-header-height) - var(--yl-toolbar-height) - 32px);
+    gap: 8px;
+    height: calc(100vh - var(--yl-header-height) - var(--yl-toolbar-height) - 24px);
     overflow: hidden;
     min-height: 0;
-    padding: 16px;
+    padding: 10px 12px;
 }
 
 .crm-header {

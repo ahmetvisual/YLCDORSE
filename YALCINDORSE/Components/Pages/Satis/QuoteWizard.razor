@@ -5,11 +5,11 @@
 @inject NavigationManager Nav
 @inject AuthService Auth
 
-<div class="crm-workspace-panel" style="flex:1;padding:20px;box-sizing:border-box;overflow-y:auto;">
+<div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow:hidden;">
     <div class="wizard-container">
-        <div class="crm-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--yl-border);">
-            <h3 style="margin:0;font-size:1.2rem;font-weight:700;color:var(--yl-primary)">Teklif Olustur</h3>
-            <p style="margin:4px 0 0;font-size:0.8rem;color:var(--yl-text-light)">3 adimda teklif olusturun</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:var(--yl-primary)">Teklif Olustur</h3>
+            <span style="font-size:0.68rem;color:var(--yl-text-light)">3 adimda teklif olusturun</span>
         </div>
 
         <!-- Adim Gostergesi -->
@@ -180,7 +180,7 @@
                     </div>
                 </div>
 
-                <div class="wizard-section-title" style="margin-top:20px">Odeme Bilgileri</div>
+                <div class="wizard-section-title" style="margin-top:10px">Odeme Bilgileri</div>
                 <div class="wizard-grid3">
                     <div class="wizard-field">
                         <label>Odeme Sistemi</label>
@@ -218,8 +218,8 @@
         {
             <div class="wizard-content">
                 <div class="wizard-section-title">Teklif Kalemleri</div>
-                <p style="font-size:0.8rem;color:var(--yl-text-light);margin-bottom:16px">
-                    Urun baslik ekleyip altina kalemler, alt kalemler ve opsiyonlar ekleyebilirsiniz. Opsiyonlar koyu italik gorunur.
+                <p style="font-size:0.68rem;color:var(--yl-text-light);margin:0 0 8px">
+                    Baslik ekleyip altina kalemler, alt kalemler ve opsiyonlar ekleyebilirsiniz.
                 </p>
                 <QuoteItemsEditor @bind-Items="quoteItems" />
             </div>
@@ -254,7 +254,7 @@
                     </div>
                 </div>
 
-                <div class="wizard-section-title" style="margin-top:20px">Fiyatlandirma</div>
+                <div class="wizard-section-title" style="margin-top:10px">Fiyatlandirma</div>
                 <div class="wizard-grid3">
                     <div class="wizard-field">
                         <label>Toplam Tutar</label>
