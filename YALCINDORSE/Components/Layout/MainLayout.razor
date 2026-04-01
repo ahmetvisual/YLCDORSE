@@ -6,101 +6,31 @@
 @inject DesktopWindowService WindowService
 
 <div class="app-container">
-    <!-- Header Bar -->
-    <div class="app-header">
-        <img src="images/logo.png" alt="Yalcin Trailer" class="header-logo" />
-        <div class="header-spacer"></div>
-
-        <!-- User Profile Dropdown -->
-        <div class="header-profile" @onclick="ToggleProfileMenu" @onclick:stopPropagation="true">
-            <div class="profile-avatar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-            </div>
-            <span class="profile-name">@Auth.FullName</span>
-            <svg class="profile-chevron @(showProfileMenu ? "rotated" : "")" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-            </svg>
-
-            @if (showProfileMenu)
-            {
-                <div class="profile-dropdown">
-                    <div class="profile-dropdown-header">
-                        <div class="profile-dropdown-avatar">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <div class="profile-dropdown-name">@Auth.FullName</div>
-                            <div class="profile-dropdown-role">@Auth.CurrentUser</div>
-                        </div>
-                    </div>
-                    <div class="profile-dropdown-divider"></div>
-                    <button class="profile-dropdown-item" @onclick="GoToUserManagement">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                        <span>Kullanici Yonetimi</span>
-                    </button>
-                    <div class="profile-dropdown-divider"></div>
-                    <div class="profile-dropdown-item theme-toggle-item" @onclick="ToggleTheme" @onclick:stopPropagation="true">
-                        @if (Theme.IsDark)
-                        {
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                            </svg>
-                        }
-                        else
-                        {
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                            </svg>
-                        }
-                        <span>Koyu Tema</span>
-                        <div class="mini-toggle @(Theme.IsDark ? "on" : "")">
-                            <div class="mini-toggle-dot"></div>
-                        </div>
-                    </div>
-                    <div class="profile-dropdown-divider"></div>
-                    <button class="profile-dropdown-item logout" @onclick="DoLogout">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                            <polyline points="16 17 21 12 16 7"/>
-                            <line x1="21" y1="12" x2="9" y2="12"/>
-                        </svg>
-                        <span>Cikis Yap</span>
-                    </button>
-                </div>
-            }
+    <!-- Sidebar -->
+    <aside class="app-sidebar @(sidebarCollapsed ? "sidebar-collapsed" : "") @(mobileMenuOpen ? "sidebar-mobile-open" : "")">
+        <!-- Logo -->
+        <div class="sidebar-header">
+            <img src="images/logo.png" alt="Yalcin Trailer" class="sidebar-logo" />
+            <span class="sidebar-brand-text">YALCIN DORSE</span>
         </div>
-    </div>
 
-    <!-- Toolbar -->
-    <div class="app-toolbar" @onclick:stopPropagation="true">
-        <div class="toolbar-menu">
-            <button class="toolbar-btn @(activeMenu == "satis" ? "active" : "")" @onclick='() => ToggleMenu("satis")'>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toolbar-btn-icon">
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <path d="M16 10a4 4 0 0 1-8 0"/>
-                </svg>
-                SATIS
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toolbar-chevron">
-                    <polyline points="6 9 12 15 18 9"/>
-                </svg>
-            </button>
-
-            @if (activeMenu == "satis")
-            {
-                <div class="toolbar-dropdown">
-                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenTeklifOlustur">
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <!-- SATIS Group -->
+            <div class="sidebar-group @(expandedGroup == "satis" ? "expanded" : "")">
+                <button class="sidebar-group-header" @onclick='() => ToggleGroup("satis")'>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="sidebar-group-icon">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                    <span class="sidebar-group-label">SATIS</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="sidebar-chevron">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="sidebar-group-items">
+                    <button class="sidebar-item" @onclick="OpenTeklifOlustur">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>
@@ -109,7 +39,7 @@
                         </svg>
                         <span>Teklif Olustur</span>
                     </button>
-                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenTeklifListesi">
+                    <button class="sidebar-item" @onclick="OpenTeklifListesi">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>
@@ -120,27 +50,24 @@
                         <span>Teklif Listesi</span>
                     </button>
                 </div>
-            }
-        </div>
+            </div>
 
-        <div class="toolbar-menu">
-            <button class="toolbar-btn @(activeMenu == "crm" ? "active" : "")" @onclick='() => ToggleMenu("crm")'>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toolbar-btn-icon">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                CRM
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="toolbar-chevron">
-                    <polyline points="6 9 12 15 18 9"/>
-                </svg>
-            </button>
-
-            @if (activeMenu == "crm")
-            {
-                <div class="toolbar-dropdown">
-                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenCustomerCards">
+            <!-- CRM Group -->
+            <div class="sidebar-group @(expandedGroup == "crm" ? "expanded" : "")">
+                <button class="sidebar-group-header" @onclick='() => ToggleGroup("crm")'>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="sidebar-group-icon">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span class="sidebar-group-label">CRM</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="sidebar-chevron">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="sidebar-group-items">
+                    <button class="sidebar-item" @onclick="OpenCustomerCards">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <rect x="3" y="4" width="18" height="16" rx="2" />
                             <line x1="7" y1="8" x2="17" y2="8" />
@@ -149,27 +76,27 @@
                         </svg>
                         <span>Cari Kartlar</span>
                     </button>
-                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenTouchCRM">
+                    <button class="sidebar-item" @onclick="OpenTouchCRM">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
                         </svg>
                         <span>Touch CRM</span>
                     </button>
-                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenDashboard">
+                    <button class="sidebar-item" @onclick="OpenDashboard">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                             <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
                         </svg>
                         <span>Dashboard</span>
                     </button>
-                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenReminders">
+                    <button class="sidebar-item" @onclick="OpenReminders">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                         </svg>
                         <span>Hatirlatmalar</span>
                     </button>
-                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenCalendar">
+                    <button class="sidebar-item" @onclick="OpenCalendar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                             <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
@@ -178,93 +105,228 @@
                         <span>Takvim</span>
                     </button>
                 </div>
-            }
-        </div>
-    </div>
+            </div>
 
-    <!-- Page Content -->
-    <div class="main-content" @onclick="CloseAllMenus">
-        <div class="page-content">
-            @Body
+            <!-- Yonetim (tek oge) -->
+            <button class="sidebar-item" @onclick="GoToUserManagement">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>Yonetim</span>
+            </button>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <!-- Theme Toggle -->
+            <button class="sidebar-theme-toggle" @onclick="ToggleTheme" @onclick:stopPropagation="true">
+                @if (Theme.IsDark)
+                {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                }
+                <span class="sidebar-theme-label">Koyu Tema</span>
+                <div class="mini-toggle @(Theme.IsDark ? "on" : "")">
+                    <div class="mini-toggle-dot"></div>
+                </div>
+            </button>
+
+            <!-- Collapse Toggle -->
+            <button class="sidebar-toggle-btn" @onclick="ToggleSidebar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="11 17 6 12 11 7"/>
+                    <polyline points="18 17 13 12 18 7"/>
+                </svg>
+                <span>Menuyu Sakla</span>
+            </button>
+
+            <!-- Logout -->
+            <button class="sidebar-item" @onclick="DoLogout" style="color:rgba(255,100,100,0.7);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Cikis Yap</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Mobile Overlay -->
+    @if (mobileMenuOpen)
+    {
+        <div class="sidebar-overlay" @onclick="CloseMobileMenu"></div>
+    }
+
+    <!-- Content Area -->
+    <div class="app-content-wrapper" @onclick="CloseAllMenus">
+        <!-- Header -->
+        <div class="app-header">
+            <!-- Mobile Hamburger -->
+            <button class="mobile-hamburger" @onclick="ToggleMobileMenu" @onclick:stopPropagation="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+
+            <div class="header-spacer"></div>
+
+            <!-- User Profile Dropdown -->
+            <div class="header-profile" @onclick="ToggleProfileMenu" @onclick:stopPropagation="true">
+                <div class="profile-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <span class="profile-name">@Auth.FullName</span>
+                <svg class="profile-chevron @(showProfileMenu ? "rotated" : "")" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+
+                @if (showProfileMenu)
+                {
+                    <div class="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <div class="profile-dropdown-avatar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="profile-dropdown-name">@Auth.FullName</div>
+                                <div class="profile-dropdown-role">@Auth.CurrentUser</div>
+                            </div>
+                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item logout" @onclick="DoLogout">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            <span>Cikis Yap</span>
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="main-content">
+            <div class="page-content">
+                @Body
+            </div>
         </div>
     </div>
 </div>
 
 @code {
-    private string? activeMenu = null;
+    private bool sidebarCollapsed = true;
+    private bool mobileMenuOpen = false;
+    private string? expandedGroup = null;
     private bool showProfileMenu = false;
 
-    private void ToggleMenu(string menu)
+    private void ToggleGroup(string group)
     {
-        activeMenu = activeMenu == menu ? null : menu;
+        if (sidebarCollapsed)
+        {
+            sidebarCollapsed = false;
+            expandedGroup = group;
+            return;
+        }
+        expandedGroup = expandedGroup == group ? null : group;
+    }
+
+    private void ToggleSidebar()
+    {
+        sidebarCollapsed = !sidebarCollapsed;
+        if (sidebarCollapsed)
+            expandedGroup = null;
+    }
+
+    private void ToggleMobileMenu()
+    {
+        mobileMenuOpen = !mobileMenuOpen;
+        if (mobileMenuOpen)
+            sidebarCollapsed = false;
+    }
+
+    private void CloseMobileMenu()
+    {
+        mobileMenuOpen = false;
+    }
+
+    private void CloseAllMenus()
+    {
         showProfileMenu = false;
     }
 
-    private void CloseMenu()
-    {
-        activeMenu = null;
-    }
+    private void ToggleProfileMenu() => showProfileMenu = !showProfileMenu;
 
     private void OpenCustomerCards()
     {
-        activeMenu = null;
-
+        mobileMenuOpen = false;
         if (!WindowService.OpenCustomerCardsWindow())
             Nav.NavigateTo("/crm/cari-kartlar");
     }
 
     private void OpenTeklifOlustur()
     {
-        activeMenu = null;
+        mobileMenuOpen = false;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Olustur", 1200, 800))
             Nav.NavigateTo("/satis/teklif-olustur");
     }
 
     private void OpenTeklifListesi()
     {
-        activeMenu = null;
+        mobileMenuOpen = false;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.TeklifListesi>("Teklif Listesi", 1300, 800))
             Nav.NavigateTo("/satis/teklif-listesi");
     }
 
     private void OpenTouchCRM()
     {
-        activeMenu = null;
+        mobileMenuOpen = false;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchCRM>("Touch CRM", 1400, 900))
             Nav.NavigateTo("/crm/touch-crm");
     }
 
     private void OpenDashboard()
     {
-        activeMenu = null;
+        mobileMenuOpen = false;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchDashboard>("Dashboard", 1200, 800))
             Nav.NavigateTo("/crm/dashboard");
     }
 
     private void OpenReminders()
     {
-        activeMenu = null;
+        mobileMenuOpen = false;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchReminders>("Hatirlatmalar", 900, 700))
             Nav.NavigateTo("/crm/hatirlatmalar");
     }
 
     private void OpenCalendar()
     {
-        activeMenu = null;
+        mobileMenuOpen = false;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchCalendar>("Takvim", 1200, 800))
             Nav.NavigateTo("/crm/takvim");
     }
 
-    private void CloseAllMenus()
-    {
-        activeMenu = null;
-        showProfileMenu = false;
-    }
-
-    private void ToggleProfileMenu() => showProfileMenu = !showProfileMenu;
-
     private void GoToUserManagement()
     {
+        mobileMenuOpen = false;
         showProfileMenu = false;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Yonetim.KullaniciYonetimi>("Kullanıcı Yönetimi", 1000, 700))
             Nav.NavigateTo("/yonetim/kullanicilar");
@@ -278,6 +340,7 @@
     private void DoLogout()
     {
         showProfileMenu = false;
+        mobileMenuOpen = false;
         Auth.Logout();
     }
 }
