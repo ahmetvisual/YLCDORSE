@@ -84,6 +84,7 @@
     margin-bottom: var(--yl-space-sm);
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .wizard-section-title {
@@ -103,12 +104,14 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--yl-space-sm);
     align-items: start;
+    min-width: 0;
 }
 
 .wizard-field-pair {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--yl-space-sm);
+    min-width: 0;
 }
 
 .wizard-field-stretch {
@@ -141,6 +144,8 @@
 
 .wizard-field {
     margin-bottom: 6px;
+    min-width: 0;
+    overflow: visible;
 }
 
 .wizard-field label {
@@ -161,6 +166,7 @@
 .wizard-field select,
 .wizard-field textarea {
     width: 100%;
+    max-width: 100%;
     padding: 4px 7px;
     border-radius: var(--yl-radius-sm);
     border: 1px solid var(--yl-border);
