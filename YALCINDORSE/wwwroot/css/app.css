@@ -599,10 +599,8 @@ html, body {
 }
 
 .sidebar-logo {
-    width: 28px;
-    height: 28px;
-    object-fit: cover;
-    border-radius: 4px;
+    width: 30px;
+    height: 26px;
     flex-shrink: 0;
 }
 
@@ -994,8 +992,8 @@ html, body {
 }
 
 .sidebar-collapsed .sidebar-logo {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 30px;
 }
 
 /* Mobile hamburger - hidden on desktop */
