@@ -903,12 +903,17 @@ h4 {
 }
 
 .sidebar-collapsed .sidebar-group,
-.sidebar-collapsed .sidebar-nav > .sidebar-item {
+.sidebar-collapsed .sidebar-nav > .sidebar-item,
+.sidebar-collapsed .sidebar-footer > .sidebar-item,
+.sidebar-collapsed .sidebar-theme-toggle,
+.sidebar-collapsed .sidebar-toggle-btn {
     position: relative;
 }
 
 .sidebar-collapsed .sidebar-group-header:hover .sidebar-tooltip,
-.sidebar-collapsed .sidebar-item:hover .sidebar-tooltip {
+.sidebar-collapsed .sidebar-item:hover .sidebar-tooltip,
+.sidebar-collapsed .sidebar-theme-toggle:hover .sidebar-tooltip,
+.sidebar-collapsed .sidebar-toggle-btn:hover .sidebar-tooltip {
     display: block;
 }
 
