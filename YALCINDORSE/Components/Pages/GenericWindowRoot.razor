@@ -3,9 +3,9 @@
 @inject ThemeService Theme
 
 <div class="@($"app-root {Theme.CurrentTheme}")">
-    <div class="window-titlebar" @onmousedown="StartDrag" @onmousedown:preventDefault>
+    <div class="window-titlebar">
         <span class="window-titlebar-text">@WindowTitle</span>
-        <div class="window-titlebar-controls" @onmousedown:stopPropagation>
+        <div class="window-titlebar-controls">
             <button class="window-ctrl-btn minimize" @onclick="MinimizeWindow" title="Kucult">
                 <svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5"/></svg>
             </button>
@@ -40,44 +40,6 @@
         Theme.OnThemeChanged -= StateHasChanged;
     }
 
-    private void StartDrag(MouseEventArgs e)
-    {
-        if (e.Button != 0) return; // Sadece sol tik
-#if WINDOWS
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            try
-            {
-                var uiWin = GetCurrentUiWindow();
-                if (uiWin != null)
-                {
-                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(uiWin);
-
-                    // Cift tik = maximize/restore
-                    if (e.Detail >= 2)
-                    {
-                        var wId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-                        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(wId);
-                        if (appWindow?.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
-                        {
-                            if (p.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized)
-                                p.Restore();
-                            else
-                                p.Maximize();
-                        }
-                        return;
-                    }
-
-                    // Pointer yakalamayi birak, sonra pencere surukle
-                    ReleaseCapture();
-                    SendMessage(hwnd, 0x00A1, (IntPtr)0x0002, IntPtr.Zero); // WM_NCLBUTTONDOWN, HTCAPTION
-                }
-            }
-            catch { }
-        });
-#endif
-    }
-
     private void MinimizeWindow()
     {
 #if WINDOWS
@@ -85,7 +47,7 @@
         {
             try
             {
-                var uiWin = GetCurrentUiWindow();
+                var uiWin = Application.Current?.Windows.LastOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
                 if (uiWin != null)
                 {
                     var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(uiWin);
@@ -104,7 +66,7 @@
         {
             try
             {
-                var uiWin = GetCurrentUiWindow();
+                var uiWin = Application.Current?.Windows.LastOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
                 if (uiWin != null)
                 {
                     var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(uiWin);
@@ -131,7 +93,7 @@
         {
             try
             {
-                var mauiWindow = GetCurrentMauiWindow();
+                var mauiWindow = Application.Current?.Windows.LastOrDefault();
                 if (mauiWindow != null)
                     Application.Current?.CloseWindow(mauiWindow);
             }
@@ -141,24 +103,6 @@
     }
 
 #if WINDOWS
-    private Microsoft.UI.Xaml.Window? GetCurrentUiWindow()
-    {
-        return GetCurrentMauiWindow()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-    }
-
-    private Window? GetCurrentMauiWindow()
-    {
-        var windows = Application.Current?.Windows;
-        if (windows == null || windows.Count <= 1) return windows?.FirstOrDefault();
-        return windows.LastOrDefault();
-    }
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool ReleaseCapture();
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 #endif
