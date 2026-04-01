@@ -101,6 +101,10 @@ namespace YALCINDORSE.Services
                     
                     if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
                     {
+                        // Başarılı girişten sonra ana uygulamanın tüm pencerelerini/başlığını açıyoruz (Login çerçevesizdi)
+                        presenter.SetBorderAndTitleBar(true, true);
+                        presenter.IsResizable = true;
+                        presenter.IsMaximizable = true;
                         presenter.Maximize();
                     }
                 }

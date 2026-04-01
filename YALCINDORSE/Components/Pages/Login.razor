@@ -1,90 +1,487 @@
 @using YALCINDORSE.Services
 @inject AuthService Auth
 
-<div class="login-shell">
-    <div class="login-panel">
-        <div class="login-brand-panel">
-            <img src="images/logo.svg" alt="Yalcin Trailer" class="login-logo" />
-        </div>
+<div class="login-page-container">
+    <!-- Abstract background corners -->
+    <div class="bg-shape top-left"></div>
+    <div class="bg-shape bottom-right"></div>
 
-        <div class="login-card">
-            <div class="login-card-header">
-                <h2 class="login-title">Hesabınıza giriş yapın</h2>
-                <p class="login-subtitle">Devam etmek için kullanıcı bilgilerinizle oturum açın.</p>
-            </div>
-
-            <form class="login-form" @onsubmit="DoLogin" @onsubmit:preventDefault="true">
-                <div class="form-floating-group">
-                    <div class="input-wrapper">
-                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
+    <div class="login-box-wrapper">
+        <!-- White card (Left) -->
+        <div class="login-card-white">
+            <h2 class="form-title">Login please</h2>
+            <form class="new-login-form" @onsubmit="DoLogin" @onsubmit:preventDefault="true">
+                
+                <div class="input-group">
+                    <span class="icon-span">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
                         </svg>
-                        <input type="text" class="form-control floating-input" id="username" @bind="username" @bind:event="oninput" placeholder=" " autocomplete="username" />
-                        <label for="username" class="floating-label">Kullanıcı Adı</label>
-                    </div>
+                    </span>
+                    <div class="divider"></div>
+                    <input type="text" class="custom-input" placeholder="Input your user ID or Email" @bind="username" @bind:event="oninput" />
                 </div>
 
-                <div class="form-floating-group">
-                    <div class="input-wrapper">
-                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <div class="input-group">
+                    <span class="icon-span">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
                         </svg>
-                        <input type="password" class="form-control floating-input" id="password" @bind="password" @bind:event="oninput" placeholder=" " autocomplete="current-password" />
-                        <label for="password" class="floating-label">Şifre</label>
-                    </div>
+                    </span>
+                    <div class="divider"></div>
+                    <input type="password" class="custom-input" placeholder="Input your password" @bind="password" @bind:event="oninput" />
                 </div>
 
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert-error animated fadeIn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;">
+                <div class="options-row">
+                    <label class="remember-checkbox">
+                        <input type="checkbox" @bind="rememberMe" />
+                        <span>Beni Hatırla</span>
+                    </label>
+                    <a href="#" class="forgot-link">Şifremi Unuttum?</a>
+                </div>
+
+                @if(!string.IsNullOrEmpty(errorMessage)) {
+                    <div class="error-msg">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;margin-right:4px;">
                             <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
                         </svg>
                         @errorMessage
                     </div>
                 }
 
-                <button type="submit" class="btn-login" disabled="@isLoading">
-                    @if (isLoading)
-                    {
-                        <span class="spinner"></span>
-                        <span class="btn-text">Giriş yapılıyor...</span>
-                    }
-                    else
-                    {
-                        <span class="btn-text">Giriş Yap</span>
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
+                <div class="action-row">
+                    <button type="submit" class="primary-btn" disabled="@isLoading">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                            <path d="M10 7l5 5-5 5"/>
+                            <path d="M21 3v18"/>
                         </svg>
-                    }
-                </button>
+                        @(isLoading ? "..." : "LOG IN")
+                    </button>
+                </div>
             </form>
+        </div>
 
-            <div class="login-footer">
-                <span>YALCIN TRAILER ERP &copy; @DateTime.Now.Year</span>
-                <span class="login-footer-dot"></span>
-                <span>İç kullanım</span>
+        <!-- Blue card (Right) -->
+        <div class="login-card-blue">
+            <button class="close-app-btn" type="button" @onclick="CloseApp" title="Uygulamayı Kapat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="blue-waves">
+                <div class="wave wave1"></div>
+                <div class="wave wave2"></div>
+                <div class="wave wave3"></div>
+            </div>
+            <div class="blue-content">
+                <img src="images/logo.svg" style="max-width: 150px; margin-bottom: 20px; filter: brightness(0) invert(1);" alt="Yalcin Logo" />
+                <h2>HOŞ GELDİNİZ!</h2>
+                <p>ERP Sistemine giriş yapmak için bilgilerinizi giriniz.</p>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* 
+    TASARIM BİREBİR KOPYALANDI
+*/
+.login-page-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fdfdfd;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: -16px; /* body default margin offset */
+    -webkit-app-region: drag; /* optional for certain platforms */
+}
+
+/* Background Abstract Corners */
+.bg-shape {
+    position: absolute;
+    border-radius: 50%;
+    z-index: 0;
+}
+.top-left {
+    width: 350px;
+    height: 350px;
+    background: #5058de;
+    top: -100px;
+    left: -100px;
+}
+.bottom-right {
+    width: 450px;
+    height: 450px;
+    background: #370da1;
+    bottom: -150px;
+    right: -150px;
+}
+
+/* Wrapper */
+.login-box-wrapper {
+    position: relative;
+    width: 850px;
+    height: 520px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+}
+
+/* Blue Card */
+.login-card-blue {
+    position: absolute;
+    right: 0;
+    width: 480px;
+    height: 520px;
+    background: #023cdb; /* main blue */
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(2, 60, 219, 0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.close-app-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    -webkit-app-region: no-drag;
+}
+.close-app-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+.close-app-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Fluid Shapes inside Blue Card */
+.blue-waves {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+.wave {
+    position: absolute;
+}
+.wave1 {
+    top: -40px;
+    right: -40px;
+    width: 350px;
+    height: 380px;
+    background: #002eb8;
+    border-radius: 35% 65% 70% 30% / 40% 50% 60% 50%;
+}
+.wave2 {
+    bottom: -50px;
+    left: -50px;
+    width: 380px;
+    height: 280px;
+    background: #00249c;
+    border-radius: 40% 60% 70% 30% / 50% 40% 60% 50%;
+}
+.wave3 {
+    bottom: 20px;
+    right: -20px;
+    width: 140px;
+    height: 140px;
+    background: #1e56ed;
+    border-radius: 50%;
+}
+
+.blue-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding-left: 60px; /* space for the white card overlapping */
+    padding-right: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.blue-content h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+.blue-content p {
+    font-size: 13px;
+    margin-bottom: 30px;
+    opacity: 0.9;
+}
+.outline-btn {
+    background: rgba(255,255,255,0.08); /* slightly transparent */
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 10px 45px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+    letter-spacing: 0.5px;
+}
+.outline-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* White Card */
+.login-card-white {
+    position: absolute;
+    left: 0;
+    width: 440px;
+    height: 440px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    z-index: 2;
+    padding: 45px 50px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #2b3240;
+    margin-bottom: 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-title::after {
+    content: '';
+    display: block;
+    width: 45px;
+    height: 4px;
+    background: #c3c8cf;
+    margin-top: 8px;
+    border-radius: 2px;
+}
+
+.new-login-form {
+    display: flex;
+    flex-direction: column;
+    /* Reset margins for inner elements */
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e6f0;
+    border-radius: 8px;
+    padding: 0 16px;
+    margin-bottom: 20px;
+    min-height: 52px;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+}
+
+/* A subtle blue indicator on the left side of inputs */
+.input-group::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background: #023cdb;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.input-group:focus-within::before {
+    opacity: 1;
+}
+.input-group:focus-within {
+    border-color: #023cdb;
+    box-shadow: 0 4px 12px rgba(2, 60, 219, 0.08);
+}
+
+.icon-span {
+    color: #9ba4b5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+}
+.icon-span svg {
+    width: 18px;
+    height: 18px;
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background: #e2e6f0;
+    margin: 0 12px;
+}
+
+.custom-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 13.5px;
+    color: #2b3240;
+    font-weight: 500;
+    background: transparent;
+    padding: 0;
+}
+.custom-input::placeholder {
+    color: #b0b8c6;
+    font-style: italic;
+    font-weight: 400;
+}
+
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+    margin-bottom: 25px;
+    font-size: 12.5px;
+}
+
+.remember-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6a7382;
+    cursor: pointer;
+    font-weight: 500;
+}
+.remember-checkbox input {
+    accent-color: #5058de;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    border: 1px solid #c2c8d2;
+    border-radius: 4px; /* Native checkbox border radiuses may not apply but standard approach */
+}
+
+.forgot-link {
+    color: #2b3240;
+    font-weight: 700;
+    text-decoration: none;
+}
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.error-msg {
+    color: #e63946;
+    font-size: 12.5px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.action-row {
+    display: flex;
+    justify-content: center;
+}
+
+.primary-btn {
+    background: #023cdb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 35px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(2, 60, 219, 0.25);
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+}
+.primary-btn:hover {
+    background: #002eb8;
+    box-shadow: 0 8px 20px rgba(2, 60, 219, 0.35);
+    transform: translateY(-2px);
+}
+.primary-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px rgba(2, 60, 219, 0.2);
+}
+.primary-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Koyu mod zorunlu overrideları (Çünkü kullanıcı dark mode'a alsa da özel UI yapısı bozulmamalı) */
+.app-root.dark .login-card-white {
+    background: #1e2129;
+}
+.app-root.dark .input-group {
+    background: #17191f;
+    border-color: #2a2e39;
+}
+.app-root.dark .custom-input {
+    color: #eef0f3;
+}
+.app-root.dark .form-title {
+    color: #eef0f3;
+}
+.app-root.dark .forgot-link {
+    color: #eef0f3;
+}
+</style>
 
 @code {
     private string username = "";
     private string password = "";
     private string? errorMessage;
     private bool isLoading;
+    private bool rememberMe = false;
 
-
+    protected override void OnInitialized()
+    {
+        username = Microsoft.Maui.Storage.Preferences.Default.Get("remembered_username", "");
+        if (!string.IsNullOrEmpty(username))
+        {
+            rememberMe = true;
+        }
+    }
 
     private async Task DoLogin()
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            errorMessage = "Kullanıcı adı ve şifre gereklidir";
+            errorMessage = "Kullanıcı adı ve şifre gereklidir.";
             return;
         }
 
@@ -94,11 +491,27 @@
 
         var (success, message) = await Auth.LoginAsync(username, password);
 
-        if (!success)
+        if (success)
+        {
+            if (rememberMe)
+            {
+                Microsoft.Maui.Storage.Preferences.Default.Set("remembered_username", username);
+            }
+            else
+            {
+                Microsoft.Maui.Storage.Preferences.Default.Remove("remembered_username");
+            }
+        }
+        else
         {
             errorMessage = message;
         }
 
         isLoading = false;
+    }
+
+    private void CloseApp()
+    {
+        Microsoft.Maui.Controls.Application.Current?.Quit();
     }
 }
