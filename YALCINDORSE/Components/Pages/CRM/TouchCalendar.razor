@@ -1,0 +1,168 @@
+@page "/crm/takvim"
+@using YALCINDORSE.Services
+@inject TouchService TouchSvc
+@inject NavigationManager Nav
+
+<div class="crm-shell">
+    <div class="crm-header">
+        <div>
+            <h2 style="margin:0;font-size:1.3rem;font-weight:700;color:var(--yl-primary)">Takvim</h2>
+            <p style="margin:2px 0 0;font-size:0.8rem;color:var(--yl-text-light)">Temas ve teklif takvimi</p>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:0.72rem;align-items:center">
+        <div style="display:flex;align-items:center;gap:5px">
+            <span style="width:10px;height:10px;border-radius:3px;background:#EAF3DE;display:inline-block"></span> Gonderim
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+            <span style="width:10px;height:10px;border-radius:3px;background:#E6F1FB;display:inline-block"></span> Touch
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+            <span style="width:10px;height:10px;border-radius:3px;background:#EEEDFE;display:inline-block"></span> Revizyon
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+            <span style="width:10px;height:10px;border-radius:3px;background:#FAEEDA;display:inline-block"></span> Planli Temas
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+            <span style="width:10px;height:10px;border-radius:3px;background:#FCEBEB;display:inline-block"></span> Gecikmis
+        </div>
+    </div>
+
+    <!-- Takvim -->
+    <div style="background:#fff;border:1px solid var(--yl-border);border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05)">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#0C447C;color:#fff">
+            <button style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:700"
+                    @onclick="PrevMonth">&#8249;</button>
+            <div style="font-size:1rem;font-weight:700">@months[currentMonth] @currentYear</div>
+            <button style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:700"
+                    @onclick="NextMonth">&#8250;</button>
+        </div>
+
+        <!-- Gun Basliklari -->
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#f0f4f8">
+            @foreach (var day in dayNames)
+            {
+                <div style="padding:8px 0;text-align:center;font-size:0.7rem;font-weight:700;color:var(--yl-text-light);text-transform:uppercase;letter-spacing:0.5px">@day</div>
+            }
+        </div>
+
+        <!-- Takvim Grid -->
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--yl-border)">
+            @foreach (var cell in calendarCells)
+            {
+                var isToday = cell.Date == DateTime.Today;
+                var isOtherMonth = cell.Date.Month != currentMonth + 1;
+                var cellEvents = entries.Where(e => e.Tarih.Date == cell.Date).ToList();
+
+                <div style="min-height:90px;border-right:1px solid var(--yl-border);border-bottom:1px solid var(--yl-border);padding:6px 7px;position:relative;cursor:default;transition:background 0.12s;vertical-align:top;@(isOtherMonth ? "background:#fafafa;" : "") @(isToday ? "background:#EBF3FF;" : "")">
+                    <div style="font-size:0.78rem;font-weight:600;color:@(isOtherMonth ? "#ccc" : "var(--yl-text)");margin-bottom:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;@(isToday ? "background:#185FA5;color:#fff;border-radius:50%;font-weight:700;" : "")">
+                        @cell.Date.Day
+                    </div>
+
+                    @foreach (var ev in cellEvents.Take(3))
+                    {
+                        var dotClass = ev.Tip switch {
+                            "OVERDUE" => "background:#FCEBEB;color:#A32D2D;font-weight:700;",
+                            "PLANNED" => "background:#FAEEDA;color:#854F0B;font-weight:700;",
+                            "TOUCH" => "background:#E6F1FB;color:#185FA5;",
+                            "REVISION" => "background:#EEEDFE;color:#534AB7;",
+                            _ => "background:#EAF3DE;color:#3B6D11;"
+                        };
+                        <div style="font-size:0.6rem;padding:1px 5px;border-radius:8px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;@dotClass">
+                            @ev.Baslik
+                        </div>
+                    }
+                    @if (cellEvents.Count > 3)
+                    {
+                        <div style="font-size:0.6rem;color:var(--yl-text-light);margin-top:1px">+@(cellEvents.Count - 3) daha</div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int currentYear;
+    private int currentMonth; // 0-indexed
+    private bool isLoading;
+    private List<CalendarEntryModel> entries = new();
+    private List<CalendarCell> calendarCells = new();
+
+    private string[] months = { "Ocak", "Subat", "Mart", "Nisan", "Mayis", "Haziran", "Temmuz", "Agustos", "Eylul", "Ekim", "Kasim", "Aralik" };
+    private string[] dayNames = { "Pzt", "Sal", "Car", "Per", "Cum", "Cmt", "Paz" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentYear = DateTime.Today.Year;
+        currentMonth = DateTime.Today.Month - 1;
+        await LoadCalendar();
+    }
+
+    private async Task LoadCalendar()
+    {
+        isLoading = true;
+        try
+        {
+            entries = await TouchSvc.GetCalendarEntriesAsync(currentYear, currentMonth + 1);
+        }
+        catch { entries = new(); }
+        finally
+        {
+            isLoading = false;
+        }
+
+        BuildCalendarGrid();
+        StateHasChanged();
+    }
+
+    private void BuildCalendarGrid()
+    {
+        calendarCells = new List<CalendarCell>();
+        var firstDay = new DateTime(currentYear, currentMonth + 1, 1);
+        var lastDay = new DateTime(currentYear, currentMonth + 1, DateTime.DaysInMonth(currentYear, currentMonth + 1));
+        var startDow = ((int)firstDay.DayOfWeek + 6) % 7; // Monday = 0
+
+        // Onceki ayin gunleri
+        for (int i = startDow - 1; i >= 0; i--)
+        {
+            calendarCells.Add(new CalendarCell { Date = firstDay.AddDays(-(i + 1)) });
+        }
+
+        // Bu ayin gunleri
+        for (int d = 1; d <= lastDay.Day; d++)
+        {
+            calendarCells.Add(new CalendarCell { Date = new DateTime(currentYear, currentMonth + 1, d) });
+        }
+
+        // Sonraki ayin gunleri
+        var totalCells = calendarCells.Count;
+        var trailing = (7 - (totalCells % 7)) % 7;
+        for (int t = 1; t <= trailing; t++)
+        {
+            calendarCells.Add(new CalendarCell { Date = lastDay.AddDays(t) });
+        }
+    }
+
+    private async Task PrevMonth()
+    {
+        currentMonth--;
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        await LoadCalendar();
+    }
+
+    private async Task NextMonth()
+    {
+        currentMonth++;
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        await LoadCalendar();
+    }
+
+    private class CalendarCell
+    {
+        public DateTime Date { get; set; }
+    }
+}
