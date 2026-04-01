@@ -549,7 +549,7 @@ html, body {
 }
 
 .header-logo {
-    height: 34px;
+    height: 45px;
     width: auto;
     filter: brightness(0) invert(1);
 }
