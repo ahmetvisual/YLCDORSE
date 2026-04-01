@@ -6,13 +6,13 @@
     <div class="window-titlebar">
         <span class="window-titlebar-text">@WindowTitle</span>
         <div class="window-titlebar-controls">
-            <button class="window-ctrl-btn minimize" @onclick="MinimizeWindow" title="Kucult">
+            <button class="window-ctrl-btn minimize" title="Kucult">
                 <svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5"/></svg>
             </button>
-            <button class="window-ctrl-btn maximize" @onclick="MaximizeWindow" title="Buyut">
+            <button class="window-ctrl-btn maximize" title="Buyut">
                 <svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
             </button>
-            <button class="window-ctrl-btn close" @onclick="CloseWindow" title="Kapat">
+            <button class="window-ctrl-btn close" title="Kapat">
                 <svg viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" stroke-width="1.5"/><line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" stroke-width="1.5"/></svg>
             </button>
         </div>
@@ -39,71 +39,4 @@
     {
         Theme.OnThemeChanged -= StateHasChanged;
     }
-
-    private void MinimizeWindow()
-    {
-#if WINDOWS
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            try
-            {
-                var uiWin = Application.Current?.Windows.LastOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-                if (uiWin != null)
-                {
-                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(uiWin);
-                    ShowWindow(hwnd, 6); // SW_MINIMIZE
-                }
-            }
-            catch { }
-        });
-#endif
-    }
-
-    private void MaximizeWindow()
-    {
-#if WINDOWS
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            try
-            {
-                var uiWin = Application.Current?.Windows.LastOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-                if (uiWin != null)
-                {
-                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(uiWin);
-                    var wId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-                    var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(wId);
-                    if (appWindow?.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
-                    {
-                        if (p.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized)
-                            p.Restore();
-                        else
-                            p.Maximize();
-                    }
-                }
-            }
-            catch { }
-        });
-#endif
-    }
-
-    private void CloseWindow()
-    {
-#if WINDOWS
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            try
-            {
-                var mauiWindow = Application.Current?.Windows.LastOrDefault();
-                if (mauiWindow != null)
-                    Application.Current?.CloseWindow(mauiWindow);
-            }
-            catch { }
-        });
-#endif
-    }
-
-#if WINDOWS
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-#endif
 }

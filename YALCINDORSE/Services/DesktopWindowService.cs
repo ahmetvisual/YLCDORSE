@@ -56,6 +56,39 @@ namespace YALCINDORSE.Services
                             owPresenter.SetBorderAndTitleBar(true, false);
                         }
 
+                        // Ust 34px'i native drag alani olarak tanimla (InputNonClientPointerSource)
+                        // Bu API WebView2'den ONCE calisir, sifir gecikme ile surukleme saglar
+                        try
+                        {
+                            var nonClientSrc = Microsoft.UI.Input.InputNonClientPointerSource.GetForWindowId(windowId);
+                            var scale = uiWindow.Content?.XamlRoot?.RasterizationScale ?? 1.0;
+                            var dragH = (int)(34 * scale);
+                            var btnW = (int)(112 * scale);
+                            var winW = appWindow.Size.Width;
+
+                            nonClientSrc.SetRegionRects(
+                                Microsoft.UI.Input.NonClientRegionKind.Caption,
+                                new[] { new global::Windows.Graphics.RectInt32(0, 0, winW - btnW, dragH) }
+                            );
+
+                            // Pencere boyutu degisince drag alani guncelle
+                            appWindow.Changed += (sender, args) =>
+                            {
+                                if (args.DidSizeChange && sender is Microsoft.UI.Windowing.AppWindow aw)
+                                {
+                                    try
+                                    {
+                                        nonClientSrc.SetRegionRects(
+                                            Microsoft.UI.Input.NonClientRegionKind.Caption,
+                                            new[] { new global::Windows.Graphics.RectInt32(0, 0, aw.Size.Width - btnW, dragH) }
+                                        );
+                                    }
+                                    catch { }
+                                }
+                            };
+                        }
+                        catch { }
+
                         var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
                         if (displayArea != null && appWindow != null)
                         {

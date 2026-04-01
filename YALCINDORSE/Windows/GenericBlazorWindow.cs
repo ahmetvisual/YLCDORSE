@@ -37,14 +37,21 @@ namespace YALCINDORSE.Windows
                 webView2.CoreWebView2.WebMessageReceived += (s, e) =>
                 {
                     var message = e.TryGetWebMessageAsString();
-                    if (message == "DRAG_START")
+                    MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        MainThread.BeginInvokeOnMainThread(() => DragWindow());
-                    }
-                    else if (message == "MAXIMIZE_TOGGLE")
-                    {
-                        MainThread.BeginInvokeOnMainThread(() => ToggleMaximize());
-                    }
+                        switch (message)
+                        {
+                            case "MINIMIZE":
+                                MinimizeWindow();
+                                break;
+                            case "MAXIMIZE_TOGGLE":
+                                ToggleMaximize();
+                                break;
+                            case "CLOSE":
+                                CloseWindow();
+                                break;
+                        }
+                    });
                 };
             };
 #endif
@@ -53,7 +60,7 @@ namespace YALCINDORSE.Windows
         }
 
 #if WINDOWS
-        private void DragWindow()
+        private void MinimizeWindow()
         {
             try
             {
@@ -61,8 +68,7 @@ namespace YALCINDORSE.Windows
                 if (window != null)
                 {
                     var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                    ReleaseCapture();
-                    SendMessage(hwnd, 0x00A1, (nint)0x0002, 0); // WM_NCLBUTTONDOWN, HTCAPTION
+                    ShowWindow(hwnd, 6); // SW_MINIMIZE
                 }
             }
             catch { }
@@ -90,11 +96,19 @@ namespace YALCINDORSE.Windows
             catch { }
         }
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        private static extern bool ReleaseCapture();
+        private void CloseWindow()
+        {
+            try
+            {
+                var mauiWindow = this.Window;
+                if (mauiWindow != null)
+                    Application.Current?.CloseWindow(mauiWindow);
+            }
+            catch { }
+        }
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]
-        private static extern nint SendMessage(nint hWnd, uint msg, nint wParam, nint lParam);
+        private static extern bool ShowWindow(nint hWnd, int nCmdShow);
 #endif
     }
 }

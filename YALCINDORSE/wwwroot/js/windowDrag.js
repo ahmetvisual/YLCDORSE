@@ -1,28 +1,21 @@
-// MDI pencere surukleme - WebView2 uzerinden native C# ile iletisim
+// MDI pencere buton kontrolleri - WebView2 uzerinden native C# ile iletisim
+// Surukleme InputNonClientPointerSource ile native olarak yapiliyor (sifir gecikme)
+// Bu dosya sadece buton tiklamalarini C# tarafina iletir
 (function () {
-    document.addEventListener('mousedown', function (e) {
-        // Sadece sol tik
-        if (e.button !== 0) return;
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.window-ctrl-btn');
+        if (!btn) return;
 
-        var titlebar = e.target.closest('.window-titlebar');
-        if (!titlebar) return;
-
-        // Butonlara tiklanmissa surukleme yapma
-        if (e.target.closest('.window-titlebar-controls')) return;
-
-        // Cift tik = maximize/restore
-        if (e.detail >= 2) {
-            if (window.chrome && window.chrome.webview) {
-                window.chrome.webview.postMessage('MAXIMIZE_TOGGLE');
-            }
-            e.preventDefault();
-            return;
-        }
-
-        // Tek tik = surukle
         if (window.chrome && window.chrome.webview) {
-            window.chrome.webview.postMessage('DRAG_START');
+            if (btn.classList.contains('minimize')) {
+                window.chrome.webview.postMessage('MINIMIZE');
+            } else if (btn.classList.contains('maximize')) {
+                window.chrome.webview.postMessage('MAXIMIZE_TOGGLE');
+            } else if (btn.classList.contains('close')) {
+                window.chrome.webview.postMessage('CLOSE');
+            }
         }
         e.preventDefault();
+        e.stopPropagation();
     });
 })();
