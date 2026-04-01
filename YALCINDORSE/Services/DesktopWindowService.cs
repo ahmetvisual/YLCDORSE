@@ -50,39 +50,11 @@ namespace YALCINDORSE.Services
                         var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
                         var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
                         
-                        // Title bar icerige uzat, Blazor titlebar native drag yapar
-                        appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
-                        appWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Collapsed;
-
-                        // Sistem caption butonlarini gizle (kendi butonlarimizi kullaniyoruz)
-                        appWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
-                        appWindow.TitleBar.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
-
-                        // Ust 34px drag alani olarak ayarla (buton alani haric)
-                        var scale = uiWindow.Content.XamlRoot?.RasterizationScale ?? 1.0;
-                        var dragHeight = (int)(34 * scale);
-                        var btnWidth = (int)(110 * scale); // 3 buton ~110px
-                        var winWidth = appWindow.Size.Width;
-
-                        appWindow.TitleBar.SetDragRectangles(new[] {
-                            new global::Windows.Graphics.RectInt32(0, 0, winWidth - btnWidth, dragHeight)
-                        });
-
-                        // Pencere boyutu degisince drag rect guncelle
-                        appWindow.Changed += (sender, args) =>
+                        // Native title bar'i tamamen kaldır, border'i koru
+                        if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter owPresenter)
                         {
-                            if (args.DidSizeChange && sender is Microsoft.UI.Windowing.AppWindow aw)
-                            {
-                                try
-                                {
-                                    var w = aw.Size.Width;
-                                    aw.TitleBar.SetDragRectangles(new[] {
-                                        new global::Windows.Graphics.RectInt32(0, 0, w - btnWidth, dragHeight)
-                                    });
-                                }
-                                catch { }
-                            }
-                        };
+                            owPresenter.SetBorderAndTitleBar(true, false);
+                        }
 
                         var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
                         if (displayArea != null && appWindow != null)
