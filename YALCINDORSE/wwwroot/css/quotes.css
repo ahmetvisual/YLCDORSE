@@ -1,0 +1,227 @@
+/* QUOTES MASTER DETAIL GRID */
+.quote-grid-container {
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.quote-table-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.quote-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
+}
+
+.quote-grid th {
+    background: #f4f6fa;
+    color: var(--yl-text-light);
+    font-weight: 600;
+    padding: 12px 14px;
+    border-bottom: 2px solid var(--yl-border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.quote-grid td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--yl-border);
+    color: var(--yl-text);
+    vertical-align: middle;
+}
+
+.quote-grid tbody tr:hover {
+    background: #f9fbfd;
+}
+
+.quote-grid tbody tr.expanded-master {
+    background: #f0f5ff;
+}
+
+/* EXPAND ACTION */
+.btn-expand {
+    background: none;
+    border: none;
+    color: var(--yl-text-light);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    transition: transform 0.2s;
+    border-radius: 4px;
+}
+
+.btn-expand:hover {
+    background: rgba(0,0,0,0.05);
+    color: var(--yl-primary);
+}
+
+.btn-expand svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* DETAILS ROW */
+.quote-detail-wrapper {
+    background: #fafbfc;
+    padding: 16px 24px;
+    border-bottom: 2px solid var(--yl-border);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.02);
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.detail-table th {
+    background: #f0f2f5;
+    padding: 8px 12px;
+    color: var(--yl-text-light);
+    font-weight: 600;
+}
+
+.detail-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--yl-border);
+}
+
+.detail-table tr.header-row td {
+    background: #e6f6ee;
+    color: #1e6c38;
+    font-weight: 700;
+}
+
+/* CHIPS (BADGES) */
+.yl-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* Status Chips */
+.chip-draft {
+    background: #E6ECF5;
+    color: #3C5A8C;
+}
+
+.chip-sent {
+    background: #E6F6FF;
+    color: #0078B4;
+}
+
+.chip-waiting {
+    background: #FFF8E1;
+    color: #A06E00;
+}
+
+.chip-approved {
+    background: #E6F8EC;
+    color: #1E823C;
+}
+
+.chip-rejected {
+    background: #FFECEC;
+    color: #B41E1E;
+}
+
+/* Standing Chips */
+.chip-hot {
+    background: #DC2828;
+    color: #FFFFFF;
+}
+
+.chip-warm {
+    background: #DC8200;
+    color: #FFFFFF;
+}
+
+.chip-cold {
+    background: #3C82C8;
+    color: #FFFFFF;
+}
+
+/* MODAL / QUICK ADD CSS */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.quick-modal-content {
+    background: #fff;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+    animation: modal-pop 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes modal-pop {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--yl-bg);
+    border-bottom: 1px solid var(--yl-border);
+}
+
+.modal-header h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--yl-primary);
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--yl-text-light);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--yl-border);
+    background: #f9fbfd;
+}

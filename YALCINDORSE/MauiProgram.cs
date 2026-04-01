@@ -25,6 +25,7 @@ namespace YALCINDORSE
             builder.Services.AddSingleton<DesktopWindowService>();
             builder.Services.AddTransient<UserService>();
             builder.Services.AddTransient<CustomerService>();
+            builder.Services.AddTransient<QuoteService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

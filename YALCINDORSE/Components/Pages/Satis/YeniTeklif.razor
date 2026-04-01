@@ -1,4 +1,336 @@
 @page "/satis/yeni-teklif"
+@using YALCINDORSE.Services
+@inject QuoteService QuoteService
+@inject CustomerService CustomerService
+@inject NavigationManager Nav
 
-<h3>Yeni Teklif</h3>
-<p>Bu sayfa yakında aktif olacaktır.</p>
+<div class="crm-workspace-panel" style="flex: 1; padding:20px; box-sizing: border-box; overflow-y: auto;">
+    <div class="crm-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--yl-border);">
+        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: var(--yl-primary);">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            YALCIN - Yeni Teklif (Taslak)
+        </h3>
+        <p class="crm-header-subtitle" style="margin-top: 6px;">
+            Musteri secin ve teklifin temel (header) bilgilerini girin. Detay kalem ekleme daha sonraki adimda yapilacaktir.
+        </p>
+    </div>
+
+    @if (errorMessage != null)
+    {
+        <div style="padding: 16px; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 8px; color: #cf1322; margin-bottom: 16px;">
+            Hata: @errorMessage
+        </div>
+    }
+
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+        
+        <!-- Sol Kolon -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">TEKLIF NO</label>
+                <input type="text" class="form-control" placeholder="Otomatik (Kaydedince alinacak)" disabled style="background:#f4f6fa; font-weight: bold;" />
+            </div>
+
+            <div>
+                <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-primary);">
+                    MUSTERI <span style="color:var(--yl-danger);">*</span>
+                </label>
+                <div style="display: flex; gap: 8px;">
+                    <select class="form-select" @bind="SelectedCustomerId" @bind:after="OnCustomerChanged" style="flex:1;">
+                        <option value="0">--- Secilmedi ---</option>
+                        @if (customers != null)
+                        {
+                            @foreach (var cust in customers)
+                            {
+                                <option value="@cust.Id">@cust.Title</option>
+                            }
+                        }
+                    </select>
+                    <button class="btn-primary-action" title="Yeni Cari Ekle" @onclick="() => showQuickAddModal = true" style="padding:8px 12px;">
+                        + Yeni
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">
+                    ILGILI KISI
+                </label>
+                <select class="form-select" @bind="quote.IlgiliKisiId" disabled="@(activeContacts == null || !activeContacts.Any())">
+                    <option value="">--- Secilmedi ---</option>
+                    @if (activeContacts != null)
+                    {
+                        @foreach (var cont in activeContacts)
+                        {
+                            <option value="@cont.Id">@cont.ContactName</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">DIL</label>
+                    <select class="form-select" @bind="quote.Dil">
+                        <option value="TR">Turkce (TR)</option>
+                        <option value="EN">Ingilizce (EN)</option>
+                        <option value="DE">Almanca (DE)</option>
+                        <option value="FR">Fransizca (FR)</option>
+                        <option value="RU">Rusca (RU)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">PARA BIRIMI</label>
+                    <select class="form-select" @bind="quote.ParaBirimi">
+                        <option value="EUR">EUR (€)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="TRY">TRY (₺)</option>
+                        <option value="GBP">GBP (£)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">TALEP TARIHI</label>
+                    <input type="date" class="form-control" @bind="quote.TalepTarihi" @bind:format="yyyy-MM-dd" />
+                </div>
+                <div>
+                    <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">GECERLILIK TARIHI</label>
+                    <input type="date" class="form-control" @bind="quote.GecerlilikTarihi" @bind:format="yyyy-MM-dd" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Sag Kolon -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">SATIS TIPI</label>
+                <select class="form-select" @bind="quote.SatisTipi">
+                    <option value="NewProduction">Yeni Uretim (New Prod.)</option>
+                    <option value="SecondHand">Ikinci El (2nd Hand)</option>
+                    <option value="SparePart">Yedek Parca (Spare Parts)</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">KAYNAK</label>
+                <select class="form-select" @bind="quote.Kaynak">
+                    <option value="Email">E-Posta</option>
+                    <option value="Phone">Telefon</option>
+                    <option value="Website">Web Sitesi</option>
+                    <option value="TradeShow">Fuar / Etkinlik</option>
+                    <option value="Direct">Dogrudan Iletisim</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">SICAKLIK (PUAN)</label>
+                <select class="form-select" @bind="quote.Puan">
+                    <option value="HOT">Sicak (HOT - Kisa Vadede Alir)</option>
+                    <option value="WARM">Ilik (WARM - Ilgileniyor)</option>
+                    <option value="COLD">Soguk (COLD - Fiyat Arastirmasi)</option>
+                </select>
+            </div>
+            
+            <div style="flex: 1; display:flex; flex-direction:column;">
+                <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">NOTLAR</label>
+                <textarea class="form-control" style="flex: 1; min-height:100px; resize:none;" placeholder="Musterinin istekleri veya ozel notlar..." @bind="quote.Notlar"></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div style="margin-top: 32px; border-top: 1px solid var(--yl-border); padding-top: 16px; display: flex; justify-content: flex-end; gap: 12px;">
+        <button class="btn-secondary" @onclick="GoBack">Iptal Et</button>
+        <button class="btn-primary-action" @onclick="SaveDraftAsync" disabled="@isSaving">
+            @if (isSaving) { <span>Kaydediliyor...</span> } else { <span>Taslak Olarak Kaydet</span> }
+        </button>
+    </div>
+</div>
+
+<!-- QUICK ADD CUSTOMER MODAL -->
+@if (showQuickAddModal)
+{
+    <div class="modal-overlay">
+        <div class="quick-modal-content">
+            <div class="modal-header">
+                <h4>Yeni Cari Kayit</h4>
+                <button class="btn-close" @onclick="() => showQuickAddModal = false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.85rem; color: var(--yl-text-light); margin-bottom: 12px;">
+                    Detayli bilgelere girmeden yalnizca unvani girerek hizli bir cari kart olusturabilirsiniz.
+                </p>
+                <div>
+                    <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">FIRMA UNVANI <span style="color:red;">*</span></label>
+                    <input type="text" class="form-control" @bind="newCustomerTitle" @bind:event="oninput" placeholder="Orn. Yalcin Dorse San. Tic." />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="() => showQuickAddModal = false" disabled="@isSavingCustomer">Iptal</button>
+                <button class="btn-primary-action" @onclick="SaveQuickCustomerAsync" disabled="@(string.IsNullOrWhiteSpace(newCustomerTitle) || isSavingCustomer)">
+                    Kaydet ve Sec
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private QuoteModel quote = new QuoteModel();
+    private List<CustomerListItemModel>? customers;
+    private List<CustomerContactModel>? activeContacts;
+    
+    private string? errorMessage;
+    private bool isSaving = false;
+    
+    // Dropdown binds
+    private int selectedCustomerId = 0;
+    private int SelectedCustomerId
+    {
+        get => selectedCustomerId;
+        set {
+            if (selectedCustomerId != value)
+            {
+                selectedCustomerId = value;
+                quote.MusteriId = value;
+            }
+        }
+    }
+
+    // Modal state
+    private bool showQuickAddModal = false;
+    private bool isSavingCustomer = false;
+    private string newCustomerTitle = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            customers = await CustomerService.GetCustomersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Cariler yuklenirken hata: " + ex.Message;
+        }
+    }
+
+    private async Task OnCustomerChanged()
+    {
+        quote.IlgiliKisiId = null;
+        activeContacts = null;
+
+        if (quote.MusteriId > 0)
+        {
+            try
+            {
+                var fullCustomer = await CustomerService.GetCustomerByIdAsync(quote.MusteriId);
+                if (fullCustomer != null && fullCustomer.Contacts != null)
+                {
+                    activeContacts = fullCustomer.Contacts.Where(x => x.IsActive).ToList();
+                    
+                    // If there's a primary contact, select it automatically!
+                    var primary = activeContacts.FirstOrDefault(x => x.IsPrimary);
+                    if (primary != null)
+                    {
+                        quote.IlgiliKisiId = primary.Id;
+                    }
+                    else if (activeContacts.Any())
+                    {
+                        quote.IlgiliKisiId = activeContacts.First().Id;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Ilgili kisiler yuklenemedi: " + ex.Message;
+            }
+        }
+    }
+
+    private async Task SaveQuickCustomerAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newCustomerTitle)) return;
+        
+        isSavingCustomer = true;
+        try
+        {
+            // Create a minimal customer via CustomerService
+            var newCustInfo = new CustomerModel
+            {
+                Title = newCustomerTitle,
+                Country = "TR",
+                RiskLimit = 0,
+                CurrentBalance = 0,
+                IsActive = true
+            };
+            
+            await CustomerService.SaveCustomerAsync(newCustInfo); // This handles setting codes, defaults, etc.
+            
+            // Reload dropdown
+            customers = await CustomerService.GetCustomersAsync();
+            
+            // Find newly added customer (by highest ID or match, but typically latest)
+            var created = customers.OrderByDescending(c => c.Id).FirstOrDefault(c => c.Title == newCustomerTitle);
+            if (created != null)
+            {
+                SelectedCustomerId = created.Id;
+                await OnCustomerChanged();
+            }
+            
+            showQuickAddModal = false;
+            newCustomerTitle = ""; // reset
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Cari eklenirken hata: " + ex.Message;
+        }
+        finally
+        {
+            isSavingCustomer = false;
+        }
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        errorMessage = null;
+
+        if (quote.MusteriId <= 0)
+        {
+            errorMessage = "Lutfen mecburi 'Musteri' secimini yapiniz.";
+            return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            int insertedId = await QuoteService.CreateDraftQuoteAsync(quote);
+            
+            // Go back to list when created successfully
+            Nav.NavigateTo("/satis/teklif-listesi");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Teklif kaydedilemedi: " + ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/satis/teklif-listesi");
+    }
+}

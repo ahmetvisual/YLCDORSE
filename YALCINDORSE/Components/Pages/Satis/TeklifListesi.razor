@@ -1,4 +1,312 @@
 @page "/satis/teklif-listesi"
+@using YALCINDORSE.Services
+@inject QuoteService QuoteService
+@inject NavigationManager Nav
 
-<h3>Teklif Listesi</h3>
-<p>Bu sayfa yakında aktif olacaktır.</p>
+<div class="crm-workspace-panel" style="flex: 1; padding:20px; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
+    <div class="crm-header" style="margin-bottom: 20px;">
+        <div>
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: var(--yl-primary);">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Teklif Listesi
+            </h3>
+            <p class="crm-header-subtitle">Teklif basliklarini ve detay kalemlerini (Master-Detail) goruntuleyebilirsiniz.</p>
+        </div>
+        <div class="crm-header-actions">
+            <button class="btn-primary-action" @onclick="GoToNewQuote">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; margin-right:4px; vertical-align:text-bottom;">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Yeni Teklif On Hazirlik
+            </button>
+            <button class="btn-secondary" @onclick="ReloadAsync">Yenile</button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+        <div class="crm-search-box" style="flex: 1; max-width: 300px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" class="form-control" placeholder="Teklif No, Musteri, Satici ara..." @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" />
+        </div>
+        <select class="form-select" style="max-width: 150px; border-radius:10px; border-color:var(--yl-border);" @onchange="OnStatusChanged">
+            <option value="">Tumu (Durum)</option>
+            <option value="Draft">Taslak (Draft)</option>
+            <option value="Sent">Gonderildi (Sent)</option>
+            <option value="WaitingApproval">Onay Bekliyor</option>
+            <option value="Approved">Onaylandi</option>
+            <option value="Rejected">Reddedildi</option>
+        </select>
+    </div>
+
+    @if (isLoading)
+    {
+        <div style="text-align: center; padding: 40px; color: var(--yl-text-light);">
+            <div class="spinner" style="border-top-color: var(--yl-primary); margin: 0 auto 12px;"></div>
+            Yukleniyor...
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div style="padding: 16px; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 8px; color: #cf1322; margin-bottom: 16px;">
+            Hata: @errorMessage
+        </div>
+    }
+    else
+    {
+        <div class="quote-grid-container">
+            <div class="quote-table-wrapper">
+                <table class="quote-grid">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>Tarih</th>
+                            <th>Teklif No</th>
+                            <th>Musteri & Ilgili</th>
+                            <th>Satici</th>
+                            <th>Durum</th>
+                            <th>Net Tutar / Para</th>
+                            <th>Puan</th>
+                            <th style="width: 80px;">Isl.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (quotes == null || !quotes.Any())
+                        {
+                            <tr><td colspan="9" style="text-align:center; padding: 24px;">Goruntulenecek kayit bulunamadi.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var quote in quotes)
+                            {
+                                bool isExpanded = expandedQuoteId == quote.Id;
+
+                                <tr class="@(isExpanded ? "expanded-master" : "")">
+                                    <td style="text-align: center;">
+                                        <button class="btn-expand" @onclick="() => ToggleRowAsync(quote.Id)">
+                                            @if (isExpanded) {
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                                            } else {
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                                            }
+                                        </button>
+                                    </td>
+                                    <td>@quote.TalepTarihi.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <div style="font-weight: 600; color: var(--yl-accent);">@quote.TeklifNo</div>
+                                        <div style="font-size: 0.7rem; color: var(--yl-text-light);">Rev @quote.Rev</div>
+                                    </td>
+                                    <td>
+                                        <div style="font-weight: 500;">@quote.Musteri</div>
+                                        @if (!string.IsNullOrEmpty(quote.Ilgili))
+                                        {
+                                            <div style="font-size: 0.75rem; color: var(--yl-text-light);">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px; height:10px; margin-right:2px; vertical-align:text-top;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                @quote.Ilgili
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>@quote.Satici</td>
+                                    <td>
+                                        <span class="yl-chip @GetStatusChipClass(quote.Durum)">
+                                            @GetStatusName(quote.Durum)
+                                        </span>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <div style="font-weight: 600;">@quote.NetTutar.ToString("N2") @quote.Para</div>
+                                    </td>
+                                    <td>
+                                        <span class="yl-chip @GetStandingChipClass(quote.Puan)">
+                                            @quote.Puan
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <!-- Actions e.g Print, PDF -->
+                                        <button class="btn-expand" title="PDF Ciktisi (Test)" style="color: var(--yl-danger);">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                @if (isExpanded)
+                                {
+                                    <tr>
+                                        <td colspan="9" style="padding: 0;">
+                                            <div class="quote-detail-wrapper">
+                                                @if (isDetailsLoading)
+                                                {
+                                                    <div style="padding: 10px; color: var(--yl-text-light); font-size: 0.8rem;">Kalemler yukleniyor...</div>
+                                                }
+                                                else if (expandedItems == null || !expandedItems.Any())
+                                                {
+                                                    <div style="padding: 10px; color: var(--yl-text-light); font-size: 0.8rem;">Bu teklife ait kaydedilmis kalem bulunamadi.</div>
+                                                }
+                                                else
+                                                {
+                                                    <table class="detail-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style="width: 50px; text-align: center;">Sira</th>
+                                                                <th>Aciklama (Kalem Detayi)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in expandedItems)
+                                                            {
+                                                                <tr class="@(item.BaslikMi ? "header-row" : "")">
+                                                                    <td style="text-align: center;">@item.SiraNo</td>
+                                                                    <td>
+                                                                        @if (item.BaslikMi) {
+                                                                            <strong>@item.Aciklama</strong>
+                                                                        } else {
+                                                                            @item.Aciklama
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="padding: 12px 14px; border-top: 1px solid var(--yl-border); font-size: 0.8rem; color: var(--yl-text-light); background: #fbfcfe; display: flex; justify-content: space-between;">
+                <span>Toplam @(quotes?.Count ?? 0) kayit gosteriliyor.</span>
+                <span>YALCINDORSE ERP v2.0 MAUI</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private bool isDetailsLoading = false;
+    private string? errorMessage;
+
+    private List<QuoteListItemModel>? quotes;
+    private List<QuoteItemModel>? expandedItems;
+
+    private string searchQuery = "";
+    private string selectedStatus = "";
+    // Note: SalesRep filter logic requires fetching Users. For simplicity, we skip it or mock it.
+
+    private int expandedQuoteId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadQuotesAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        await LoadQuotesAsync();
+    }
+
+    private async Task LoadQuotesAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            quotes = await QuoteService.GetQuotesAsync(searchQuery, selectedStatus, null);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSearch(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await LoadQuotesAsync();
+        }
+    }
+
+    private async Task OnStatusChanged(ChangeEventArgs e)
+    {
+        selectedStatus = e.Value?.ToString() ?? "";
+        await LoadQuotesAsync();
+    }
+
+    private async Task ToggleRowAsync(int quoteId)
+    {
+        if (expandedQuoteId == quoteId)
+        {
+            expandedQuoteId = 0; // Collapse
+        }
+        else
+        {
+            expandedQuoteId = quoteId; // Expand
+            isDetailsLoading = true;
+            expandedItems = null; // Clear old
+            StateHasChanged();
+
+            try
+            {
+                expandedItems = await QuoteService.GetQuoteItemsAsync(quoteId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Error] Loading Items: {ex.Message}");
+            }
+            finally
+            {
+                isDetailsLoading = false;
+            }
+        }
+    }
+
+    private void GoToNewQuote()
+    {
+        Nav.NavigateTo("/satis/yeni-teklif");
+    }
+
+    // --- Helpers
+    private string GetStatusName(string code) => code switch {
+        "Draft" => "Taslak",
+        "Sent" => "Gonderildi",
+        "WaitingApproval" => "Onay Bek.",
+        "Approved" => "Onaylandi",
+        "Rejected" => "Reddedildi",
+        _ => code
+    };
+
+    private string GetStatusChipClass(string status) => status switch {
+        "Draft" => "chip-draft",
+        "Sent" => "chip-sent",
+        "WaitingApproval" => "chip-waiting",
+        "Approved" => "chip-approved",
+        "Rejected" => "chip-rejected",
+        _ => ""
+    };
+
+    private string GetStandingChipClass(string standing) => standing switch {
+        "HOT" => "chip-hot",
+        "WARM" => "chip-warm",
+        "COLD" => "chip-cold",
+        _ => ""
+    };
+}
