@@ -602,6 +602,9 @@ html, body {
     width: 30px;
     height: 26px;
     flex-shrink: 0;
+    object-fit: contain;
+    filter: grayscale(1) contrast(100) invert(1);
+    mix-blend-mode: screen;
 }
 
 .sidebar-brand-text {
