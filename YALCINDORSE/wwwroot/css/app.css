@@ -26,6 +26,20 @@
     --yl-header-height: 40px;
     --yl-toolbar-height: 36px;
     --yl-dropdown-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    /* Spacing scale */
+    --yl-space-xs: 4px;
+    --yl-space-sm: 8px;
+    --yl-space-md: 12px;
+    --yl-space-lg: 16px;
+    --yl-space-xl: 24px;
+    /* Border radius tokens */
+    --yl-radius-sm: 4px;
+    --yl-radius-md: 6px;
+    --yl-radius-lg: 8px;
+    --yl-radius-xl: 12px;
+    /* Transition tokens */
+    --yl-transition-fast: 0.15s ease;
+    --yl-transition-normal: 0.2s ease;
 }
 
 /* Dark Theme Override */
@@ -172,7 +186,9 @@
 }
 
 .app-root.dark .toolbar-dropdown {
-    background: #1c2030;
+    background: rgba(28,32,48,0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border-color: var(--yl-border);
 }
 
@@ -181,7 +197,9 @@
 }
 
 .app-root.dark .profile-dropdown {
-    background: #1c2030;
+    background: rgba(28,32,48,0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .app-root.dark .profile-dropdown-item:hover {
@@ -531,7 +549,7 @@ html, body {
 }
 
 .header-logo {
-    height: 30px;
+    height: 34px;
     width: auto;
     filter: brightness(0) invert(1);
 }
@@ -597,7 +615,7 @@ html, body {
 .toolbar-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     padding: 6px 14px;
     font-size: var(--yl-font-sm);
     font-weight: 600;
@@ -606,16 +624,29 @@ html, body {
     color: var(--yl-text);
     background: none;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--yl-radius-md);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all var(--yl-transition-fast);
     user-select: none;
     white-space: nowrap;
+    position: relative;
+}
+
+.toolbar-btn-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.6;
+    transition: opacity var(--yl-transition-fast);
+    flex-shrink: 0;
 }
 
 .toolbar-btn:hover {
-    background: rgba(26, 58, 107, 0.06);
+    background: rgba(26, 58, 107, 0.08);
     color: var(--yl-primary);
+}
+
+.toolbar-btn:hover .toolbar-btn-icon {
+    opacity: 1;
 }
 
 .toolbar-btn.active {
@@ -623,13 +654,28 @@ html, body {
     color: var(--yl-primary);
 }
 
-.toolbar-btn svg {
+.toolbar-btn.active .toolbar-btn-icon {
+    opacity: 1;
+}
+
+.toolbar-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: var(--yl-accent);
+    border-radius: 2px 2px 0 0;
+}
+
+.toolbar-btn svg.toolbar-chevron {
     width: 12px;
     height: 12px;
     transition: transform 0.2s;
 }
 
-.toolbar-btn.active svg {
+.toolbar-btn.active svg.toolbar-chevron {
     transform: rotate(180deg);
 }
 
@@ -638,9 +684,11 @@ html, body {
     top: calc(100% + 4px);
     left: 0;
     min-width: 200px;
-    background: var(--yl-white);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--yl-border);
-    border-radius: 6px;
+    border-radius: var(--yl-radius-lg);
     box-shadow: var(--yl-dropdown-shadow);
     z-index: 900;
     padding: 4px 0;
@@ -752,8 +800,10 @@ html, body {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    background: var(--yl-white);
-    border-radius: 10px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: var(--yl-radius-xl);
     box-shadow: 0 10px 40px rgba(0,0,0,0.15), 0 2px 10px rgba(0,0,0,0.08);
     min-width: 240px;
     z-index: 1000;
@@ -1292,8 +1342,10 @@ html, body {
     color: var(--yl-text-light);
 }
 
-.crm-search-box .form-input {
+.crm-search-box .form-input,
+.crm-search-box .form-control {
     padding-left: 38px;
+    font-size: 0.82rem;
 }
 
 .crm-master-count {

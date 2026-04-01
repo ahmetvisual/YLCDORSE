@@ -46,136 +46,143 @@
         {
             <div class="wizard-content">
                 <div class="wizard-section-title">Teklif Bilgileri</div>
-                <div class="wizard-grid2">
-                    <div>
-                        <div class="wizard-field">
-                            <label>Teklif No</label>
-                            <input type="text" placeholder="Otomatik (kaydedince)" disabled />
-                        </div>
-                        <div class="wizard-field">
-                            <label>Musteri <span class="required">*</span></label>
-                            <div style="display:flex;gap:8px">
-                                <select @bind="quote.MusteriId" @bind:after="OnCustomerChanged" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--yl-border);font-size:0.85rem">
-                                    <option value="0">--- Secilmedi ---</option>
-                                    @foreach (var c in customers)
-                                    {
-                                        <option value="@c.Id">@c.CustomerCode - @c.Title</option>
-                                    }
-                                </select>
-                                <button class="wizard-btn wizard-btn-primary" style="padding:6px 12px" @onclick="() => showQuickAdd = true">+ Yeni</button>
-                            </div>
-                        </div>
-                        <div class="wizard-field">
-                            <label>Ilgili Kisiler</label>
-                            @if (contacts.Count > 0)
-                            {
-                                <div class="wizard-checkbox-row">
-                                    @foreach (var c in contacts)
-                                    {
-                                        <label class="wizard-checkbox">
-                                            <input type="checkbox" checked="@selectedContacts.Contains(c.Id)"
-                                                   @onchange="(e) => ToggleContact(c.Id, (bool)(e.Value ?? false))" />
-                                            @c.ContactName
-                                        </label>
-                                    }
-                                </div>
-                            }
-                            else
-                            {
-                                <span style="font-size:0.8rem;color:var(--yl-text-light)">Musteri secilmedi veya ilgili kisi yok</span>
-                            }
-                        </div>
-                        <div class="wizard-field">
-                            <label>Teklif Kanali</label>
-                            <select @bind="quote.TeklifKanali">
-                                <option value="">— Seciniz —</option>
-                                <option value="BAYI">Bayi</option>
-                                <option value="ZIYARET">Ziyaret</option>
-                                <option value="ONLINE">Online</option>
-                                <option value="WHATSAPP">WhatsApp</option>
-                                <option value="EMAIL">E-Mail</option>
-                                <option value="WEB_SITESI">Web Sitesi</option>
-                                <option value="FUAR">Fuar</option>
-                            </select>
-                        </div>
-                        <div class="wizard-grid2">
-                            <div class="wizard-field">
-                                <label>Dil</label>
-                                <select @bind="quote.Dil">
-                                    <option value="TR">Turkce</option>
-                                    <option value="EN">English</option>
-                                    <option value="DE">Deutsch</option>
-                                    <option value="FR">Francais</option>
-                                    <option value="RU">Russian</option>
-                                </select>
-                            </div>
-                            <div class="wizard-field">
-                                <label>Para Birimi</label>
-                                <select @bind="quote.ParaBirimi">
-                                    <option value="EUR">EUR</option>
-                                    <option value="USD">USD</option>
-                                    <option value="TRY">TRY</option>
-                                    <option value="GBP">GBP</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="wizard-grid2">
-                            <div class="wizard-field">
-                                <label>Talep Tarihi</label>
-                                <input type="date" @bind="quote.TalepTarihi" @bind:format="yyyy-MM-dd" />
-                            </div>
-                            <div class="wizard-field">
-                                <label>Gecerlilik Tarihi</label>
-                                <input type="date" @bind="quote.GecerlilikTarihi" @bind:format="yyyy-MM-dd" />
-                            </div>
-                        </div>
+                <div class="wizard-form-grid">
+                    <!-- Satir 1: Teklif No | Satis Tipi -->
+                    <div class="wizard-field">
+                        <label>Teklif No</label>
+                        <input type="text" placeholder="Otomatik (kaydedince)" disabled />
                     </div>
-                    <div>
-                        <div class="wizard-field">
-                            <label>Satis Tipi</label>
-                            <select @bind="quote.SatisTipi">
-                                <option value="NewProduction">Yeni Uretim</option>
-                                <option value="SecondHand">Ikinci El</option>
-                                <option value="SparePart">Yedek Parca</option>
-                            </select>
-                        </div>
-                        <div class="wizard-grid2">
-                            <div class="wizard-field">
-                                <label>Teklif Tipi</label>
-                                <select @bind="quote.TeklifTipi">
-                                    <option value="">— Seciniz —</option>
-                                    <option value="LB">LB</option>
-                                    <option value="KB">KB</option>
-                                    <option value="SHC">SHC</option>
-                                    <option value="PLT">PLT</option>
-                                </select>
-                            </div>
-                            <div class="wizard-field">
-                                <label>Aks Sayisi</label>
-                                <input type="number" @bind="quote.AksSayisi" min="1" max="10" />
-                            </div>
-                        </div>
-                        <div class="wizard-field">
-                            <label>Puan</label>
-                            <select @bind="quote.Puan">
-                                <option value="WARM">WARM</option>
-                                <option value="HOT">HOT</option>
-                                <option value="COLD">COLD</option>
-                            </select>
-                        </div>
-                        <div class="wizard-field">
-                            <label>Satici</label>
-                            <select @bind="quote.SaticiId">
-                                <option value="">— Seciniz —</option>
-                                @foreach (var sr in salesReps)
+                    <div class="wizard-field">
+                        <label>Satis Tipi</label>
+                        <select @bind="quote.SatisTipi">
+                            <option value="NewProduction">Yeni Uretim</option>
+                            <option value="SecondHand">Ikinci El</option>
+                            <option value="SparePart">Yedek Parca</option>
+                        </select>
+                    </div>
+
+                    <!-- Satir 2: Musteri | Teklif Tipi + Aks -->
+                    <div class="wizard-field">
+                        <label>Musteri <span class="required">*</span></label>
+                        <div style="display:flex;gap:6px">
+                            <select @bind="quote.MusteriId" @bind:after="OnCustomerChanged" style="flex:1">
+                                <option value="0">--- Secilmedi ---</option>
+                                @foreach (var c in customers)
                                 {
-                                    <option value="@sr.Id">@sr.FullName</option>
+                                    <option value="@c.Id">@c.CustomerCode - @c.Title</option>
                                 }
                             </select>
+                            <button class="wizard-btn wizard-btn-primary" @onclick="() => showQuickAdd = true">+ Yeni</button>
+                        </div>
+                    </div>
+                    <div class="wizard-field-pair">
+                        <div class="wizard-field">
+                            <label>Teklif Tipi</label>
+                            <select @bind="quote.TeklifTipi">
+                                <option value="">— Seciniz —</option>
+                                <option value="LB">LB</option>
+                                <option value="KB">KB</option>
+                                <option value="SHC">SHC</option>
+                                <option value="PLT">PLT</option>
+                            </select>
                         </div>
                         <div class="wizard-field">
-                            <label>Notlar</label>
-                            <textarea @bind="quote.Notlar" placeholder="Teklif notlari..."></textarea>
+                            <label>Aks Sayisi</label>
+                            <input type="number" @bind="quote.AksSayisi" min="1" max="10" />
+                        </div>
+                    </div>
+
+                    <!-- Satir 3: Ilgili Kisiler | Puan -->
+                    <div class="wizard-field">
+                        <label>Ilgili Kisiler</label>
+                        @if (contacts.Count > 0)
+                        {
+                            <div class="wizard-checkbox-row">
+                                @foreach (var c in contacts)
+                                {
+                                    <label class="wizard-checkbox">
+                                        <input type="checkbox" checked="@selectedContacts.Contains(c.Id)"
+                                               @onchange="(e) => ToggleContact(c.Id, (bool)(e.Value ?? false))" />
+                                        @c.ContactName
+                                    </label>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span style="font-size:0.75rem;color:var(--yl-text-light)">Musteri secilmedi veya ilgili kisi yok</span>
+                        }
+                    </div>
+                    <div class="wizard-field">
+                        <label>Puan</label>
+                        <select @bind="quote.Puan">
+                            <option value="WARM">WARM</option>
+                            <option value="HOT">HOT</option>
+                            <option value="COLD">COLD</option>
+                        </select>
+                    </div>
+
+                    <!-- Satir 4: Teklif Kanali | Satici -->
+                    <div class="wizard-field">
+                        <label>Teklif Kanali</label>
+                        <select @bind="quote.TeklifKanali">
+                            <option value="">— Seciniz —</option>
+                            <option value="BAYI">Bayi</option>
+                            <option value="ZIYARET">Ziyaret</option>
+                            <option value="ONLINE">Online</option>
+                            <option value="WHATSAPP">WhatsApp</option>
+                            <option value="EMAIL">E-Mail</option>
+                            <option value="WEB_SITESI">Web Sitesi</option>
+                            <option value="FUAR">Fuar</option>
+                        </select>
+                    </div>
+                    <div class="wizard-field">
+                        <label>Satici</label>
+                        <select @bind="quote.SaticiId">
+                            <option value="">— Seciniz —</option>
+                            @foreach (var sr in salesReps)
+                            {
+                                <option value="@sr.Id">@sr.FullName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Satir 5: Dil + Para Birimi | Notlar (span 2 satir) -->
+                    <div class="wizard-field-pair">
+                        <div class="wizard-field">
+                            <label>Dil</label>
+                            <select @bind="quote.Dil">
+                                <option value="TR">Turkce</option>
+                                <option value="EN">English</option>
+                                <option value="DE">Deutsch</option>
+                                <option value="FR">Francais</option>
+                                <option value="RU">Russian</option>
+                            </select>
+                        </div>
+                        <div class="wizard-field">
+                            <label>Para Birimi</label>
+                            <select @bind="quote.ParaBirimi">
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="TRY">TRY</option>
+                                <option value="GBP">GBP</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="wizard-field wizard-field-stretch">
+                        <label>Notlar</label>
+                        <textarea @bind="quote.Notlar" placeholder="Teklif notlari..."></textarea>
+                    </div>
+
+                    <!-- Satir 6: Tarihler | (Notlar devam) -->
+                    <div class="wizard-field-pair">
+                        <div class="wizard-field">
+                            <label>Talep Tarihi</label>
+                            <input type="date" @bind="quote.TalepTarihi" @bind:format="yyyy-MM-dd" />
+                        </div>
+                        <div class="wizard-field">
+                            <label>Gecerlilik Tarihi</label>
+                            <input type="date" @bind="quote.GecerlilikTarihi" @bind:format="yyyy-MM-dd" />
                         </div>
                     </div>
                 </div>

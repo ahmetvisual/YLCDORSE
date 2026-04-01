@@ -78,10 +78,10 @@
 .wizard-content {
     background: #fff;
     border: 1px solid var(--yl-border);
-    border-radius: 6px;
-    padding: 12px 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    margin-bottom: 8px;
+    border-radius: var(--yl-radius-lg);
+    padding: var(--yl-space-md) 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: var(--yl-space-sm);
     flex: 1;
     overflow-y: auto;
 }
@@ -95,6 +95,29 @@
     margin-bottom: 8px;
     padding-bottom: 4px;
     border-bottom: 1px solid var(--yl-border);
+}
+
+/* Form Grid - Satirlar hizali 2 sutun */
+.wizard-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--yl-space-sm);
+    align-items: start;
+}
+
+.wizard-field-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--yl-space-sm);
+}
+
+.wizard-field-stretch {
+    grid-row: span 2;
+}
+
+.wizard-field-stretch textarea {
+    height: calc(100% - 20px);
+    min-height: 70px;
 }
 
 /* Form Grid - Daha sikisik */
@@ -139,7 +162,7 @@
 .wizard-field textarea {
     width: 100%;
     padding: 4px 7px;
-    border-radius: 4px;
+    border-radius: var(--yl-radius-sm);
     border: 1px solid var(--yl-border);
     background: #fff;
     color: var(--yl-text);
@@ -206,17 +229,17 @@
 
 .wizard-btn {
     padding: 5px 14px;
-    border-radius: 4px;
+    border-radius: var(--yl-radius-md);
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
     border: 1px solid var(--yl-border);
     background: #fff;
     color: var(--yl-text);
-    transition: all 0.15s;
+    transition: all var(--yl-transition-fast);
 }
 
-.wizard-btn:hover { background: #f0f2f5; }
+.wizard-btn:hover { background: #f0f2f5; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
 .wizard-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .wizard-btn-primary {
@@ -224,14 +247,14 @@
     color: #fff;
     border-color: #185FA5;
 }
-.wizard-btn-primary:hover { background: #0C447C; }
+.wizard-btn-primary:hover { background: #0C447C; box-shadow: 0 2px 8px rgba(24,95,165,0.25); }
 
 .wizard-btn-success {
     background: #3B6D11;
     color: #fff;
     border-color: #3B6D11;
 }
-.wizard-btn-success:hover { background: #2d5a0d; }
+.wizard-btn-success:hover { background: #2d5a0d; box-shadow: 0 2px 8px rgba(59,109,17,0.25); }
 
 /* Items Editor - Kompakt */
 .items-editor {
@@ -430,6 +453,8 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .wizard-form-grid { grid-template-columns: 1fr; }
+    .wizard-field-stretch { grid-row: auto; }
     .wizard-grid2 { grid-template-columns: 1fr; }
     .wizard-grid3 { grid-template-columns: 1fr; }
     .wizard-grid4 { grid-template-columns: 1fr 1fr; }

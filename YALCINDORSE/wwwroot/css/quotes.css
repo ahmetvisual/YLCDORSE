@@ -2,7 +2,7 @@
 .quote-grid-container {
     background: #fff;
     border: 1px solid var(--yl-border);
-    border-radius: 12px;
+    border-radius: var(--yl-radius-xl);
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     overflow: hidden;
     display: flex;
@@ -18,7 +18,7 @@
 .quote-grid {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     text-align: left;
 }
 
@@ -26,23 +26,30 @@
     background: #f4f6fa;
     color: var(--yl-text-light);
     font-weight: 600;
-    padding: 12px 14px;
+    padding: var(--yl-space-sm) var(--yl-space-md);
     border-bottom: 2px solid var(--yl-border);
     white-space: nowrap;
     position: sticky;
     top: 0;
     z-index: 10;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .quote-grid td {
-    padding: 12px 14px;
+    padding: var(--yl-space-sm) var(--yl-space-md);
     border-bottom: 1px solid var(--yl-border);
     color: var(--yl-text);
     vertical-align: middle;
 }
 
+.quote-grid tbody tr {
+    transition: background var(--yl-transition-fast);
+}
+
 .quote-grid tbody tr:hover {
-    background: #f9fbfd;
+    background: #f4f7fb;
 }
 
 .quote-grid tbody tr.expanded-master {
@@ -58,10 +65,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    transition: transform 0.2s;
-    border-radius: 4px;
+    width: 26px;
+    height: 26px;
+    transition: all var(--yl-transition-fast);
+    border-radius: var(--yl-radius-sm);
 }
 
 .btn-expand:hover {
@@ -149,20 +156,20 @@
     color: #B41E1E;
 }
 
-/* Standing Chips */
+/* Standing Chips - Pastel */
 .chip-hot {
-    background: #DC2828;
-    color: #FFFFFF;
+    background: #FEE2E2;
+    color: #B91C1C;
 }
 
 .chip-warm {
-    background: #DC8200;
-    color: #FFFFFF;
+    background: #FEF3C7;
+    color: #B45309;
 }
 
 .chip-cold {
-    background: #3C82C8;
-    color: #FFFFFF;
+    background: #DBEAFE;
+    color: #1D4ED8;
 }
 
 /* MODAL / QUICK ADD CSS */
@@ -178,7 +185,7 @@
 
 .quick-modal-content {
     background: #fff;
-    border-radius: 12px;
+    border-radius: var(--yl-radius-xl);
     width: 400px;
     max-width: 90%;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
@@ -224,4 +231,86 @@
     padding: 16px 20px;
     border-top: 1px solid var(--yl-border);
     background: #f9fbfd;
+}
+
+/* Dark Mode Overrides */
+.app-root.dark .quote-grid-container {
+    background: var(--yl-white);
+}
+
+.app-root.dark .quote-grid th {
+    background: #161b22;
+}
+
+.app-root.dark .quote-grid tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+.app-root.dark .quote-grid tbody tr.expanded-master {
+    background: rgba(59,125,221,0.08);
+}
+
+.app-root.dark .quote-detail-wrapper {
+    background: #161b22;
+}
+
+.app-root.dark .detail-table {
+    background: var(--yl-white);
+}
+
+.app-root.dark .detail-table th {
+    background: #1c2030;
+}
+
+.app-root.dark .detail-table tr.header-row td {
+    background: rgba(30,108,56,0.12);
+    color: #6ee7b7;
+}
+
+.app-root.dark .chip-hot {
+    background: rgba(220,40,40,0.2);
+    color: #FCA5A5;
+}
+
+.app-root.dark .chip-warm {
+    background: rgba(220,130,0,0.2);
+    color: #FCD34D;
+}
+
+.app-root.dark .chip-cold {
+    background: rgba(60,130,200,0.2);
+    color: #93C5FD;
+}
+
+.app-root.dark .chip-draft {
+    background: rgba(60,90,140,0.2);
+    color: #93A8CC;
+}
+
+.app-root.dark .chip-sent {
+    background: rgba(0,120,180,0.2);
+    color: #7DD3FC;
+}
+
+.app-root.dark .chip-waiting {
+    background: rgba(160,110,0,0.2);
+    color: #FDE68A;
+}
+
+.app-root.dark .chip-approved {
+    background: rgba(30,130,60,0.2);
+    color: #86EFAC;
+}
+
+.app-root.dark .chip-rejected {
+    background: rgba(180,30,30,0.2);
+    color: #FCA5A5;
+}
+
+.app-root.dark .modal-footer {
+    background: #161b22;
+}
+
+.app-root.dark .quick-modal-content {
+    background: var(--yl-white);
 }

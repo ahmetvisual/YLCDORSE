@@ -3,8 +3,8 @@
 @inject QuoteService QuoteService
 @inject NavigationManager Nav
 
-<div class="crm-workspace-panel" style="flex: 1; padding:20px; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
-    <div class="crm-header" style="margin-bottom: 20px;">
+<div class="crm-workspace-panel" style="flex: 1; padding:12px 14px; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
+    <div class="crm-header" style="margin-bottom: 8px;">
         <div>
             <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: var(--yl-primary);">
@@ -30,14 +30,14 @@
     </div>
 
     <!-- Filters -->
-    <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap:wrap;">
+    <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap:wrap;">
         <div class="crm-search-box" style="flex: 1; max-width: 300px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input type="text" class="form-control" placeholder="Teklif No, Musteri, Satici ara..." @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" />
         </div>
-        <select class="form-select" style="max-width: 150px; border-radius:10px; border-color:var(--yl-border);" @onchange="OnStatusChanged">
+        <select class="form-select" style="max-width: 150px; border-radius:6px; border-color:var(--yl-border); font-size:0.82rem;" @onchange="OnStatusChanged">
             <option value="">Tumu (Durum)</option>
             <option value="Draft">Taslak</option>
             <option value="Sent">Gonderildi</option>
@@ -48,7 +48,7 @@
             <option value="ORDER">Siparis</option>
             <option value="CLOSED">Kapali</option>
         </select>
-        <select class="form-select" style="max-width: 130px; border-radius:10px; border-color:var(--yl-border);" @onchange="OnPuanChanged">
+        <select class="form-select" style="max-width: 130px; border-radius:6px; border-color:var(--yl-border); font-size:0.82rem;" @onchange="OnPuanChanged">
             <option value="">Tumu (Puan)</option>
             <option value="HOT">HOT</option>
             <option value="WARM">WARM</option>
@@ -118,7 +118,7 @@
                                         @if (!string.IsNullOrEmpty(quote.Ilgili))
                                         {
                                             <div style="font-size: 0.75rem; color: var(--yl-text-light);">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px; height:10px; margin-right:2px; vertical-align:text-top;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px; margin-right:4px; vertical-align:middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                                 @quote.Ilgili
                                             </div>
                                         }
@@ -137,7 +137,7 @@
                                             @quote.Puan
                                         </span>
                                     </td>
-                                    <td style="display:flex;gap:4px;">
+                                    <td style="display:flex;gap:6px;align-items:center;">
                                         <button class="btn-expand" title="Kopyala" @onclick="() => CopyQuote(quote.Id)">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                                         </button>
