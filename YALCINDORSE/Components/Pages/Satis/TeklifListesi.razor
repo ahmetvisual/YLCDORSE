@@ -23,14 +23,14 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; margin-right:4px; vertical-align:text-bottom;">
                     <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
-                Yeni Teklif On Hazirlik
+                Teklif Olustur
             </button>
             <button class="btn-secondary" @onclick="ReloadAsync">Yenile</button>
         </div>
     </div>
 
     <!-- Filters -->
-    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+    <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap:wrap;">
         <div class="crm-search-box" style="flex: 1; max-width: 300px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -39,11 +39,20 @@
         </div>
         <select class="form-select" style="max-width: 150px; border-radius:10px; border-color:var(--yl-border);" @onchange="OnStatusChanged">
             <option value="">Tumu (Durum)</option>
-            <option value="Draft">Taslak (Draft)</option>
-            <option value="Sent">Gonderildi (Sent)</option>
+            <option value="Draft">Taslak</option>
+            <option value="Sent">Gonderildi</option>
             <option value="WaitingApproval">Onay Bekliyor</option>
             <option value="Approved">Onaylandi</option>
             <option value="Rejected">Reddedildi</option>
+            <option value="OPEN">Acik</option>
+            <option value="ORDER">Siparis</option>
+            <option value="CLOSED">Kapali</option>
+        </select>
+        <select class="form-select" style="max-width: 130px; border-radius:10px; border-color:var(--yl-border);" @onchange="OnPuanChanged">
+            <option value="">Tumu (Puan)</option>
+            <option value="HOT">HOT</option>
+            <option value="WARM">WARM</option>
+            <option value="COLD">COLD</option>
         </select>
     </div>
 
@@ -128,9 +137,11 @@
                                             @quote.Puan
                                         </span>
                                     </td>
-                                    <td>
-                                        <!-- Actions e.g Print, PDF -->
-                                        <button class="btn-expand" title="PDF Ciktisi (Test)" style="color: var(--yl-danger);">
+                                    <td style="display:flex;gap:4px;">
+                                        <button class="btn-expand" title="Kopyala" @onclick="() => CopyQuote(quote.Id)">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                        </button>
+                                        <button class="btn-expand" title="PDF Ciktisi" style="color: var(--yl-danger);">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                                         </button>
                                     </td>
@@ -203,7 +214,7 @@
 
     private string searchQuery = "";
     private string selectedStatus = "";
-    // Note: SalesRep filter logic requires fetching Users. For simplicity, we skip it or mock it.
+    private string selectedPuan = "";
 
     private int expandedQuoteId = 0;
 
@@ -225,7 +236,7 @@
 
         try
         {
-            quotes = await QuoteService.GetQuotesAsync(searchQuery, selectedStatus, null);
+            quotes = await QuoteService.GetQuotesAsync(searchQuery, selectedStatus, null, selectedPuan);
         }
         catch (Exception ex)
         {
@@ -279,9 +290,28 @@
         }
     }
 
+    private async Task OnPuanChanged(ChangeEventArgs e)
+    {
+        selectedPuan = e.Value?.ToString() ?? "";
+        await LoadQuotesAsync();
+    }
+
     private void GoToNewQuote()
     {
-        Nav.NavigateTo("/satis/yeni-teklif");
+        Nav.NavigateTo("/satis/teklif-olustur");
+    }
+
+    private async Task CopyQuote(int quoteId)
+    {
+        try
+        {
+            var newId = await QuoteService.CopyQuoteAsync(quoteId);
+            await LoadQuotesAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Kopyalama hatasi: {ex.Message}";
+        }
     }
 
     // --- Helpers
@@ -291,6 +321,9 @@
         "WaitingApproval" => "Onay Bek.",
         "Approved" => "Onaylandi",
         "Rejected" => "Reddedildi",
+        "OPEN" => "Acik",
+        "ORDER" => "Siparis",
+        "CLOSED" => "Kapali",
         _ => code
     };
 
@@ -300,6 +333,9 @@
         "WaitingApproval" => "chip-waiting",
         "Approved" => "chip-approved",
         "Rejected" => "chip-rejected",
+        "OPEN" => "chip-sent",
+        "ORDER" => "chip-approved",
+        "CLOSED" => "chip-draft",
         _ => ""
     };
 

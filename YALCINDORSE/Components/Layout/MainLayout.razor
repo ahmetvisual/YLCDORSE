@@ -95,14 +95,14 @@
             @if (activeMenu == "satis")
             {
                 <div class="toolbar-dropdown">
-                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenYeniTeklif">
+                    <button type="button" class="toolbar-dropdown-item" @onclick="OpenTeklifOlustur">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>
                             <line x1="12" y1="18" x2="12" y2="12"/>
                             <line x1="9" y1="15" x2="15" y2="15"/>
                         </svg>
-                        <span>Yeni Teklif</span>
+                        <span>Teklif Olustur</span>
                     </button>
                     <button type="button" class="toolbar-dropdown-item" @onclick="OpenTeklifListesi">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -202,11 +202,11 @@
             Nav.NavigateTo("/crm/cari-kartlar");
     }
 
-    private void OpenYeniTeklif()
+    private void OpenTeklifOlustur()
     {
         activeMenu = null;
-        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.YeniTeklif>("Yeni Teklif", 1200, 800))
-            Nav.NavigateTo("/satis/yeni-teklif");
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Olustur", 1200, 800))
+            Nav.NavigateTo("/satis/teklif-olustur");
     }
 
     private void OpenTeklifListesi()

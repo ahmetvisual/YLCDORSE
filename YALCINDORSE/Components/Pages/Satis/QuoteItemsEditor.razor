@@ -1,0 +1,278 @@
+@using YALCINDORSE.Services
+
+<div class="items-editor">
+    <div class="items-toolbar">
+        <button class="wizard-btn wizard-btn-primary" style="padding:5px 12px;font-size:0.78rem" @onclick="AddHeader">+ Yeni Urun Basligi</button>
+        @if (Items.Any(i => i.KalemTipi == "HEADER"))
+        {
+            <button class="wizard-btn" style="padding:5px 12px;font-size:0.78rem" @onclick="AddItem">+ Kalem Ekle</button>
+        }
+    </div>
+
+    <div class="items-list">
+        @if (Items.Count == 0)
+        {
+            <div class="items-empty">
+                Henuz kalem eklenmedi. "Yeni Urun Basligi" ile baslayın.
+            </div>
+        }
+
+        @foreach (var item in GetOrderedItems())
+        {
+            var rowClass = item.KalemTipi switch
+            {
+                "HEADER" => "item-row item-row-header",
+                "SUB_ITEM" => "item-row item-row-subitem",
+                "OPTION" => "item-row item-row-option",
+                _ => "item-row"
+            };
+
+            <div class="@rowClass">
+                <div class="item-sira">@GetSiraLabel(item)</div>
+
+                <div class="item-desc">
+                    <input type="text" value="@item.Aciklama"
+                           @onchange="(e) => UpdateField(item, nameof(item.Aciklama), e.Value?.ToString())"
+                           placeholder="@(item.KalemTipi == "HEADER" ? "Urun adi (orn: Deveboynu)" : item.KalemTipi == "OPTION" ? "Opsiyon aciklamasi" : "Kalem aciklamasi")" />
+                </div>
+
+                @if (item.KalemTipi != "HEADER")
+                {
+                    <div class="item-qty">
+                        <input type="number" value="@item.Miktar"
+                               @onchange="(e) => UpdateNumericField(item, nameof(item.Miktar), e.Value?.ToString())"
+                               placeholder="Mkt" />
+                    </div>
+                    <div class="item-unit">
+                        <input type="text" value="@item.Birim"
+                               @onchange="(e) => UpdateField(item, nameof(item.Birim), e.Value?.ToString())"
+                               placeholder="Brm" />
+                    </div>
+                    <div class="item-price">
+                        <input type="number" value="@item.BirimFiyat"
+                               @onchange="(e) => UpdatePriceField(item, e.Value?.ToString())"
+                               placeholder="Fiyat" />
+                    </div>
+                    <div class="item-total">
+                        <input type="text" value="@($"{item.Tutar:N2}")" disabled />
+                    </div>
+                }
+                else
+                {
+                    <div class="item-qty"></div>
+                    <div class="item-unit">
+                        <input type="text" value="@item.UrunKodu"
+                               @onchange="(e) => UpdateField(item, nameof(item.UrunKodu), e.Value?.ToString())"
+                               placeholder="Urun Kodu" style="text-align:left" />
+                    </div>
+                    <div class="item-price"></div>
+                    <div class="item-total"></div>
+                }
+
+                <div class="item-actions">
+                    @if (item.KalemTipi == "HEADER")
+                    {
+                        <button class="item-action-btn" title="Kalem ekle" @onclick="() => AddItemUnder(item)">+</button>
+                    }
+                    @if (item.KalemTipi == "ITEM")
+                    {
+                        <button class="item-action-btn" title="Alt kalem ekle" @onclick="() => AddSubItem(item)">&#8627;</button>
+                        <button class="item-action-btn" title="Opsiyon ekle" @onclick="() => AddOption(item)">&#9733;</button>
+                    }
+                    <button class="item-action-btn delete" title="Sil" @onclick="() => RemoveItem(item)">&#10005;</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<QuoteItemModel> Items { get; set; } = new();
+    [Parameter] public EventCallback<List<QuoteItemModel>> ItemsChanged { get; set; }
+
+    private int nextTempId = -1;
+
+    private List<QuoteItemModel> GetOrderedItems()
+    {
+        var result = new List<QuoteItemModel>();
+        var headers = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
+
+        foreach (var header in headers)
+        {
+            result.Add(header);
+            var children = Items.Where(i => i.UstKalemId == header.Id && i.KalemTipi == "ITEM")
+                               .OrderBy(i => i.SiraNo).ToList();
+            foreach (var child in children)
+            {
+                result.Add(child);
+                var subs = Items.Where(i => i.UstKalemId == child.Id)
+                               .OrderBy(i => i.SiraNo).ToList();
+                foreach (var sub in subs)
+                {
+                    result.Add(sub);
+                }
+            }
+        }
+
+        // Basligi olmayan kalemler (eski veri)
+        var orphans = Items.Where(i => !result.Contains(i)).OrderBy(i => i.SiraNo).ToList();
+        result.AddRange(orphans);
+
+        return result;
+    }
+
+    private string GetSiraLabel(QuoteItemModel item)
+    {
+        if (item.KalemTipi == "HEADER")
+        {
+            var headers = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
+            var idx = headers.IndexOf(item) + 1;
+            return $"{idx}.0";
+        }
+        else if (item.KalemTipi == "ITEM" && item.UstKalemId.HasValue)
+        {
+            var parent = Items.FirstOrDefault(i => i.Id == item.UstKalemId);
+            if (parent != null)
+            {
+                var headers = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
+                var hIdx = headers.IndexOf(parent) + 1;
+                var siblings = Items.Where(i => i.UstKalemId == parent.Id && i.KalemTipi == "ITEM").OrderBy(i => i.SiraNo).ToList();
+                var cIdx = siblings.IndexOf(item) + 1;
+                return $"{hIdx}.{cIdx}";
+            }
+        }
+        else if ((item.KalemTipi == "SUB_ITEM" || item.KalemTipi == "OPTION") && item.UstKalemId.HasValue)
+        {
+            var parent = Items.FirstOrDefault(i => i.Id == item.UstKalemId);
+            if (parent?.UstKalemId.HasValue == true)
+            {
+                var grandParent = Items.FirstOrDefault(i => i.Id == parent.UstKalemId);
+                if (grandParent != null)
+                {
+                    var headers = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
+                    var hIdx = headers.IndexOf(grandParent) + 1;
+                    var parentSiblings = Items.Where(i => i.UstKalemId == grandParent.Id && i.KalemTipi == "ITEM").OrderBy(i => i.SiraNo).ToList();
+                    var pIdx = parentSiblings.IndexOf(parent) + 1;
+                    var mySiblings = Items.Where(i => i.UstKalemId == parent.Id).OrderBy(i => i.SiraNo).ToList();
+                    var myIdx = mySiblings.IndexOf(item) + 1;
+                    return $"{hIdx}.{pIdx}.{myIdx}";
+                }
+            }
+        }
+        return $"{item.SiraNo}";
+    }
+
+    private void AddHeader()
+    {
+        var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
+        Items.Add(new QuoteItemModel
+        {
+            Id = nextTempId--,
+            KalemTipi = "HEADER",
+            BaslikMi = true,
+            SiraNo = maxSira + 10,
+            Aciklama = ""
+        });
+        NotifyChanged();
+    }
+
+    private void AddItem()
+    {
+        var lastHeader = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).LastOrDefault();
+        if (lastHeader != null)
+            AddItemUnder(lastHeader);
+    }
+
+    private void AddItemUnder(QuoteItemModel header)
+    {
+        var maxSira = Items.Where(i => i.UstKalemId == header.Id && i.KalemTipi == "ITEM").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
+        Items.Add(new QuoteItemModel
+        {
+            Id = nextTempId--,
+            KalemTipi = "ITEM",
+            UstKalemId = header.Id,
+            SiraNo = maxSira + 10,
+            Aciklama = ""
+        });
+        NotifyChanged();
+    }
+
+    private void AddSubItem(QuoteItemModel parent)
+    {
+        var maxSira = Items.Where(i => i.UstKalemId == parent.Id && i.KalemTipi == "SUB_ITEM").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
+        Items.Add(new QuoteItemModel
+        {
+            Id = nextTempId--,
+            KalemTipi = "SUB_ITEM",
+            UstKalemId = parent.Id,
+            SiraNo = maxSira + 10,
+            Aciklama = ""
+        });
+        NotifyChanged();
+    }
+
+    private void AddOption(QuoteItemModel parent)
+    {
+        var maxSira = Items.Where(i => i.UstKalemId == parent.Id && i.KalemTipi == "OPTION").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
+        Items.Add(new QuoteItemModel
+        {
+            Id = nextTempId--,
+            KalemTipi = "OPTION",
+            OpsiyonMu = true,
+            UstKalemId = parent.Id,
+            SiraNo = maxSira + 10,
+            Aciklama = ""
+        });
+        NotifyChanged();
+    }
+
+    private void RemoveItem(QuoteItemModel item)
+    {
+        // Cocuklari da sil
+        var childIds = Items.Where(i => i.UstKalemId == item.Id).Select(i => i.Id).ToList();
+        foreach (var childId in childIds)
+        {
+            var grandChildren = Items.Where(i => i.UstKalemId == childId).ToList();
+            Items.RemoveAll(i => grandChildren.Contains(i));
+        }
+        Items.RemoveAll(i => childIds.Contains(i.Id));
+        Items.Remove(item);
+        NotifyChanged();
+    }
+
+    private void UpdateField(QuoteItemModel item, string field, string? value)
+    {
+        switch (field)
+        {
+            case nameof(item.Aciklama): item.Aciklama = value ?? ""; break;
+            case nameof(item.UrunKodu): item.UrunKodu = value; break;
+            case nameof(item.Birim): item.Birim = value; break;
+        }
+        NotifyChanged();
+    }
+
+    private void UpdateNumericField(QuoteItemModel item, string field, string? value)
+    {
+        if (decimal.TryParse(value, out var num))
+        {
+            item.Miktar = num;
+            item.Tutar = (item.Miktar ?? 0) * (item.BirimFiyat ?? 0);
+        }
+        NotifyChanged();
+    }
+
+    private void UpdatePriceField(QuoteItemModel item, string? value)
+    {
+        if (decimal.TryParse(value, out var num))
+        {
+            item.BirimFiyat = num;
+            item.Tutar = (item.Miktar ?? 0) * (item.BirimFiyat ?? 0);
+        }
+        NotifyChanged();
+    }
+
+    private void NotifyChanged()
+    {
+        ItemsChanged.InvokeAsync(Items);
+    }
+}

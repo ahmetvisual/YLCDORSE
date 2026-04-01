@@ -98,7 +98,7 @@ namespace YALCINDORSE.Services
             _auth = auth;
         }
 
-        public async Task<List<QuoteListItemModel>> GetQuotesAsync(string search = "", string durum = "", int? saticiId = null)
+        public async Task<List<QuoteListItemModel>> GetQuotesAsync(string search = "", string durum = "", int? saticiId = null, string puan = "")
         {
             var items = new List<QuoteListItemModel>();
             using var conn = _db.GetConnection();
@@ -136,17 +136,21 @@ namespace YALCINDORSE.Services
                 sql += " AND q.\"Durum\" = @durum";
             if (saticiId.HasValue && saticiId > 0)
                 sql += " AND q.\"SaticiId\" = @saticiId";
+            if (!string.IsNullOrWhiteSpace(puan))
+                sql += " AND q.\"Puan\" = @puan";
 
             sql += " ORDER BY q.\"OlusturmaTarihi\" DESC;";
 
             using var cmd = new NpgsqlCommand(sql, conn);
-            
+
             if (!string.IsNullOrWhiteSpace(search))
                 cmd.Parameters.AddWithValue("search", $"%{search}%");
             if (!string.IsNullOrWhiteSpace(durum))
                 cmd.Parameters.AddWithValue("durum", durum);
             if (saticiId.HasValue && saticiId > 0)
                 cmd.Parameters.AddWithValue("saticiId", saticiId.Value);
+            if (!string.IsNullOrWhiteSpace(puan))
+                cmd.Parameters.AddWithValue("puan", puan);
 
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -183,7 +187,8 @@ namespace YALCINDORSE.Services
             await conn.OpenAsync();
 
             const string sql = """
-                SELECT "Id", "TeklifId", "BaslikMi", "Aciklama", "SiraNo"
+                SELECT "Id", "TeklifId", "BaslikMi", "Aciklama", "SiraNo",
+                       "UstKalemId", "UrunKodu", "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi"
                 FROM "YLTeklifKalemleri"
                 WHERE "TeklifId" = @quoteId
                 ORDER BY "SiraNo";
@@ -191,7 +196,7 @@ namespace YALCINDORSE.Services
 
             using var cmd = new NpgsqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("quoteId", quoteId);
-            
+
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -201,7 +206,15 @@ namespace YALCINDORSE.Services
                     TeklifId = reader.GetInt32(1),
                     BaslikMi = reader.GetBoolean(2),
                     Aciklama = reader.GetString(3),
-                    SiraNo = reader.GetInt32(4)
+                    SiraNo = reader.GetInt32(4),
+                    UstKalemId = reader.IsDBNull(5) ? null : reader.GetInt32(5),
+                    UrunKodu = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    Miktar = reader.IsDBNull(7) ? null : reader.GetDecimal(7),
+                    Birim = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    BirimFiyat = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
+                    Tutar = reader.IsDBNull(10) ? null : reader.GetDecimal(10),
+                    OpsiyonMu = !reader.IsDBNull(11) && reader.GetBoolean(11),
+                    KalemTipi = reader.IsDBNull(12) ? "ITEM" : reader.GetString(12)
                 });
             }
             return items;
@@ -219,36 +232,232 @@ namespace YALCINDORSE.Services
                     "Kaynak", "Dil", "ParaBirimi", "Durum", "Puan",
                     "TalepTarihi", "GecerlilikTarihi", "SaticiId", "Notlar",
                     "ToplamTutar", "IndirimYuzde", "IndirimTutar", "NetTutar",
-                    "RevizyonNo", "OnayGerektirir", "Olusturan"
+                    "RevizyonNo", "OnayGerektirir", "Olusturan",
+                    "TeklifKanali", "TeklifTipi", "AksSayisi", "OdemeSistemi",
+                    "IskontoAciklama", "KdvDahilMi", "IhracatMi", "IhracKayitliMi",
+                    "TeslimatHaftasi", "TeslimatTipiKodu", "TeslimatYeri"
                 )
                 VALUES
                 (
                     @TeklifNo, @MusteriId, @IlgiliKisiId, @SatisTipi,
-                    @Kaynak, @Dil, @ParaBirimi, 'Draft', @Puan,
+                    @Kaynak, @Dil, @ParaBirimi, @Durum, @Puan,
                     @TalepTarihi, @GecerlilikTarihi, @SaticiId, @Notlar,
-                    0, 0, 0, 0,
-                    0, false, @Olusturan
+                    @ToplamTutar, @IndirimYuzde, @IndirimTutar, @NetTutar,
+                    0, false, @Olusturan,
+                    @TeklifKanali, @TeklifTipi, @AksSayisi, @OdemeSistemi,
+                    @IskontoAciklama, @KdvDahilMi, @IhracatMi, @IhracKayitliMi,
+                    @TeslimatHaftasi, @TeslimatTipiKodu, @TeslimatYeri
                 )
                 RETURNING "Id";
                 """;
 
             using var cmd = new NpgsqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("TeklifNo", ""); // Trigger set eder
+            cmd.Parameters.AddWithValue("TeklifNo", "");
             cmd.Parameters.AddWithValue("MusteriId", quote.MusteriId);
             cmd.Parameters.AddWithValue("IlgiliKisiId", (object?)quote.IlgiliKisiId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("SatisTipi", quote.SatisTipi);
             cmd.Parameters.AddWithValue("Kaynak", quote.Kaynak);
             cmd.Parameters.AddWithValue("Dil", quote.Dil);
             cmd.Parameters.AddWithValue("ParaBirimi", quote.ParaBirimi);
+            cmd.Parameters.AddWithValue("Durum", quote.Durum);
             cmd.Parameters.AddWithValue("Puan", quote.Puan);
             cmd.Parameters.AddWithValue("TalepTarihi", quote.TalepTarihi);
             cmd.Parameters.AddWithValue("GecerlilikTarihi", quote.GecerlilikTarihi);
             cmd.Parameters.AddWithValue("SaticiId", (object?)quote.SaticiId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Notlar", (object?)quote.Notlar ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("ToplamTutar", quote.ToplamTutar);
+            cmd.Parameters.AddWithValue("IndirimYuzde", quote.IndirimYuzde);
+            cmd.Parameters.AddWithValue("IndirimTutar", quote.IndirimTutar);
+            cmd.Parameters.AddWithValue("NetTutar", quote.NetTutar);
             cmd.Parameters.AddWithValue("Olusturan", _auth.CurrentUser);
+            cmd.Parameters.AddWithValue("TeklifKanali", (object?)quote.TeklifKanali ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TeklifTipi", (object?)quote.TeklifTipi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("AksSayisi", (object?)quote.AksSayisi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("OdemeSistemi", (object?)quote.OdemeSistemi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("IskontoAciklama", (object?)quote.IskontoAciklama ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("KdvDahilMi", quote.KdvDahilMi);
+            cmd.Parameters.AddWithValue("IhracatMi", quote.IhracatMi);
+            cmd.Parameters.AddWithValue("IhracKayitliMi", quote.IhracKayitliMi);
+            cmd.Parameters.AddWithValue("TeslimatHaftasi", (object?)quote.TeslimatHaftasi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TeslimatTipiKodu", (object?)quote.TeslimatTipiKodu ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
 
             var idResult = await cmd.ExecuteScalarAsync();
             return Convert.ToInt32(idResult);
+        }
+
+        public async Task SaveQuoteItemAsync(QuoteItemModel item)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            const string sql = """
+                INSERT INTO "YLTeklifKalemleri"
+                ("TeklifId", "BaslikMi", "Aciklama", "SiraNo", "UstKalemId", "UrunKodu",
+                 "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi")
+                VALUES
+                (@TeklifId, @BaslikMi, @Aciklama, @SiraNo, @UstKalemId, @UrunKodu,
+                 @Miktar, @Birim, @BirimFiyat, @Tutar, @OpsiyonMu, @KalemTipi)
+                RETURNING "Id";
+                """;
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("TeklifId", item.TeklifId);
+            cmd.Parameters.AddWithValue("BaslikMi", item.BaslikMi);
+            cmd.Parameters.AddWithValue("Aciklama", item.Aciklama);
+            cmd.Parameters.AddWithValue("SiraNo", item.SiraNo);
+            cmd.Parameters.AddWithValue("UstKalemId", (object?)item.UstKalemId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("UrunKodu", (object?)item.UrunKodu ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Miktar", (object?)item.Miktar ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Birim", (object?)item.Birim ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("BirimFiyat", (object?)item.BirimFiyat ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Tutar", (object?)item.Tutar ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("OpsiyonMu", item.OpsiyonMu);
+            cmd.Parameters.AddWithValue("KalemTipi", item.KalemTipi);
+
+            var idResult = await cmd.ExecuteScalarAsync();
+            item.Id = Convert.ToInt32(idResult);
+        }
+
+        public async Task<QuoteModel?> GetQuoteByIdAsync(int quoteId)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            const string sql = """
+                SELECT "Id", "TeklifNo", "MusteriId", "IlgiliKisiId", "SatisTipi", "Kaynak",
+                       "Dil", "ParaBirimi", "Durum", "Puan", "TalepTarihi", "GecerlilikTarihi",
+                       "SaticiId", "Notlar", "ToplamTutar", "IndirimYuzde", "IndirimTutar", "NetTutar",
+                       "RevizyonNo", "OnayGerektirir", "OlusturmaTarihi", "Olusturan",
+                       "TeklifKanali", "TeklifTipi", "AksSayisi", "OdemeSistemi", "IskontoAciklama",
+                       "KdvDahilMi", "IhracatMi", "IhracKayitliMi", "TeslimatHaftasi",
+                       "TeslimatTipiKodu", "TeslimatYeri", "SiparisNo"
+                FROM "YLTeklifler"
+                WHERE "Id" = @id;
+                """;
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("id", quoteId);
+
+            using var r = await cmd.ExecuteReaderAsync();
+            if (!await r.ReadAsync()) return null;
+
+            return new QuoteModel
+            {
+                Id = r.GetInt32(0),
+                TeklifNo = r.GetString(1),
+                MusteriId = r.GetInt32(2),
+                IlgiliKisiId = r.IsDBNull(3) ? null : r.GetInt32(3),
+                SatisTipi = r.IsDBNull(4) ? "" : r.GetString(4),
+                Kaynak = r.IsDBNull(5) ? "" : r.GetString(5),
+                Dil = r.IsDBNull(6) ? "" : r.GetString(6),
+                ParaBirimi = r.IsDBNull(7) ? "" : r.GetString(7),
+                Durum = r.IsDBNull(8) ? "" : r.GetString(8),
+                Puan = r.IsDBNull(9) ? "" : r.GetString(9),
+                TalepTarihi = r.GetDateTime(10),
+                GecerlilikTarihi = r.GetDateTime(11),
+                SaticiId = r.IsDBNull(12) ? null : r.GetInt32(12),
+                Notlar = r.IsDBNull(13) ? null : r.GetString(13),
+                ToplamTutar = r.IsDBNull(14) ? 0 : r.GetDecimal(14),
+                IndirimYuzde = r.IsDBNull(15) ? 0 : r.GetDecimal(15),
+                IndirimTutar = r.IsDBNull(16) ? 0 : r.GetDecimal(16),
+                NetTutar = r.IsDBNull(17) ? 0 : r.GetDecimal(17),
+                RevizyonNo = r.IsDBNull(18) ? 0 : r.GetInt32(18),
+                OnayGerektirir = !r.IsDBNull(19) && r.GetBoolean(19),
+                OlusturmaTarihi = r.IsDBNull(20) ? DateTime.Now : r.GetDateTime(20),
+                Olusturan = r.IsDBNull(21) ? "" : r.GetString(21),
+                TeklifKanali = r.IsDBNull(22) ? null : r.GetString(22),
+                TeklifTipi = r.IsDBNull(23) ? null : r.GetString(23),
+                AksSayisi = r.IsDBNull(24) ? null : r.GetInt32(24),
+                OdemeSistemi = r.IsDBNull(25) ? null : r.GetString(25),
+                IskontoAciklama = r.IsDBNull(26) ? null : r.GetString(26),
+                KdvDahilMi = !r.IsDBNull(27) && r.GetBoolean(27),
+                IhracatMi = !r.IsDBNull(28) && r.GetBoolean(28),
+                IhracKayitliMi = !r.IsDBNull(29) && r.GetBoolean(29),
+                TeslimatHaftasi = r.IsDBNull(30) ? null : r.GetString(30),
+                TeslimatTipiKodu = r.IsDBNull(31) ? null : r.GetString(31),
+                TeslimatYeri = r.IsDBNull(32) ? null : r.GetString(32),
+                SiparisNo = r.IsDBNull(33) ? null : r.GetString(33)
+            };
+        }
+
+        public async Task<int> CopyQuoteAsync(int sourceQuoteId)
+        {
+            var source = await GetQuoteByIdAsync(sourceQuoteId);
+            if (source == null) throw new Exception("Kaynak teklif bulunamadi.");
+
+            source.Id = 0;
+            source.TeklifNo = "";
+            source.Durum = "Draft";
+            source.RevizyonNo = 0;
+            source.SiparisNo = null;
+            source.TalepTarihi = DateTime.Today;
+            source.OlusturmaTarihi = DateTime.Now;
+
+            var newId = await CreateDraftQuoteAsync(source);
+
+            // Kalemleri kopyala
+            var items = await GetQuoteItemsAsync(sourceQuoteId);
+            var idMap = new Dictionary<int, int>(); // eski Id -> yeni Id
+
+            foreach (var item in items)
+            {
+                var oldId = item.Id;
+                item.Id = 0;
+                item.TeklifId = newId;
+                // UstKalemId'yi sonra guncelleyecegiz
+                var origParent = item.UstKalemId;
+                if (origParent.HasValue && idMap.ContainsKey(origParent.Value))
+                    item.UstKalemId = idMap[origParent.Value];
+                else
+                    item.UstKalemId = null;
+
+                await SaveQuoteItemAsync(item);
+                idMap[oldId] = item.Id;
+            }
+
+            return newId;
+        }
+
+        public async Task<string> TransitionStatusAsync(int quoteId, string newStatus)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            // ORDER durumuna geciste siparis numarasi uret
+            string? siparisNo = null;
+            if (newStatus == "ORDER")
+            {
+                const string seqSql = """SELECT nextval('"YLSiparisNoSeq"');""";
+                using var seqCmd = new NpgsqlCommand(seqSql, conn);
+                var seqVal = await seqCmd.ExecuteScalarAsync();
+                siparisNo = $"ACF{Convert.ToInt64(seqVal):D4}";
+
+                const string updateSql = """
+                    UPDATE "YLTeklifler"
+                    SET "Durum" = @durum, "SiparisNo" = @siparisNo
+                    WHERE "Id" = @id;
+                    """;
+                using var cmd = new NpgsqlCommand(updateSql, conn);
+                cmd.Parameters.AddWithValue("durum", newStatus);
+                cmd.Parameters.AddWithValue("siparisNo", siparisNo);
+                cmd.Parameters.AddWithValue("id", quoteId);
+                await cmd.ExecuteNonQueryAsync();
+            }
+            else
+            {
+                const string updateSql = """
+                    UPDATE "YLTeklifler"
+                    SET "Durum" = @durum
+                    WHERE "Id" = @id;
+                    """;
+                using var cmd = new NpgsqlCommand(updateSql, conn);
+                cmd.Parameters.AddWithValue("durum", newStatus);
+                cmd.Parameters.AddWithValue("id", quoteId);
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            return siparisNo ?? "";
         }
     }
 }
