@@ -10,9 +10,7 @@
     <aside class="app-sidebar @(sidebarCollapsed ? "sidebar-collapsed" : "") @(mobileMenuOpen ? "sidebar-mobile-open" : "")">
         <!-- Logo -->
         <div class="sidebar-header">
-            <div class="sidebar-logo-wrapper">
-                <img src="images/logo.png" alt="Yalcin Trailer" class="sidebar-logo" />
-            </div>
+            <img src="images/menusimge.png" alt="Yalcin Dorse" class="sidebar-logo" />
             <span class="sidebar-brand-text">YALCIN DORSE</span>
         </div>
 
@@ -20,7 +18,7 @@
         <nav class="sidebar-nav">
             <!-- SATIS Group -->
             <div class="sidebar-group @(expandedGroup == "satis" ? "expanded" : "")">
-                <button class="sidebar-group-header" @onclick='() => ToggleGroup("satis")'>
+                <button class="sidebar-group-header" @onclick='() => ToggleGroup("satis")' @onclick:stopPropagation="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="sidebar-group-icon">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
                         <line x1="3" y1="6" x2="21" y2="6"/>
@@ -30,7 +28,9 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="sidebar-chevron">
                         <polyline points="6 9 12 15 18 9"/>
                     </svg>
+                    <span class="sidebar-tooltip">SATIS</span>
                 </button>
+                <!-- Expanded inline items -->
                 <div class="sidebar-group-items">
                     <button class="sidebar-item" @onclick="OpenTeklifOlustur">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -52,11 +52,26 @@
                         <span>Teklif Listesi</span>
                     </button>
                 </div>
+                <!-- Collapsed flyout menu -->
+                @if (sidebarCollapsed && flyoutMenu == "satis")
+                {
+                    <div class="sidebar-flyout show">
+                        <div class="sidebar-flyout-title">SATIS</div>
+                        <button class="sidebar-flyout-item" @onclick="OpenTeklifOlustur">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                            Teklif Olustur
+                        </button>
+                        <button class="sidebar-flyout-item" @onclick="OpenTeklifListesi">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            Teklif Listesi
+                        </button>
+                    </div>
+                }
             </div>
 
             <!-- CRM Group -->
             <div class="sidebar-group @(expandedGroup == "crm" ? "expanded" : "")">
-                <button class="sidebar-group-header" @onclick='() => ToggleGroup("crm")'>
+                <button class="sidebar-group-header" @onclick='() => ToggleGroup("crm")' @onclick:stopPropagation="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="sidebar-group-icon">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
@@ -67,46 +82,58 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="sidebar-chevron">
                         <polyline points="6 9 12 15 18 9"/>
                     </svg>
+                    <span class="sidebar-tooltip">CRM</span>
                 </button>
+                <!-- Expanded inline items -->
                 <div class="sidebar-group-items">
                     <button class="sidebar-item" @onclick="OpenCustomerCards">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <rect x="3" y="4" width="18" height="16" rx="2" />
-                            <line x1="7" y1="8" x2="17" y2="8" />
-                            <line x1="7" y1="12" x2="17" y2="12" />
-                            <line x1="7" y1="16" x2="13" y2="16" />
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="7" y1="8" x2="17" y2="8" /><line x1="7" y1="12" x2="17" y2="12" /><line x1="7" y1="16" x2="13" y2="16" /></svg>
                         <span>Cari Kartlar</span>
                     </button>
                     <button class="sidebar-item" @onclick="OpenTouchCRM">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                         <span>Touch CRM</span>
                     </button>
                     <button class="sidebar-item" @onclick="OpenDashboard">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                         <span>Dashboard</span>
                     </button>
                     <button class="sidebar-item" @onclick="OpenReminders">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                         <span>Hatirlatmalar</span>
                     </button>
                     <button class="sidebar-item" @onclick="OpenCalendar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         <span>Takvim</span>
                     </button>
                 </div>
+                <!-- Collapsed flyout menu -->
+                @if (sidebarCollapsed && flyoutMenu == "crm")
+                {
+                    <div class="sidebar-flyout show">
+                        <div class="sidebar-flyout-title">CRM</div>
+                        <button class="sidebar-flyout-item" @onclick="OpenCustomerCards">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="7" y1="8" x2="17" y2="8" /><line x1="7" y1="12" x2="17" y2="12" /><line x1="7" y1="16" x2="13" y2="16" /></svg>
+                            Cari Kartlar
+                        </button>
+                        <button class="sidebar-flyout-item" @onclick="OpenTouchCRM">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            Touch CRM
+                        </button>
+                        <button class="sidebar-flyout-item" @onclick="OpenDashboard">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                            Dashboard
+                        </button>
+                        <button class="sidebar-flyout-item" @onclick="OpenReminders">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            Hatirlatmalar
+                        </button>
+                        <button class="sidebar-flyout-item" @onclick="OpenCalendar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            Takvim
+                        </button>
+                    </div>
+                }
             </div>
 
             <!-- Yonetim (tek oge) -->
@@ -116,6 +143,7 @@
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
                 <span>Yonetim</span>
+                <span class="sidebar-tooltip">Yonetim</span>
             </button>
         </nav>
 
@@ -238,14 +266,15 @@
     private bool sidebarCollapsed = true;
     private bool mobileMenuOpen = false;
     private string? expandedGroup = null;
+    private string? flyoutMenu = null;
     private bool showProfileMenu = false;
 
     private void ToggleGroup(string group)
     {
         if (sidebarCollapsed)
         {
-            sidebarCollapsed = false;
-            expandedGroup = group;
+            // Collapsed modda flyout ac/kapat
+            flyoutMenu = flyoutMenu == group ? null : group;
             return;
         }
         expandedGroup = expandedGroup == group ? null : group;
@@ -255,7 +284,10 @@
     {
         sidebarCollapsed = !sidebarCollapsed;
         if (sidebarCollapsed)
+        {
             expandedGroup = null;
+            flyoutMenu = null;
+        }
     }
 
     private void ToggleMobileMenu()
@@ -273,6 +305,7 @@
     private void CloseAllMenus()
     {
         showProfileMenu = false;
+        flyoutMenu = null;
     }
 
     private void ToggleProfileMenu() => showProfileMenu = !showProfileMenu;
@@ -280,6 +313,7 @@
     private void OpenCustomerCards()
     {
         mobileMenuOpen = false;
+        flyoutMenu = null;
         if (!WindowService.OpenCustomerCardsWindow())
             Nav.NavigateTo("/crm/cari-kartlar");
     }
@@ -287,6 +321,7 @@
     private void OpenTeklifOlustur()
     {
         mobileMenuOpen = false;
+        flyoutMenu = null;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Olustur", 1200, 800))
             Nav.NavigateTo("/satis/teklif-olustur");
     }
@@ -294,6 +329,7 @@
     private void OpenTeklifListesi()
     {
         mobileMenuOpen = false;
+        flyoutMenu = null;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.TeklifListesi>("Teklif Listesi", 1300, 800))
             Nav.NavigateTo("/satis/teklif-listesi");
     }
@@ -301,6 +337,7 @@
     private void OpenTouchCRM()
     {
         mobileMenuOpen = false;
+        flyoutMenu = null;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchCRM>("Touch CRM", 1400, 900))
             Nav.NavigateTo("/crm/touch-crm");
     }
@@ -308,6 +345,7 @@
     private void OpenDashboard()
     {
         mobileMenuOpen = false;
+        flyoutMenu = null;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchDashboard>("Dashboard", 1200, 800))
             Nav.NavigateTo("/crm/dashboard");
     }
@@ -315,6 +353,7 @@
     private void OpenReminders()
     {
         mobileMenuOpen = false;
+        flyoutMenu = null;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchReminders>("Hatirlatmalar", 900, 700))
             Nav.NavigateTo("/crm/hatirlatmalar");
     }
@@ -322,6 +361,7 @@
     private void OpenCalendar()
     {
         mobileMenuOpen = false;
+        flyoutMenu = null;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchCalendar>("Takvim", 1200, 800))
             Nav.NavigateTo("/crm/takvim");
     }
