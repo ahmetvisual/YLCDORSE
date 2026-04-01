@@ -26,6 +26,7 @@ namespace YALCINDORSE
             builder.Services.AddTransient<UserService>();
             builder.Services.AddTransient<CustomerService>();
             builder.Services.AddTransient<QuoteService>();
+            builder.Services.AddTransient<TouchService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

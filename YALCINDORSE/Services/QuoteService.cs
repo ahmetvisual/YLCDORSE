@@ -22,6 +22,8 @@ namespace YALCINDORSE.Services
         public int Rev { get; set; }
         public DateTime OlusturmaTarihi { get; set; }
         public string? Notlar { get; set; }
+        public string? TeklifKanali { get; set; }
+        public string? MusteriKodu { get; set; }
     }
 
     public class QuoteModel
@@ -48,6 +50,20 @@ namespace YALCINDORSE.Services
         public bool OnayGerektirir { get; set; }
         public DateTime OlusturmaTarihi { get; set; }
         public string Olusturan { get; set; } = "";
+
+        // Yeni alanlar - Touch CRM & Musteri notlari
+        public string? TeklifKanali { get; set; }
+        public string? TeklifTipi { get; set; }
+        public int? AksSayisi { get; set; }
+        public string? OdemeSistemi { get; set; }
+        public string? IskontoAciklama { get; set; }
+        public bool KdvDahilMi { get; set; }
+        public bool IhracatMi { get; set; }
+        public bool IhracKayitliMi { get; set; }
+        public string? TeslimatHaftasi { get; set; }
+        public string? TeslimatTipiKodu { get; set; }
+        public string? TeslimatYeri { get; set; }
+        public string? SiparisNo { get; set; }
     }
 
     public class QuoteItemModel
@@ -57,6 +73,16 @@ namespace YALCINDORSE.Services
         public bool BaslikMi { get; set; }
         public string Aciklama { get; set; } = "";
         public int SiraNo { get; set; }
+
+        // Yeni alanlar - Hiyerarsik kalem yapisi
+        public int? UstKalemId { get; set; }
+        public string? UrunKodu { get; set; }
+        public decimal? Miktar { get; set; }
+        public string? Birim { get; set; }
+        public decimal? BirimFiyat { get; set; }
+        public decimal? Tutar { get; set; }
+        public bool OpsiyonMu { get; set; }
+        public string KalemTipi { get; set; } = "ITEM"; // HEADER, ITEM, SUB_ITEM, OPTION
     }
 
     public class QuoteService
