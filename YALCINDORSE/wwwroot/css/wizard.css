@@ -116,8 +116,28 @@
     gap: 8px;
 }
 
+/* Proportional grid rows for compact layout */
+.wizard-row {
+    display: grid;
+    gap: 8px;
+    align-items: start;
+}
+
 .wizard-field {
     margin-bottom: 6px;
+}
+
+.wizard-field.compact {
+    margin-bottom: 2px;
+}
+
+.wizard-field.compact textarea {
+    min-height: 36px;
+}
+
+.wizard-section-title.tight {
+    margin-bottom: 4px;
+    margin-top: 6px;
 }
 
 .wizard-field label {
@@ -433,6 +453,7 @@
     .wizard-grid2 { grid-template-columns: 1fr; }
     .wizard-grid3 { grid-template-columns: 1fr; }
     .wizard-grid4 { grid-template-columns: 1fr 1fr; }
+    .wizard-row { grid-template-columns: 1fr !important; }
     .wizard-steps { flex-wrap: wrap; gap: 6px; }
     .wizard-step-line { width: 20px; }
     .item-qty, .item-unit, .item-price, .item-total { width: 55px; }
