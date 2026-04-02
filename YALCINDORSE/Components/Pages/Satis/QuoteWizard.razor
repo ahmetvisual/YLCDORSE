@@ -46,12 +46,18 @@
         {
             <div class="wizard-content">
                 <div class="wizard-section-title tight">Teklif Bilgileri</div>
-
-                <!-- Row 1: Teklif No | Musteri (+Yeni) | Satici -->
-                <div class="wizard-row" style="grid-template-columns:1fr 2.5fr 1.5fr">
+                <div class="wizard-grid2">
                     <div class="wizard-field compact">
                         <label>Teklif No</label>
-                        <input type="text" placeholder="Otomatik" disabled />
+                        <input type="text" placeholder="Otomatik (kaydedince)" disabled />
+                    </div>
+                    <div class="wizard-field compact">
+                        <label>Satis Tipi</label>
+                        <select @bind="quote.SatisTipi">
+                            <option value="NewProduction">Yeni Uretim</option>
+                            <option value="SecondHand">Ikinci El</option>
+                            <option value="SparePart">Yedek Parca</option>
+                        </select>
                     </div>
                     <div class="wizard-field compact">
                         <label>Musteri <span class="required">*</span></label>
@@ -65,28 +71,6 @@
                             </select>
                             <button class="wizard-btn wizard-btn-primary" style="padding:4px 10px;font-size:0.72rem" @onclick="() => showQuickAdd = true">+ Yeni</button>
                         </div>
-                    </div>
-                    <div class="wizard-field compact">
-                        <label>Satici</label>
-                        <select @bind="quote.SaticiId">
-                            <option value="">— Seciniz —</option>
-                            @foreach (var sr in salesReps)
-                            {
-                                <option value="@sr.Id">@sr.FullName</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Row 2: Satis Tipi | Teklif Kanali | Teklif Tipi | Aks Sayisi | Puan -->
-                <div class="wizard-row" style="grid-template-columns:1.5fr 1.5fr 1fr 0.7fr 0.8fr">
-                    <div class="wizard-field compact">
-                        <label>Satis Tipi</label>
-                        <select @bind="quote.SatisTipi">
-                            <option value="NewProduction">Yeni Uretim</option>
-                            <option value="SecondHand">Ikinci El</option>
-                            <option value="SparePart">Yedek Parca</option>
-                        </select>
                     </div>
                     <div class="wizard-field compact">
                         <label>Teklif Kanali</label>
@@ -125,10 +109,16 @@
                             <option value="CLOSED">CLOSED</option>
                         </select>
                     </div>
-                </div>
-
-                <!-- Row 3: Dil | Para Birimi | Talep Tarihi | Gecerlilik Tarihi -->
-                <div class="wizard-row" style="grid-template-columns:0.8fr 0.8fr 1fr 1fr">
+                    <div class="wizard-field compact">
+                        <label>Satici</label>
+                        <select @bind="quote.SaticiId">
+                            <option value="">— Seciniz —</option>
+                            @foreach (var sr in salesReps)
+                            {
+                                <option value="@sr.Id">@sr.FullName</option>
+                            }
+                        </select>
+                    </div>
                     <div class="wizard-field compact">
                         <label>Dil</label>
                         <select @bind="quote.Dil">
@@ -156,10 +146,6 @@
                         <label>Gecerlilik Tarihi</label>
                         <input type="date" @bind="quote.GecerlilikTarihi" @bind:format="yyyy-MM-dd" />
                     </div>
-                </div>
-
-                <!-- Row 4: Ilgili Kisiler | Notlar -->
-                <div class="wizard-row" style="grid-template-columns:1fr 1fr">
                     <div class="wizard-field compact">
                         <label>Ilgili Kisiler</label>
                         @if (contacts.Count > 0)
@@ -186,11 +172,8 @@
                     </div>
                 </div>
 
-                <!-- Odeme Bilgileri -->
                 <div class="wizard-section-title tight" style="margin-top:8px">Odeme Bilgileri</div>
-
-                <!-- Row 5: Odeme Sistemi | Iskonto Aciklama | Secenekler -->
-                <div class="wizard-row" style="grid-template-columns:1fr 1.5fr 1.2fr">
+                <div class="wizard-grid2">
                     <div class="wizard-field compact">
                         <label>Odeme Sistemi</label>
                         <select @bind="quote.OdemeSistemi">
