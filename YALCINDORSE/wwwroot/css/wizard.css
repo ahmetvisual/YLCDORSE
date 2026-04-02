@@ -16,8 +16,8 @@
     align-items: center;
     justify-content: center;
     gap: 0;
-    margin-bottom: 10px;
-    padding: 8px 0;
+    margin-bottom: 6px;
+    padding: 4px 0;
 }
 
 .wizard-step {
@@ -79,11 +79,14 @@
     background: #fff;
     border: 1px solid var(--yl-border);
     border-radius: 6px;
-    padding: 12px 14px;
+    padding: 10px 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     margin-bottom: 8px;
-    flex: 1;
     overflow-y: auto;
+}
+
+.wizard-content.fill {
+    flex: 1;
 }
 
 .wizard-section-title {
@@ -119,8 +122,9 @@
 /* Proportional grid rows for compact layout */
 .wizard-row {
     display: grid;
-    gap: 8px;
+    gap: 6px;
     align-items: start;
+    margin-bottom: 2px;
 }
 
 .wizard-field {
@@ -136,8 +140,9 @@
 }
 
 .wizard-section-title.tight {
-    margin-bottom: 4px;
-    margin-top: 6px;
+    margin-bottom: 3px;
+    margin-top: 4px;
+    padding-bottom: 2px;
 }
 
 .wizard-field label {
