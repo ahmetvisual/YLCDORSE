@@ -8,8 +8,8 @@
 <div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;">
     <div class="wizard-container">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:var(--yl-primary)">Teklif Olustur</h3>
-            <span style="font-size:0.68rem;color:var(--yl-text-light)">3 adimda teklif olusturun</span>
+            <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:var(--yl-primary)">@(isEditMode ? $"Teklif Duzenle - {quote.TeklifNo}" : "Teklif Olustur")</h3>
+            <span style="font-size:0.68rem;color:var(--yl-text-light)">@(isEditMode ? "Teklif detaylarini duzenleyin" : "3 adimda teklif olusturun")</span>
         </div>
 
         <!-- Adim Gostergesi -->
@@ -403,9 +403,9 @@
                 }
                 @if (currentStep == 3)
                 {
-                    <button class="wizard-btn" @onclick="SaveDraft" disabled="@isSaving">Taslak Kaydet</button>
+                    <button class="wizard-btn" @onclick="SaveDraft" disabled="@isSaving">@(isEditMode ? "Guncelle" : "Taslak Kaydet")</button>
                     <button class="wizard-btn wizard-btn-success" @onclick="SaveAndSend" disabled="@isSaving">
-                        @(isSaving ? "Kaydediliyor..." : "Kaydet ve Gonder")
+                        @(isSaving ? "Kaydediliyor..." : isEditMode ? "Guncelle ve Gonder" : "Kaydet ve Gonder")
                     </button>
                 }
             </div>
@@ -455,6 +455,10 @@
     private string customerSearchText = "";
     private bool showCustomerDropdown = false;
 
+    // Edit mode
+    [Parameter] public int QuoteId { get; set; }
+    private bool isEditMode => QuoteId > 0;
+
     // Custom dropdown state
     private string? openDropdown;
     private void ToggleDropdown(string name) => openDropdown = openDropdown == name ? null : name;
@@ -467,15 +471,44 @@
 
     protected override async Task OnInitializedAsync()
     {
-        quote.TalepTarihi = DateTime.Today;
-        quote.GecerlilikTarihi = AddBusinessDays(DateTime.Today, 15);
-
         try
         {
             customers = await CustomerSvc.GetCustomersAsync();
             salesReps = await CustomerSvc.GetSalesRepsAsync();
         }
         catch { }
+
+        if (QuoteId > 0)
+        {
+            // Edit mode - mevcut teklifi yukle
+            try
+            {
+                var existing = await QuoteSvc.GetQuoteByIdAsync(QuoteId);
+                if (existing != null)
+                {
+                    quote = existing;
+                    quoteItems = await QuoteSvc.GetQuoteItemsAsync(QuoteId);
+
+                    // Musteri arama alanini doldur
+                    var customer = customers.FirstOrDefault(c => c.Id == quote.MusteriId);
+                    if (customer != null)
+                        customerSearchText = $"{customer.CustomerCode} - {customer.Title}";
+
+                    // Ilgili kisileri yukle
+                    await OnCustomerChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Teklif yuklenemedi: {ex.Message}";
+            }
+        }
+        else
+        {
+            // Yeni teklif defaults
+            quote.TalepTarihi = DateTime.Today;
+            quote.GecerlilikTarihi = AddBusinessDays(DateTime.Today, 15);
+        }
     }
 
     private DateTime AddBusinessDays(DateTime start, int days)
@@ -615,25 +648,39 @@
         try
         {
             quote.Durum = durum;
-            var quoteId = await QuoteSvc.CreateDraftQuoteAsync(quote);
+            int quoteId;
+
+            if (isEditMode)
+            {
+                // Mevcut teklifi guncelle
+                quoteId = quote.Id;
+                await QuoteSvc.UpdateQuoteAsync(quote);
+
+                // Eski kalemleri sil, yeniden kaydet
+                await QuoteSvc.DeleteQuoteItemsByQuoteIdAsync(quoteId);
+            }
+            else
+            {
+                // Yeni teklif olustur
+                quoteId = await QuoteSvc.CreateDraftQuoteAsync(quote);
+            }
 
             // Kalemleri kaydet - once header'lar, sonra alt kalemler (UstKalemId mapping)
-            var idMap = new Dictionary<int, int>(); // eski temp Id -> yeni DB Id
+            var idMap = new Dictionary<int, int>();
             foreach (var item in quoteItems.OrderBy(i => i.UstKalemId.HasValue ? 1 : 0).ThenBy(i => i.SiraNo))
             {
                 var oldId = item.Id;
                 item.TeklifId = quoteId;
 
-                // UstKalemId varsa, gercek DB Id ile degistir
                 if (item.UstKalemId.HasValue)
                 {
                     if (idMap.ContainsKey(item.UstKalemId.Value))
                         item.UstKalemId = idMap[item.UstKalemId.Value];
                     else
-                        item.UstKalemId = null; // parent bulunamazsa null yap
+                        item.UstKalemId = null;
                 }
 
-                item.Id = 0; // yeni kayit olarak insert et
+                item.Id = 0;
                 await QuoteSvc.SaveQuoteItemAsync(item);
                 idMap[oldId] = item.Id;
             }

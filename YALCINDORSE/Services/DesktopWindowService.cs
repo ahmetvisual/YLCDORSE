@@ -17,7 +17,18 @@ namespace YALCINDORSE.Services
                 var componentType = typeof(TComponent);
 
                 if (_openWindows.TryGetValue(componentType, out var existingWindow))
-                    return;
+                {
+                    // Farkli parametrelerle aciliyorsa (ornegin farkli QuoteId), eskiyi kapat
+                    if (parameters != null && parameters.Count > 0)
+                    {
+                        Application.Current?.CloseWindow(existingWindow);
+                        _openWindows.TryRemove(componentType, out _);
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
 
                 var page = new GenericBlazorWindow(title, componentType, parameters);
                 var newWindow = new Window(page)

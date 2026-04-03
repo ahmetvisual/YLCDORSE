@@ -319,6 +319,69 @@ namespace YALCINDORSE.Services
             item.Id = Convert.ToInt32(idResult);
         }
 
+        public async Task UpdateQuoteAsync(QuoteModel quote)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            const string sql = """
+                UPDATE "YLTeklifler" SET
+                    "MusteriId" = @MusteriId, "IlgiliKisiId" = @IlgiliKisiId, "SatisTipi" = @SatisTipi,
+                    "Kaynak" = @Kaynak, "Dil" = @Dil, "ParaBirimi" = @ParaBirimi, "Durum" = @Durum, "Puan" = @Puan,
+                    "TalepTarihi" = @TalepTarihi, "GecerlilikTarihi" = @GecerlilikTarihi,
+                    "SaticiId" = @SaticiId, "Notlar" = @Notlar,
+                    "ToplamTutar" = @ToplamTutar, "IndirimYuzde" = @IndirimYuzde,
+                    "IndirimTutar" = @IndirimTutar, "NetTutar" = @NetTutar,
+                    "TeklifKanali" = @TeklifKanali, "TeklifTipi" = @TeklifTipi, "AksSayisi" = @AksSayisi,
+                    "OdemeSistemi" = @OdemeSistemi, "IskontoAciklama" = @IskontoAciklama,
+                    "KdvDahilMi" = @KdvDahilMi, "IhracatMi" = @IhracatMi, "IhracKayitliMi" = @IhracKayitliMi,
+                    "TeslimatHaftasi" = @TeslimatHaftasi, "TeslimatTipiKodu" = @TeslimatTipiKodu, "TeslimatYeri" = @TeslimatYeri
+                WHERE "Id" = @Id;
+                """;
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("Id", quote.Id);
+            cmd.Parameters.AddWithValue("MusteriId", quote.MusteriId);
+            cmd.Parameters.AddWithValue("IlgiliKisiId", (object?)quote.IlgiliKisiId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("SatisTipi", quote.SatisTipi);
+            cmd.Parameters.AddWithValue("Kaynak", quote.Kaynak);
+            cmd.Parameters.AddWithValue("Dil", quote.Dil);
+            cmd.Parameters.AddWithValue("ParaBirimi", quote.ParaBirimi);
+            cmd.Parameters.AddWithValue("Durum", quote.Durum);
+            cmd.Parameters.AddWithValue("Puan", quote.Puan);
+            cmd.Parameters.AddWithValue("TalepTarihi", quote.TalepTarihi);
+            cmd.Parameters.AddWithValue("GecerlilikTarihi", quote.GecerlilikTarihi);
+            cmd.Parameters.AddWithValue("SaticiId", (object?)quote.SaticiId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Notlar", (object?)quote.Notlar ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("ToplamTutar", quote.ToplamTutar);
+            cmd.Parameters.AddWithValue("IndirimYuzde", quote.IndirimYuzde);
+            cmd.Parameters.AddWithValue("IndirimTutar", quote.IndirimTutar);
+            cmd.Parameters.AddWithValue("NetTutar", quote.NetTutar);
+            cmd.Parameters.AddWithValue("TeklifKanali", (object?)quote.TeklifKanali ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TeklifTipi", (object?)quote.TeklifTipi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("AksSayisi", (object?)quote.AksSayisi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("OdemeSistemi", (object?)quote.OdemeSistemi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("IskontoAciklama", (object?)quote.IskontoAciklama ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("KdvDahilMi", quote.KdvDahilMi);
+            cmd.Parameters.AddWithValue("IhracatMi", quote.IhracatMi);
+            cmd.Parameters.AddWithValue("IhracKayitliMi", quote.IhracKayitliMi);
+            cmd.Parameters.AddWithValue("TeslimatHaftasi", (object?)quote.TeslimatHaftasi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TeslimatTipiKodu", (object?)quote.TeslimatTipiKodu ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task DeleteQuoteItemsByQuoteIdAsync(int quoteId)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            const string sql = """DELETE FROM "YLTeklifKalemleri" WHERE "TeklifId" = @id;""";
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("id", quoteId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
         public async Task<QuoteModel?> GetQuoteByIdAsync(int quoteId)
         {
             using var conn = _db.GetConnection();
