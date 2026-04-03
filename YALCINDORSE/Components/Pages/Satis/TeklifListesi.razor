@@ -17,7 +17,7 @@
                 </svg>
                 Teklif Listesi
             </h3>
-            <p class="crm-header-subtitle">Teklif basliklarini ve detay kalemlerini (Master-Detail) goruntuleyebilirsiniz.</p>
+            <p class="crm-header-subtitle">Teklif basliklarini ve revizyon gecmisini goruntuleyebilirsiniz.</p>
         </div>
         <div class="crm-header-actions">
             <button class="btn-primary-action" @onclick="GoToNewQuote">
@@ -31,14 +31,14 @@
     </div>
 
     <!-- Filters -->
-    <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap:wrap;">
+    <div class="quote-filter-bar">
         <div class="crm-search-box" style="flex: 1; max-width: 300px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input type="text" class="form-control" placeholder="Teklif No, Musteri, Satici ara..." @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" />
         </div>
-        <select class="form-select" style="max-width: 150px; border-radius:6px; border-color:var(--yl-border); font-size:0.82rem;" @onchange="OnStatusChanged">
+        <select class="quote-filter-select" @onchange="OnStatusChanged">
             <option value="">Tumu (Durum)</option>
             <option value="Draft">Taslak</option>
             <option value="Sent">Gonderildi</option>
@@ -49,7 +49,7 @@
             <option value="ORDER">Siparis</option>
             <option value="CLOSED">Kapali</option>
         </select>
-        <select class="form-select" style="max-width: 130px; border-radius:6px; border-color:var(--yl-border); font-size:0.82rem;" @onchange="OnPuanChanged">
+        <select class="quote-filter-select" @onchange="OnPuanChanged">
             <option value="">Tumu (Puan)</option>
             <option value="HOT">HOT</option>
             <option value="WARM">WARM</option>
@@ -59,14 +59,14 @@
 
     @if (isLoading)
     {
-        <div style="text-align: center; padding: 40px; color: var(--yl-text-light);">
+        <div class="quote-loading-state">
             <div class="spinner" style="border-top-color: var(--yl-primary); margin: 0 auto 12px;"></div>
             Yukleniyor...
         </div>
     }
     else if (errorMessage != null)
     {
-        <div style="padding: 16px; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 8px; color: #cf1322; margin-bottom: 16px;">
+        <div class="quote-error-state">
             Hata: @errorMessage
         </div>
     }
@@ -77,21 +77,21 @@
                 <table class="quote-grid">
                     <thead>
                         <tr>
-                            <th style="width: 40px;"></th>
+                            <th style="width: 36px;"></th>
                             <th>Tarih</th>
                             <th>Teklif No</th>
                             <th>Musteri & Ilgili</th>
-                            <th>Satici</th>
+                            <th class="hide-mobile">Satici</th>
                             <th>Durum</th>
-                            <th>Net Tutar / Para</th>
-                            <th>Puan</th>
+                            <th>Net Tutar</th>
+                            <th class="hide-tablet">Puan</th>
                             <th style="width: 80px;">Isl.</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (quotes == null || !quotes.Any())
                         {
-                            <tr><td colspan="9" style="text-align:center; padding: 24px;">Goruntulenecek kayit bulunamadi.</td></tr>
+                            <tr><td colspan="9" class="quote-empty-state">Goruntulenecek kayit bulunamadi.</td></tr>
                         }
                         else
                         {
@@ -109,37 +109,38 @@
                                             }
                                         </button>
                                     </td>
-                                    <td>@quote.TalepTarihi.ToString("dd.MM.yyyy")</td>
+                                    <td class="quote-date-cell">@quote.TalepTarihi.ToString("dd.MM.yyyy")</td>
                                     <td>
-                                        <div style="font-weight: 600; color: var(--yl-accent);">@quote.TeklifNo</div>
-                                        <div style="font-size: 0.7rem; color: var(--yl-text-light);">Rev @quote.Rev</div>
+                                        <div class="quote-no">@quote.TeklifNo</div>
+                                        <div class="quote-rev">Rev @quote.Rev</div>
                                     </td>
                                     <td>
-                                        <div style="font-weight: 500;">@quote.Musteri</div>
+                                        <div class="quote-customer">@quote.Musteri</div>
                                         @if (!string.IsNullOrEmpty(quote.Ilgili))
                                         {
-                                            <div style="font-size: 0.75rem; color: var(--yl-text-light);">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px; margin-right:4px; vertical-align:middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                            <div class="quote-contact">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px; height:11px; margin-right:3px; vertical-align:middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                                 @quote.Ilgili
                                             </div>
                                         }
                                     </td>
-                                    <td>@quote.Satici</td>
+                                    <td class="hide-mobile">@quote.Satici</td>
                                     <td>
                                         <span class="yl-chip @GetStatusChipClass(quote.Durum)">
                                             @GetStatusName(quote.Durum)
                                         </span>
                                     </td>
-                                    <td style="text-align: right;">
-                                        <div style="font-weight: 600;">@quote.NetTutar.ToString("N2") @quote.Para</div>
+                                    <td class="quote-amount-cell">
+                                        <span class="quote-amount">@quote.NetTutar.ToString("N2")</span>
+                                        <span class="quote-currency">@quote.Para</span>
                                     </td>
-                                    <td>
+                                    <td class="hide-tablet">
                                         <span class="yl-chip @GetStandingChipClass(quote.Puan)">
                                             @quote.Puan
                                         </span>
                                     </td>
                                     <td>
-                                        <div style="display:flex;gap:6px;align-items:center;">
+                                        <div class="quote-row-actions">
                                             <button class="btn-expand" title="Duzenle" @onclick="() => EditQuote(quote.Id)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                             </button>
@@ -155,20 +156,20 @@
 
                                 @if (isExpanded)
                                 {
-                                    <tr>
+                                    <tr class="detail-row">
                                         <td colspan="9" style="padding: 0;">
                                             <div class="quote-detail-wrapper">
                                                 @if (isDetailsLoading)
                                                 {
-                                                    <div style="padding: 10px; color: var(--yl-text-light); font-size: 0.8rem;">Revizyonlar yukleniyor...</div>
+                                                    <div class="quote-detail-loading">Revizyonlar yukleniyor...</div>
                                                 }
                                                 else
                                                 {
-                                                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--yl-border);">
-                                                        <span style="font-weight:600; font-size:0.82rem; color:var(--yl-primary);">
+                                                    <div class="quote-detail-header">
+                                                        <span class="quote-detail-title">
                                                             Revizyonlar - @quote.TeklifNo
                                                         </span>
-                                                        <div style="display:flex; gap:6px;">
+                                                        <div class="quote-detail-actions">
                                                             @{ var transitions = GetAvailableTransitions(quote.Durum); }
                                                             @foreach (var tr in transitions)
                                                             {
@@ -177,7 +178,7 @@
                                                                 </button>
                                                             }
                                                             <button class="btn-transition btn-revize" @onclick="() => RevizeAsync(quote.Id)" disabled="@isTransitioning" title="Yeni revizyon olustur">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:3px;vertical-align:text-bottom;"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:3px;vertical-align:text-bottom;"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                                                                 Revize Et
                                                             </button>
                                                         </div>
@@ -185,40 +186,43 @@
 
                                                     @if (expandedRevisions == null || !expandedRevisions.Any())
                                                     {
-                                                        <div style="padding: 10px; color: var(--yl-text-light); font-size: 0.8rem;">Revizyon kaydi bulunamadi.</div>
+                                                        <div class="quote-detail-loading">Revizyon kaydi bulunamadi.</div>
                                                     }
                                                     else
                                                     {
                                                         <table class="detail-table">
                                                             <thead>
                                                                 <tr>
-                                                                    <th style="width:55px; text-align:center;">Rev</th>
+                                                                    <th style="width:50px; text-align:center;">Rev</th>
                                                                     <th>Tarih</th>
                                                                     <th>Durum</th>
                                                                     <th>Net Tutar</th>
                                                                     <th>Puan</th>
                                                                     <th>Olusturma</th>
-                                                                    <th style="width:70px;">Isl.</th>
+                                                                    <th style="width:60px;">Isl.</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 @foreach (var rev in expandedRevisions)
                                                                 {
                                                                     <tr class="@(rev.Id == quote.Id ? "active-rev-row" : "")">
-                                                                        <td style="text-align:center; font-weight:600;">@rev.Rev</td>
-                                                                        <td>@rev.TalepTarihi.ToString("dd.MM.yyyy")</td>
+                                                                        <td class="rev-number-cell">@rev.Rev</td>
+                                                                        <td class="quote-date-cell">@rev.TalepTarihi.ToString("dd.MM.yyyy")</td>
                                                                         <td>
-                                                                            <span class="yl-chip @GetStatusChipClass(rev.Durum)" style="font-size:0.7rem;">
+                                                                            <span class="yl-chip @GetStatusChipClass(rev.Durum)">
                                                                                 @GetStatusName(rev.Durum)
                                                                             </span>
                                                                         </td>
-                                                                        <td style="text-align:right;">@rev.NetTutar.ToString("N2") @rev.Para</td>
-                                                                        <td>
-                                                                            <span class="yl-chip @GetStandingChipClass(rev.Puan)" style="font-size:0.7rem;">@rev.Puan</span>
+                                                                        <td class="quote-amount-cell">
+                                                                            <span class="quote-amount">@rev.NetTutar.ToString("N2")</span>
+                                                                            <span class="quote-currency">@rev.Para</span>
                                                                         </td>
-                                                                        <td style="font-size:0.75rem; color:var(--yl-text-light);">@rev.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
                                                                         <td>
-                                                                            <div style="display:flex;gap:4px;align-items:center;">
+                                                                            <span class="yl-chip @GetStandingChipClass(rev.Puan)">@rev.Puan</span>
+                                                                        </td>
+                                                                        <td class="rev-meta-cell">@rev.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                                                                        <td>
+                                                                            <div class="quote-row-actions" style="opacity:1;">
                                                                                 <button class="btn-expand" title="Duzenle" @onclick="() => EditQuote(rev.Id)">
                                                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:13px;height:13px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                                                 </button>
@@ -239,10 +243,9 @@
                     </tbody>
                 </table>
             </div>
-            
-            <div style="padding: 12px 14px; border-top: 1px solid var(--yl-border); font-size: 0.8rem; color: var(--yl-text-light); background: #fbfcfe; display: flex; justify-content: space-between;">
+
+            <div class="quote-grid-footer">
                 <span>Toplam @(quotes?.Count ?? 0) kayit gosteriliyor.</span>
-                <span>YALCINDORSE ERP v2.0 MAUI</span>
             </div>
         </div>
     }
@@ -378,7 +381,6 @@
         {
             await QuoteService.TransitionStatusAsync(quoteId, newStatus);
             await LoadQuotesAsync();
-            // Revizyonlari yenile
             var quote = quotes?.FirstOrDefault(q => q.Id == quoteId);
             if (quote != null && !string.IsNullOrEmpty(quote.TeklifNo))
             {
@@ -403,7 +405,6 @@
         {
             var newId = await QuoteService.CreateRevisionAsync(quoteId);
             await LoadQuotesAsync();
-            // Yeni revizyonu expand et
             expandedQuoteId = newId;
             var newQuote = quotes?.FirstOrDefault(q => q.Id == newId);
             if (newQuote != null && !string.IsNullOrEmpty(newQuote.TeklifNo))
