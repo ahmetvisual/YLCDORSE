@@ -158,37 +158,73 @@
                                             <div class="quote-detail-wrapper">
                                                 @if (isDetailsLoading)
                                                 {
-                                                    <div style="padding: 10px; color: var(--yl-text-light); font-size: 0.8rem;">Kalemler yukleniyor...</div>
-                                                }
-                                                else if (expandedItems == null || !expandedItems.Any())
-                                                {
-                                                    <div style="padding: 10px; color: var(--yl-text-light); font-size: 0.8rem;">Bu teklife ait kaydedilmis kalem bulunamadi.</div>
+                                                    <div style="padding: 10px; color: var(--yl-text-light); font-size: 0.8rem;">Revizyonlar yukleniyor...</div>
                                                 }
                                                 else
                                                 {
-                                                    <table class="detail-table">
-                                                        <thead>
-                                                            <tr>
-                                                                <th style="width: 50px; text-align: center;">Sira</th>
-                                                                <th>Aciklama (Kalem Detayi)</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach (var item in expandedItems)
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--yl-border);">
+                                                        <span style="font-weight:600; font-size:0.82rem; color:var(--yl-primary);">
+                                                            Revizyonlar - @quote.TeklifNo
+                                                        </span>
+                                                        <div style="display:flex; gap:6px;">
+                                                            @{ var transitions = GetAvailableTransitions(quote.Durum); }
+                                                            @foreach (var tr in transitions)
                                                             {
-                                                                <tr class="@(item.BaslikMi ? "header-row" : "")">
-                                                                    <td style="text-align: center;">@item.SiraNo</td>
-                                                                    <td>
-                                                                        @if (item.BaslikMi) {
-                                                                            <strong>@item.Aciklama</strong>
-                                                                        } else {
-                                                                            @item.Aciklama
-                                                                        }
-                                                                    </td>
-                                                                </tr>
+                                                                <button class="btn-transition @tr.CssClass" @onclick="() => ChangeStatusAsync(quote.Id, tr.NewStatus)" disabled="@isTransitioning">
+                                                                    @tr.Label
+                                                                </button>
                                                             }
-                                                        </tbody>
-                                                    </table>
+                                                            <button class="btn-transition btn-revize" @onclick="() => RevizeAsync(quote.Id)" disabled="@isTransitioning" title="Yeni revizyon olustur">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:3px;vertical-align:text-bottom;"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                                Revize Et
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    @if (expandedRevisions == null || !expandedRevisions.Any())
+                                                    {
+                                                        <div style="padding: 10px; color: var(--yl-text-light); font-size: 0.8rem;">Revizyon kaydi bulunamadi.</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <table class="detail-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style="width:55px; text-align:center;">Rev</th>
+                                                                    <th>Tarih</th>
+                                                                    <th>Durum</th>
+                                                                    <th>Net Tutar</th>
+                                                                    <th>Puan</th>
+                                                                    <th>Olusturma</th>
+                                                                    <th style="width:70px;">Isl.</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach (var rev in expandedRevisions)
+                                                                {
+                                                                    <tr class="@(rev.Id == quote.Id ? "active-rev-row" : "")">
+                                                                        <td style="text-align:center; font-weight:600;">@rev.Rev</td>
+                                                                        <td>@rev.TalepTarihi.ToString("dd.MM.yyyy")</td>
+                                                                        <td>
+                                                                            <span class="yl-chip @GetStatusChipClass(rev.Durum)" style="font-size:0.7rem;">
+                                                                                @GetStatusName(rev.Durum)
+                                                                            </span>
+                                                                        </td>
+                                                                        <td style="text-align:right;">@rev.NetTutar.ToString("N2") @rev.Para</td>
+                                                                        <td>
+                                                                            <span class="yl-chip @GetStandingChipClass(rev.Puan)" style="font-size:0.7rem;">@rev.Puan</span>
+                                                                        </td>
+                                                                        <td style="font-size:0.75rem; color:var(--yl-text-light);">@rev.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                                                                        <td style="display:flex;gap:4px;align-items:center;">
+                                                                            <button class="btn-expand" title="Duzenle" @onclick="() => EditQuote(rev.Id)">
+                                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:13px;height:13px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    }
                                                 }
                                             </div>
                                         </td>
@@ -214,7 +250,8 @@
     private string? errorMessage;
 
     private List<QuoteListItemModel>? quotes;
-    private List<QuoteItemModel>? expandedItems;
+    private List<QuoteListItemModel>? expandedRevisions;
+    private bool isTransitioning = false;
 
     private string searchQuery = "";
     private string selectedStatus = "";
@@ -270,22 +307,26 @@
     {
         if (expandedQuoteId == quoteId)
         {
-            expandedQuoteId = 0; // Collapse
+            expandedQuoteId = 0;
         }
         else
         {
-            expandedQuoteId = quoteId; // Expand
+            expandedQuoteId = quoteId;
             isDetailsLoading = true;
-            expandedItems = null; // Clear old
+            expandedRevisions = null;
             StateHasChanged();
 
             try
             {
-                expandedItems = await QuoteService.GetQuoteItemsAsync(quoteId);
+                var quote = quotes?.FirstOrDefault(q => q.Id == quoteId);
+                if (quote != null && !string.IsNullOrEmpty(quote.TeklifNo))
+                {
+                    expandedRevisions = await QuoteService.GetRevisionsByTeklifNoAsync(quote.TeklifNo);
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Error] Loading Items: {ex.Message}");
+                Console.WriteLine($"[Error] Loading Revisions: {ex.Message}");
             }
             finally
             {
@@ -323,6 +364,73 @@
         {
             errorMessage = $"Kopyalama hatasi: {ex.Message}";
         }
+    }
+
+    private async Task ChangeStatusAsync(int quoteId, string newStatus)
+    {
+        isTransitioning = true;
+        StateHasChanged();
+        try
+        {
+            await QuoteService.TransitionStatusAsync(quoteId, newStatus);
+            await LoadQuotesAsync();
+            // Revizyonlari yenile
+            var quote = quotes?.FirstOrDefault(q => q.Id == quoteId);
+            if (quote != null && !string.IsNullOrEmpty(quote.TeklifNo))
+            {
+                expandedRevisions = await QuoteService.GetRevisionsByTeklifNoAsync(quote.TeklifNo);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Durum degisikligi hatasi: {ex.Message}";
+        }
+        finally
+        {
+            isTransitioning = false;
+        }
+    }
+
+    private async Task RevizeAsync(int quoteId)
+    {
+        isTransitioning = true;
+        StateHasChanged();
+        try
+        {
+            var newId = await QuoteService.CreateRevisionAsync(quoteId);
+            await LoadQuotesAsync();
+            // Yeni revizyonu expand et
+            expandedQuoteId = newId;
+            var newQuote = quotes?.FirstOrDefault(q => q.Id == newId);
+            if (newQuote != null && !string.IsNullOrEmpty(newQuote.TeklifNo))
+            {
+                expandedRevisions = await QuoteService.GetRevisionsByTeklifNoAsync(newQuote.TeklifNo);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Revize hatasi: {ex.Message}";
+        }
+        finally
+        {
+            isTransitioning = false;
+        }
+    }
+
+    private record StatusTransition(string Label, string NewStatus, string CssClass);
+
+    private List<StatusTransition> GetAvailableTransitions(string currentStatus)
+    {
+        return currentStatus switch
+        {
+            "Draft" => new() { new("Gonder", "Sent", "btn-ts-sent") },
+            "Sent" => new() { new("Onaya Sun", "WaitingApproval", "btn-ts-waiting"), new("Siparis", "ORDER", "btn-ts-order") },
+            "WaitingApproval" => new() { new("Onayla", "Approved", "btn-ts-approved"), new("Reddet", "Rejected", "btn-ts-rejected") },
+            "Approved" => new() { new("Siparis", "ORDER", "btn-ts-order") },
+            "OPEN" => new() { new("Siparis", "ORDER", "btn-ts-order"), new("Kapat", "CLOSED", "btn-ts-closed") },
+            "ORDER" => new() { new("Kapat", "CLOSED", "btn-ts-closed") },
+            _ => new()
+        };
     }
 
     // --- Helpers

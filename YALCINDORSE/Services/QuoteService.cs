@@ -482,6 +482,126 @@ namespace YALCINDORSE.Services
             return newId;
         }
 
+        public async Task<List<QuoteListItemModel>> GetRevisionsByTeklifNoAsync(string teklifNo)
+        {
+            var items = new List<QuoteListItemModel>();
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            const string sql = """
+                SELECT
+                    q."Id",
+                    q."TeklifNo",
+                    c."Title"               AS "Musteri",
+                    cc."ContactName"        AS "Ilgili",
+                    u."FullName"            AS "Satici",
+                    q."Durum",
+                    q."Puan",
+                    q."Dil",
+                    q."ParaBirimi"          AS "Para",
+                    q."SatisTipi",
+                    q."Kaynak",
+                    q."TalepTarihi",
+                    q."GecerlilikTarihi",
+                    q."NetTutar",
+                    q."RevizyonNo"          AS "Rev",
+                    q."OlusturmaTarihi",
+                    q."Notlar"
+                FROM "YLTeklifler" q
+                LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
+                LEFT JOIN "YLCustomerContacts" cc ON cc."Id" = q."IlgiliKisiId"
+                LEFT JOIN "YLUsers" u ON u."Id" = q."SaticiId"
+                WHERE q."TeklifNo" = @teklifNo
+                ORDER BY q."RevizyonNo" DESC;
+                """;
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("teklifNo", teklifNo);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                items.Add(new QuoteListItemModel
+                {
+                    Id = reader.GetInt32(0),
+                    TeklifNo = reader.GetString(1),
+                    Musteri = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                    Ilgili = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    Satici = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    Durum = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                    Puan = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                    Dil = reader.IsDBNull(7) ? "" : reader.GetString(7),
+                    Para = reader.IsDBNull(8) ? "" : reader.GetString(8),
+                    SatisTipi = reader.IsDBNull(9) ? "" : reader.GetString(9),
+                    Kaynak = reader.IsDBNull(10) ? "" : reader.GetString(10),
+                    TalepTarihi = reader.GetDateTime(11),
+                    GecerlilikTarihi = reader.GetDateTime(12),
+                    NetTutar = reader.IsDBNull(13) ? 0 : reader.GetDecimal(13),
+                    Rev = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
+                    OlusturmaTarihi = reader.IsDBNull(15) ? DateTime.Now : reader.GetDateTime(15),
+                    Notlar = reader.IsDBNull(16) ? null : reader.GetString(16)
+                });
+            }
+
+            return items;
+        }
+
+        public async Task<int> CreateRevisionAsync(int sourceQuoteId)
+        {
+            var source = await GetQuoteByIdAsync(sourceQuoteId);
+            if (source == null) throw new Exception("Kaynak teklif bulunamadi.");
+
+            // Ayni TeklifNo ile max RevizyonNo bul
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            const string maxRevSql = """SELECT COALESCE(MAX("RevizyonNo"), 0) FROM "YLTeklifler" WHERE "TeklifNo" = @teklifNo;""";
+            using var maxCmd = new NpgsqlCommand(maxRevSql, conn);
+            maxCmd.Parameters.AddWithValue("teklifNo", source.TeklifNo);
+            var maxRev = Convert.ToInt32(await maxCmd.ExecuteScalarAsync());
+
+            var teklifNo = source.TeklifNo;
+            source.Id = 0;
+            source.TeklifNo = teklifNo; // Ayni TeklifNo
+            source.RevizyonNo = maxRev + 1;
+            source.Durum = "Draft";
+            source.SiparisNo = null;
+            source.TalepTarihi = DateTime.Today;
+            source.OlusturmaTarihi = DateTime.Now;
+
+            var newId = await CreateDraftQuoteAsync(source);
+
+            // TeklifNo'yu geri yaz (CreateDraftQuoteAsync bos atiyordu)
+            const string fixSql = """UPDATE "YLTeklifler" SET "TeklifNo" = @teklifNo, "RevizyonNo" = @rev WHERE "Id" = @id;""";
+            using var fixConn = _db.GetConnection();
+            await fixConn.OpenAsync();
+            using var fixCmd = new NpgsqlCommand(fixSql, fixConn);
+            fixCmd.Parameters.AddWithValue("teklifNo", teklifNo);
+            fixCmd.Parameters.AddWithValue("rev", maxRev + 1);
+            fixCmd.Parameters.AddWithValue("id", newId);
+            await fixCmd.ExecuteNonQueryAsync();
+
+            // Kalemleri kopyala
+            var items = await GetQuoteItemsAsync(sourceQuoteId);
+            var idMap = new Dictionary<int, int>();
+
+            foreach (var item in items)
+            {
+                var oldId = item.Id;
+                item.Id = 0;
+                item.TeklifId = newId;
+                var origParent = item.UstKalemId;
+                if (origParent.HasValue && idMap.ContainsKey(origParent.Value))
+                    item.UstKalemId = idMap[origParent.Value];
+                else
+                    item.UstKalemId = null;
+
+                await SaveQuoteItemAsync(item);
+                idMap[oldId] = item.Id;
+            }
+
+            return newId;
+        }
+
         public async Task<string> TransitionStatusAsync(int quoteId, string newStatus)
         {
             using var conn = _db.GetConnection();
