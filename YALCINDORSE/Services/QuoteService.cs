@@ -497,12 +497,19 @@ namespace YALCINDORSE.Services
             return newId;
         }
 
+        private bool _revTableEnsured;
+
         public async Task EnsureRevisionTableAsync()
         {
+            if (_revTableEnsured) return;
+
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+
+            // Tabloyu sil ve yeniden olustur (gelistirme asamasi)
             const string sql = """
-                CREATE TABLE IF NOT EXISTS "YLTeklifRevizyonlari" (
+                DROP TABLE IF EXISTS "YLTeklifRevizyonlari";
+                CREATE TABLE "YLTeklifRevizyonlari" (
                     "Id" SERIAL PRIMARY KEY,
                     "TeklifId" INTEGER NOT NULL REFERENCES "YLTeklifler"("Id") ON DELETE CASCADE,
                     "RevizyonNo" INTEGER NOT NULL DEFAULT 0,
@@ -513,6 +520,7 @@ namespace YALCINDORSE.Services
                 """;
             using var cmd = new NpgsqlCommand(sql, conn);
             await cmd.ExecuteNonQueryAsync();
+            _revTableEnsured = true;
         }
 
         public async Task<List<QuoteRevisionModel>> GetRevisionsAsync(int quoteId)
