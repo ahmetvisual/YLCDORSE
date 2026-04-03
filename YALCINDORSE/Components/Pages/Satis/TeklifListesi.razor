@@ -64,13 +64,24 @@
             Yukleniyor...
         </div>
     }
-    else if (errorMessage != null)
+    else if (errorMessage != null || successMessage != null)
     {
-        <div class="quote-error-state">
-            Hata: @errorMessage
-        </div>
+        @if (successMessage != null)
+        {
+            <div class="quote-success-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                @successMessage
+            </div>
+        }
+        @if (errorMessage != null)
+        {
+            <div class="quote-error-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Hata: @errorMessage
+            </div>
+        }
     }
-    else
+    @if (!isLoading && errorMessage == null)
     {
         <div class="quote-grid-container">
             <div class="quote-table-wrapper">
@@ -234,6 +245,7 @@
     private bool isLoading = true;
     private bool isDetailsLoading = false;
     private string? errorMessage;
+    private string? successMessage;
 
     private List<QuoteListItemModel>? quotes;
     private List<QuoteRevisionModel>? expandedRevisions;
@@ -259,6 +271,7 @@
     {
         isLoading = true;
         errorMessage = null;
+        successMessage = null;
         StateHasChanged();
 
         try
@@ -341,6 +354,7 @@
         {
             var newId = await QuoteService.CopyQuoteAsync(quoteId);
             await LoadQuotesAsync();
+            successMessage = "Teklif basariyla kopyalandi.";
         }
         catch (Exception ex)
         {
@@ -357,6 +371,8 @@
             await QuoteService.TransitionStatusAsync(quoteId, newStatus);
             await LoadQuotesAsync();
             expandedRevisions = await QuoteService.GetRevisionsAsync(quoteId);
+            var statusName = GetStatusName(newStatus);
+            successMessage = $"Durum guncellendi: {statusName}";
         }
         catch (Exception ex)
         {
