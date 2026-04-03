@@ -302,8 +302,15 @@
 }
 
 .rev-meta-cell {
-    font-size: 0.73rem;
+    font-size: 0.72rem;
     color: #9ca3af;
+    white-space: nowrap;
+}
+
+.rev-detail-cell {
+    font-size: 0.73rem;
+    color: var(--yl-text);
+    line-height: 1.35;
 }
 
 /* === TRANSITION BUTTONS === */

@@ -85,6 +85,16 @@ namespace YALCINDORSE.Services
         public string KalemTipi { get; set; } = "ITEM"; // HEADER, ITEM, SUB_ITEM, OPTION
     }
 
+    public class QuoteRevisionModel
+    {
+        public int Id { get; set; }
+        public int TeklifId { get; set; }
+        public int RevizyonNo { get; set; }
+        public string DegisiklikDetayi { get; set; } = "";
+        public DateTime Tarih { get; set; }
+        public string Yapan { get; set; } = "";
+    }
+
     public class QuoteService
     {
         private readonly DatabaseHelper _db;
@@ -283,7 +293,12 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
 
             var idResult = await cmd.ExecuteScalarAsync();
-            return Convert.ToInt32(idResult);
+            var newId = Convert.ToInt32(idResult);
+
+            // Rev 0 kaydi olustur
+            await CreateRevisionEntryAsync(newId, 0, "Ilk teklif olusturuldu");
+
+            return newId;
         }
 
         public async Task SaveQuoteItemAsync(QuoteItemModel item)
@@ -482,132 +497,162 @@ namespace YALCINDORSE.Services
             return newId;
         }
 
-        public async Task<List<QuoteListItemModel>> GetRevisionsByTeklifNoAsync(string teklifNo)
+        public async Task EnsureRevisionTableAsync()
         {
-            var items = new List<QuoteListItemModel>();
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            const string sql = """
+                CREATE TABLE IF NOT EXISTS "YLTeklifRevizyonlari" (
+                    "Id" SERIAL PRIMARY KEY,
+                    "TeklifId" INTEGER NOT NULL REFERENCES "YLTeklifler"("Id") ON DELETE CASCADE,
+                    "RevizyonNo" INTEGER NOT NULL DEFAULT 0,
+                    "DegisiklikDetayi" TEXT NOT NULL DEFAULT '',
+                    "Tarih" TIMESTAMP NOT NULL DEFAULT NOW(),
+                    "Yapan" VARCHAR(200) NOT NULL DEFAULT ''
+                );
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<QuoteRevisionModel>> GetRevisionsAsync(int quoteId)
+        {
+            await EnsureRevisionTableAsync();
+            var items = new List<QuoteRevisionModel>();
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
 
             const string sql = """
-                SELECT
-                    q."Id",
-                    q."TeklifNo",
-                    c."Title"               AS "Musteri",
-                    cc."ContactName"        AS "Ilgili",
-                    u."FullName"            AS "Satici",
-                    q."Durum",
-                    q."Puan",
-                    q."Dil",
-                    q."ParaBirimi"          AS "Para",
-                    q."SatisTipi",
-                    q."Kaynak",
-                    q."TalepTarihi",
-                    q."GecerlilikTarihi",
-                    q."NetTutar",
-                    q."RevizyonNo"          AS "Rev",
-                    q."OlusturmaTarihi",
-                    q."Notlar"
-                FROM "YLTeklifler" q
-                LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
-                LEFT JOIN "YLCustomerContacts" cc ON cc."Id" = q."IlgiliKisiId"
-                LEFT JOIN "YLUsers" u ON u."Id" = q."SaticiId"
-                WHERE q."TeklifNo" = @teklifNo
-                ORDER BY q."RevizyonNo" DESC;
+                SELECT "Id", "TeklifId", "RevizyonNo", "DegisiklikDetayi", "Tarih", "Yapan"
+                FROM "YLTeklifRevizyonlari"
+                WHERE "TeklifId" = @quoteId
+                ORDER BY "RevizyonNo" ASC;
                 """;
 
             using var cmd = new NpgsqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("teklifNo", teklifNo);
+            cmd.Parameters.AddWithValue("quoteId", quoteId);
 
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                items.Add(new QuoteListItemModel
+                items.Add(new QuoteRevisionModel
                 {
                     Id = reader.GetInt32(0),
-                    TeklifNo = reader.GetString(1),
-                    Musteri = reader.IsDBNull(2) ? "" : reader.GetString(2),
-                    Ilgili = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    Satici = reader.IsDBNull(4) ? null : reader.GetString(4),
-                    Durum = reader.IsDBNull(5) ? "" : reader.GetString(5),
-                    Puan = reader.IsDBNull(6) ? "" : reader.GetString(6),
-                    Dil = reader.IsDBNull(7) ? "" : reader.GetString(7),
-                    Para = reader.IsDBNull(8) ? "" : reader.GetString(8),
-                    SatisTipi = reader.IsDBNull(9) ? "" : reader.GetString(9),
-                    Kaynak = reader.IsDBNull(10) ? "" : reader.GetString(10),
-                    TalepTarihi = reader.GetDateTime(11),
-                    GecerlilikTarihi = reader.GetDateTime(12),
-                    NetTutar = reader.IsDBNull(13) ? 0 : reader.GetDecimal(13),
-                    Rev = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
-                    OlusturmaTarihi = reader.IsDBNull(15) ? DateTime.Now : reader.GetDateTime(15),
-                    Notlar = reader.IsDBNull(16) ? null : reader.GetString(16)
+                    TeklifId = reader.GetInt32(1),
+                    RevizyonNo = reader.GetInt32(2),
+                    DegisiklikDetayi = reader.GetString(3),
+                    Tarih = reader.GetDateTime(4),
+                    Yapan = reader.IsDBNull(5) ? "" : reader.GetString(5)
                 });
             }
-
             return items;
         }
 
-        public async Task<int> CreateRevisionAsync(int sourceQuoteId)
+        public async Task CreateRevisionEntryAsync(int quoteId, int revNo, string detail)
         {
-            var source = await GetQuoteByIdAsync(sourceQuoteId);
-            if (source == null) throw new Exception("Kaynak teklif bulunamadi.");
-
-            // Ayni TeklifNo ile max RevizyonNo bul
+            await EnsureRevisionTableAsync();
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
-            const string maxRevSql = """SELECT COALESCE(MAX("RevizyonNo"), 0) FROM "YLTeklifler" WHERE "TeklifNo" = @teklifNo;""";
-            using var maxCmd = new NpgsqlCommand(maxRevSql, conn);
-            maxCmd.Parameters.AddWithValue("teklifNo", source.TeklifNo);
-            var maxRev = Convert.ToInt32(await maxCmd.ExecuteScalarAsync());
 
-            var teklifNo = source.TeklifNo;
-            source.Id = 0;
-            source.TeklifNo = teklifNo; // Ayni TeklifNo
-            source.RevizyonNo = maxRev + 1;
-            source.Durum = "Draft";
-            source.SiparisNo = null;
-            source.TalepTarihi = DateTime.Today;
-            source.OlusturmaTarihi = DateTime.Now;
+            const string sql = """
+                INSERT INTO "YLTeklifRevizyonlari" ("TeklifId", "RevizyonNo", "DegisiklikDetayi", "Tarih", "Yapan")
+                VALUES (@quoteId, @revNo, @detail, NOW(), @yapan);
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("quoteId", quoteId);
+            cmd.Parameters.AddWithValue("revNo", revNo);
+            cmd.Parameters.AddWithValue("detail", detail);
+            cmd.Parameters.AddWithValue("yapan", _auth.CurrentUser ?? "");
+            await cmd.ExecuteNonQueryAsync();
+        }
 
-            var newId = await CreateDraftQuoteAsync(source);
+        public async Task UpdateQuoteWithRevisionAsync(QuoteModel newQuote)
+        {
+            var oldQuote = await GetQuoteByIdAsync(newQuote.Id);
+            if (oldQuote == null) throw new Exception("Teklif bulunamadi.");
 
-            // TeklifNo'yu geri yaz (CreateDraftQuoteAsync bos atiyordu)
-            const string fixSql = """UPDATE "YLTeklifler" SET "TeklifNo" = @teklifNo, "RevizyonNo" = @rev WHERE "Id" = @id;""";
-            using var fixConn = _db.GetConnection();
-            await fixConn.OpenAsync();
-            using var fixCmd = new NpgsqlCommand(fixSql, fixConn);
-            fixCmd.Parameters.AddWithValue("teklifNo", teklifNo);
-            fixCmd.Parameters.AddWithValue("rev", maxRev + 1);
-            fixCmd.Parameters.AddWithValue("id", newId);
-            await fixCmd.ExecuteNonQueryAsync();
+            // Degisiklikleri tespit et
+            var changes = new List<string>();
+            CompareField(changes, "Musteri", oldQuote.MusteriId, newQuote.MusteriId);
+            CompareField(changes, "Ilgili Kisi", oldQuote.IlgiliKisiId, newQuote.IlgiliKisiId);
+            CompareField(changes, "Satis Tipi", oldQuote.SatisTipi, newQuote.SatisTipi);
+            CompareField(changes, "Kaynak", oldQuote.Kaynak, newQuote.Kaynak);
+            CompareField(changes, "Dil", oldQuote.Dil, newQuote.Dil);
+            CompareField(changes, "Para Birimi", oldQuote.ParaBirimi, newQuote.ParaBirimi);
+            CompareField(changes, "Puan", oldQuote.Puan, newQuote.Puan);
+            CompareField(changes, "Talep Tarihi", oldQuote.TalepTarihi.ToString("dd.MM.yyyy"), newQuote.TalepTarihi.ToString("dd.MM.yyyy"));
+            CompareField(changes, "Gecerlilik Tarihi", oldQuote.GecerlilikTarihi.ToString("dd.MM.yyyy"), newQuote.GecerlilikTarihi.ToString("dd.MM.yyyy"));
+            CompareField(changes, "Satici", oldQuote.SaticiId, newQuote.SaticiId);
+            CompareField(changes, "Notlar", oldQuote.Notlar ?? "", newQuote.Notlar ?? "");
+            CompareField(changes, "Net Tutar", oldQuote.NetTutar, newQuote.NetTutar);
+            CompareField(changes, "Toplam Tutar", oldQuote.ToplamTutar, newQuote.ToplamTutar);
+            CompareField(changes, "Indirim %", oldQuote.IndirimYuzde, newQuote.IndirimYuzde);
+            CompareField(changes, "Teklif Kanali", oldQuote.TeklifKanali ?? "", newQuote.TeklifKanali ?? "");
+            CompareField(changes, "Teklif Tipi", oldQuote.TeklifTipi ?? "", newQuote.TeklifTipi ?? "");
+            CompareField(changes, "Aks Sayisi", oldQuote.AksSayisi, newQuote.AksSayisi);
+            CompareField(changes, "Odeme Sistemi", oldQuote.OdemeSistemi ?? "", newQuote.OdemeSistemi ?? "");
+            CompareField(changes, "Iskonto Aciklama", oldQuote.IskontoAciklama ?? "", newQuote.IskontoAciklama ?? "");
+            CompareField(changes, "KDV Dahil", oldQuote.KdvDahilMi, newQuote.KdvDahilMi);
+            CompareField(changes, "Ihracat", oldQuote.IhracatMi, newQuote.IhracatMi);
+            CompareField(changes, "Teslimat Haftasi", oldQuote.TeslimatHaftasi ?? "", newQuote.TeslimatHaftasi ?? "");
+            CompareField(changes, "Teslimat Yeri", oldQuote.TeslimatYeri ?? "", newQuote.TeslimatYeri ?? "");
 
-            // Kalemleri kopyala
-            var items = await GetQuoteItemsAsync(sourceQuoteId);
-            var idMap = new Dictionary<int, int>();
-
-            foreach (var item in items)
+            if (changes.Count > 0)
             {
-                var oldId = item.Id;
-                item.Id = 0;
-                item.TeklifId = newId;
-                var origParent = item.UstKalemId;
-                if (origParent.HasValue && idMap.ContainsKey(origParent.Value))
-                    item.UstKalemId = idMap[origParent.Value];
-                else
-                    item.UstKalemId = null;
+                // RevizyonNo artir
+                newQuote.RevizyonNo = oldQuote.RevizyonNo + 1;
 
-                await SaveQuoteItemAsync(item);
-                idMap[oldId] = item.Id;
+                // Guncelle (RevizyonNo ile birlikte)
+                await UpdateQuoteAsync(newQuote);
+                await IncrementRevisionNoAsync(newQuote.Id, newQuote.RevizyonNo);
+
+                // Revizyon kaydi olustur
+                var detail = string.Join("; ", changes);
+                await CreateRevisionEntryAsync(newQuote.Id, newQuote.RevizyonNo, detail);
             }
+            else
+            {
+                // Degisiklik yok, sadece guncelle
+                await UpdateQuoteAsync(newQuote);
+            }
+        }
 
-            return newId;
+        private async Task IncrementRevisionNoAsync(int quoteId, int newRevNo)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            const string sql = """UPDATE "YLTeklifler" SET "RevizyonNo" = @rev WHERE "Id" = @id;""";
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("rev", newRevNo);
+            cmd.Parameters.AddWithValue("id", quoteId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        private static void CompareField<T>(List<string> changes, string fieldName, T? oldVal, T? newVal)
+        {
+            var oldStr = oldVal?.ToString() ?? "";
+            var newStr = newVal?.ToString() ?? "";
+            if (oldStr != newStr)
+            {
+                if (string.IsNullOrEmpty(oldStr))
+                    changes.Add($"{fieldName} eklendi: {newStr}");
+                else if (string.IsNullOrEmpty(newStr))
+                    changes.Add($"{fieldName} kaldirildi");
+                else
+                    changes.Add($"{fieldName}: {oldStr} -> {newStr}");
+            }
         }
 
         public async Task<string> TransitionStatusAsync(int quoteId, string newStatus)
         {
+            // Onceki durumu al
+            var oldQuote = await GetQuoteByIdAsync(quoteId);
+            var oldStatus = oldQuote?.Durum ?? "";
+            var currentRev = oldQuote?.RevizyonNo ?? 0;
+
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
 
-            // ORDER durumuna geciste siparis numarasi uret
             string? siparisNo = null;
             if (newStatus == "ORDER")
             {
@@ -618,7 +663,7 @@ namespace YALCINDORSE.Services
 
                 const string updateSql = """
                     UPDATE "YLTeklifler"
-                    SET "Durum" = @durum, "SiparisNo" = @siparisNo
+                    SET "Durum" = @durum, "SiparisNo" = @siparisNo, "RevizyonNo" = "RevizyonNo" + 1
                     WHERE "Id" = @id;
                     """;
                 using var cmd = new NpgsqlCommand(updateSql, conn);
@@ -631,7 +676,7 @@ namespace YALCINDORSE.Services
             {
                 const string updateSql = """
                     UPDATE "YLTeklifler"
-                    SET "Durum" = @durum
+                    SET "Durum" = @durum, "RevizyonNo" = "RevizyonNo" + 1
                     WHERE "Id" = @id;
                     """;
                 using var cmd = new NpgsqlCommand(updateSql, conn);
@@ -639,6 +684,11 @@ namespace YALCINDORSE.Services
                 cmd.Parameters.AddWithValue("id", quoteId);
                 await cmd.ExecuteNonQueryAsync();
             }
+
+            // Durum gecisi revizyon kaydi
+            var detail = $"Durum degisti: {oldStatus} -> {newStatus}";
+            if (siparisNo != null) detail += $" (Siparis No: {siparisNo})";
+            await CreateRevisionEntryAsync(quoteId, currentRev + 1, detail);
 
             return siparisNo ?? "";
         }

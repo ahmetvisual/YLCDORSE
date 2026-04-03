@@ -654,7 +654,7 @@
             {
                 // Mevcut teklifi guncelle
                 quoteId = quote.Id;
-                await QuoteSvc.UpdateQuoteAsync(quote);
+                await QuoteSvc.UpdateQuoteWithRevisionAsync(quote);
 
                 // Eski kalemleri sil, yeniden kaydet
                 await QuoteSvc.DeleteQuoteItemsByQuoteIdAsync(quoteId);

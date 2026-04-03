@@ -167,7 +167,7 @@
                                                 {
                                                     <div class="quote-detail-header">
                                                         <span class="quote-detail-title">
-                                                            Revizyonlar - @quote.TeklifNo
+                                                            Degisiklik Gecmisi - @quote.TeklifNo
                                                         </span>
                                                         <div class="quote-detail-actions">
                                                             @{ var transitions = GetAvailableTransitions(quote.Durum); }
@@ -177,8 +177,8 @@
                                                                     @tr.Label
                                                                 </button>
                                                             }
-                                                            <button class="btn-transition btn-revize" @onclick="() => RevizeAsync(quote.Id)" disabled="@isTransitioning" title="Yeni revizyon olustur">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:3px;vertical-align:text-bottom;"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                            <button class="btn-transition btn-revize" @onclick="() => EditQuote(quote.Id)" title="Teklifi duzenle (revizyon olusturur)">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:3px;vertical-align:text-bottom;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                                 Revize Et
                                                             </button>
                                                         </div>
@@ -186,48 +186,27 @@
 
                                                     @if (expandedRevisions == null || !expandedRevisions.Any())
                                                     {
-                                                        <div class="quote-detail-loading">Revizyon kaydi bulunamadi.</div>
+                                                        <div class="quote-detail-loading">Henuz revizyon kaydi yok.</div>
                                                     }
                                                     else
                                                     {
                                                         <table class="detail-table">
                                                             <thead>
                                                                 <tr>
-                                                                    <th style="width:50px; text-align:center;">Rev</th>
-                                                                    <th>Tarih</th>
-                                                                    <th>Durum</th>
-                                                                    <th>Net Tutar</th>
-                                                                    <th>Puan</th>
-                                                                    <th>Olusturma</th>
-                                                                    <th style="width:60px;">Isl.</th>
+                                                                    <th style="width:45px; text-align:center;">Rev</th>
+                                                                    <th style="width:120px;">Tarih</th>
+                                                                    <th>Degisiklik Detayi</th>
+                                                                    <th style="width:100px;">Yapan</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 @foreach (var rev in expandedRevisions)
                                                                 {
-                                                                    <tr class="@(rev.Id == quote.Id ? "active-rev-row" : "")">
-                                                                        <td class="rev-number-cell">@rev.Rev</td>
-                                                                        <td class="quote-date-cell">@rev.TalepTarihi.ToString("dd.MM.yyyy")</td>
-                                                                        <td>
-                                                                            <span class="yl-chip @GetStatusChipClass(rev.Durum)">
-                                                                                @GetStatusName(rev.Durum)
-                                                                            </span>
-                                                                        </td>
-                                                                        <td class="quote-amount-cell">
-                                                                            <span class="quote-amount">@rev.NetTutar.ToString("N2")</span>
-                                                                            <span class="quote-currency">@rev.Para</span>
-                                                                        </td>
-                                                                        <td>
-                                                                            <span class="yl-chip @GetStandingChipClass(rev.Puan)">@rev.Puan</span>
-                                                                        </td>
-                                                                        <td class="rev-meta-cell">@rev.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
-                                                                        <td>
-                                                                            <div class="quote-row-actions" style="opacity:1;">
-                                                                                <button class="btn-expand" title="Duzenle" @onclick="() => EditQuote(rev.Id)">
-                                                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:13px;height:13px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                                                                </button>
-                                                                            </div>
-                                                                        </td>
+                                                                    <tr>
+                                                                        <td class="rev-number-cell">@rev.RevizyonNo</td>
+                                                                        <td class="rev-meta-cell">@rev.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                                                                        <td class="rev-detail-cell">@rev.DegisiklikDetayi</td>
+                                                                        <td class="rev-meta-cell">@rev.Yapan</td>
                                                                     </tr>
                                                                 }
                                                             </tbody>
@@ -257,7 +236,7 @@
     private string? errorMessage;
 
     private List<QuoteListItemModel>? quotes;
-    private List<QuoteListItemModel>? expandedRevisions;
+    private List<QuoteRevisionModel>? expandedRevisions;
     private bool isTransitioning = false;
 
     private string searchQuery = "";
@@ -325,11 +304,7 @@
 
             try
             {
-                var quote = quotes?.FirstOrDefault(q => q.Id == quoteId);
-                if (quote != null && !string.IsNullOrEmpty(quote.TeklifNo))
-                {
-                    expandedRevisions = await QuoteService.GetRevisionsByTeklifNoAsync(quote.TeklifNo);
-                }
+                expandedRevisions = await QuoteService.GetRevisionsAsync(quoteId);
             }
             catch (Exception ex)
             {
@@ -381,40 +356,11 @@
         {
             await QuoteService.TransitionStatusAsync(quoteId, newStatus);
             await LoadQuotesAsync();
-            var quote = quotes?.FirstOrDefault(q => q.Id == quoteId);
-            if (quote != null && !string.IsNullOrEmpty(quote.TeklifNo))
-            {
-                expandedRevisions = await QuoteService.GetRevisionsByTeklifNoAsync(quote.TeklifNo);
-            }
+            expandedRevisions = await QuoteService.GetRevisionsAsync(quoteId);
         }
         catch (Exception ex)
         {
             errorMessage = $"Durum degisikligi hatasi: {ex.Message}";
-        }
-        finally
-        {
-            isTransitioning = false;
-        }
-    }
-
-    private async Task RevizeAsync(int quoteId)
-    {
-        isTransitioning = true;
-        StateHasChanged();
-        try
-        {
-            var newId = await QuoteService.CreateRevisionAsync(quoteId);
-            await LoadQuotesAsync();
-            expandedQuoteId = newId;
-            var newQuote = quotes?.FirstOrDefault(q => q.Id == newId);
-            if (newQuote != null && !string.IsNullOrEmpty(newQuote.TeklifNo))
-            {
-                expandedRevisions = await QuoteService.GetRevisionsByTeklifNoAsync(newQuote.TeklifNo);
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Revize hatasi: {ex.Message}";
         }
         finally
         {
