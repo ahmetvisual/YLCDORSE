@@ -1,4 +1,5 @@
 @using YALCINDORSE.Services
+@inject ArabaslikService ArabaslikSvc
 
 <div class="items-editor">
     <div class="items-toolbar">
@@ -7,7 +8,85 @@
         {
             <button class="wizard-btn" style="padding:5px 12px;font-size:0.78rem" @onclick="AddItem">+ Kalem Ekle</button>
         }
+        <div style="flex:1"></div>
+        <button class="wizard-btn ab-import-btn" style="padding:5px 12px;font-size:0.78rem" @onclick="ToggleArabaslikPanel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:3px;vertical-align:text-bottom;">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            Arabasliktan Ekle
+        </button>
     </div>
+
+    @* === ARABASLIK SECIM PANELI === *@
+    @if (showArabaslikPanel)
+    {
+        <div class="ab-import-panel">
+            <div class="ab-import-header">
+                <div class="ab-import-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;opacity:0.4;flex-shrink:0;">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" placeholder="Arabaslik grubu ara..." @bind="abSearchQuery" @bind:event="oninput" />
+                </div>
+                <button class="ab-import-close" @onclick="() => showArabaslikPanel = false" title="Kapat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div class="ab-import-list">
+                @if (isLoadingAb)
+                {
+                    <div class="ab-import-empty">Yukleniyor...</div>
+                }
+                else if (filteredGruplar == null || !filteredGruplar.Any())
+                {
+                    <div class="ab-import-empty">Arabaslik grubu bulunamadi.</div>
+                }
+                else
+                {
+                    @foreach (var g in filteredGruplar)
+                    {
+                        var isSelected = selectedAbIds.Contains(g.Id);
+                        <div class="ab-import-item @(isSelected ? "selected" : "")" @onclick="() => ToggleAbSelection(g.Id)">
+                            <div class="ab-import-check">
+                                @if (isSelected)
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;color:#059669;"><path d="M20 6L9 17l-5-5"/></svg>
+                                }
+                                else
+                                {
+                                    <div class="ab-import-checkbox-empty"></div>
+                                }
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="ab-import-name">@g.GrupAdi</div>
+                                @{ var enText = GetGrupLocalizedName(g); }
+                                @if (!string.IsNullOrEmpty(enText) && enText != g.GrupAdi)
+                                {
+                                    <div class="ab-import-sub">@enText</div>
+                                }
+                            </div>
+                            <span class="ab-import-badge">@(g.TablTipi == 1 ? "Tablo" : "Liste")</span>
+                        </div>
+                    }
+                }
+            </div>
+
+            @if (selectedAbIds.Count > 0)
+            {
+                <div class="ab-import-footer">
+                    <span class="ab-import-count">@selectedAbIds.Count grup secildi</span>
+                    <button class="wizard-btn wizard-btn-primary" style="padding:5px 14px;font-size:0.76rem;" @onclick="ImportSelectedArabasliklar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:3px;">
+                            <polyline points="22 2 13.5 15.5 8.5 10.5 2 22"/><polyline points="16 2 22 2 22 8"/>
+                        </svg>
+                        Kaleme Aktar
+                    </button>
+                </div>
+            }
+        </div>
+    }
 
     <div class="items-list">
         @if (Items.Count == 0)
@@ -89,8 +168,16 @@
 @code {
     [Parameter] public List<QuoteItemModel> Items { get; set; } = new();
     [Parameter] public EventCallback<List<QuoteItemModel>> ItemsChanged { get; set; }
+    [Parameter] public string Dil { get; set; } = "TR";
 
     private int nextTempId = -1;
+
+    // === Arabaslik Import State ===
+    private bool showArabaslikPanel = false;
+    private bool isLoadingAb = false;
+    private string abSearchQuery = "";
+    private List<ArabaslikGrupModel>? allGruplar;
+    private HashSet<int> selectedAbIds = new();
 
     private List<QuoteItemModel> GetOrderedItems()
     {
@@ -274,5 +361,121 @@
     private void NotifyChanged()
     {
         ItemsChanged.InvokeAsync(Items);
+    }
+
+    // ═══ ARABASLIK IMPORT ═══════════════════════════════════
+
+    private List<ArabaslikGrupModel> filteredGruplar =>
+        allGruplar == null ? new() :
+        string.IsNullOrWhiteSpace(abSearchQuery) ? allGruplar :
+        allGruplar.Where(g =>
+            g.GrupAdi.Contains(abSearchQuery, StringComparison.OrdinalIgnoreCase) ||
+            g.GrupAdi_EN.Contains(abSearchQuery, StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+
+    private async Task ToggleArabaslikPanel()
+    {
+        showArabaslikPanel = !showArabaslikPanel;
+        if (showArabaslikPanel && allGruplar == null)
+        {
+            isLoadingAb = true;
+            StateHasChanged();
+            try
+            {
+                allGruplar = await ArabaslikSvc.GetGruplarAsync();
+            }
+            catch { allGruplar = new(); }
+            finally { isLoadingAb = false; }
+        }
+        selectedAbIds.Clear();
+    }
+
+    private void ToggleAbSelection(int id)
+    {
+        if (!selectedAbIds.Remove(id))
+            selectedAbIds.Add(id);
+    }
+
+    private string GetGrupLocalizedName(ArabaslikGrupModel g) => Dil switch
+    {
+        "EN" => g.GrupAdi_EN,
+        "DE" => g.GrupAdi_DE,
+        "FR" => g.GrupAdi_FR,
+        "RU" => g.GrupAdi_RU,
+        "RO" => g.GrupAdi_RO,
+        "AR" => g.GrupAdi_AR,
+        _ => ""
+    };
+
+    private string GetDetayLocalizedText(ArabaslikDetayModel d) => Dil switch
+    {
+        "EN" when !string.IsNullOrEmpty(d.SatirMetni_EN) => d.SatirMetni_EN,
+        "DE" when !string.IsNullOrEmpty(d.SatirMetni_DE) => d.SatirMetni_DE,
+        "FR" when !string.IsNullOrEmpty(d.SatirMetni_FR) => d.SatirMetni_FR,
+        "RU" when !string.IsNullOrEmpty(d.SatirMetni_RU) => d.SatirMetni_RU,
+        "RO" when !string.IsNullOrEmpty(d.SatirMetni_RO) => d.SatirMetni_RO,
+        "AR" when !string.IsNullOrEmpty(d.SatirMetni_AR) => d.SatirMetni_AR,
+        _ => d.SatirMetni
+    };
+
+    private async Task ImportSelectedArabasliklar()
+    {
+        if (selectedAbIds.Count == 0) return;
+
+        var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
+
+        foreach (var grupId in selectedAbIds.OrderBy(id => allGruplar?.FindIndex(g => g.Id == id) ?? 0))
+        {
+            var grup = allGruplar?.FirstOrDefault(g => g.Id == grupId);
+            if (grup == null) continue;
+
+            maxSira += 10;
+
+            // Lokalize baslik
+            var headerText = Dil != "TR" ? GetGrupLocalizedName(grup) : "";
+            var displayName = !string.IsNullOrEmpty(headerText) ? headerText : grup.GrupAdi;
+
+            // HEADER olustur
+            var headerId = nextTempId--;
+            Items.Add(new QuoteItemModel
+            {
+                Id = headerId,
+                KalemTipi = "HEADER",
+                BaslikMi = true,
+                SiraNo = maxSira,
+                Aciklama = displayName,
+                UrunKodu = $"AB-{grup.Id}"
+            });
+
+            // Detaylari yukle ve ITEM olarak ekle
+            try
+            {
+                var detaylar = await ArabaslikSvc.GetDetaylarAsync(grupId);
+                int childSira = 0;
+                foreach (var d in detaylar)
+                {
+                    childSira += 10;
+                    var itemText = GetDetayLocalizedText(d);
+
+                    Items.Add(new QuoteItemModel
+                    {
+                        Id = nextTempId--,
+                        KalemTipi = "ITEM",
+                        UstKalemId = headerId,
+                        SiraNo = childSira,
+                        Aciklama = itemText,
+                        BirimFiyat = d.Fiyat,
+                        Miktar = d.Fiyat.HasValue ? 1 : null,
+                        Tutar = d.Fiyat,
+                        Birim = d.Fiyat.HasValue ? "AD" : null
+                    });
+                }
+            }
+            catch { /* detaylar yuklenemezse sadece baslik kalir */ }
+        }
+
+        NotifyChanged();
+        showArabaslikPanel = false;
+        selectedAbIds.Clear();
     }
 }

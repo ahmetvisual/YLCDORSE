@@ -1,0 +1,420 @@
+@page "/satis/arabaslik-tanimi"
+@using YALCINDORSE.Services
+@inject ArabaslikService ArabaslikSvc
+@inject NavigationManager Nav
+
+<div class="crm-workspace-panel" style="flex:1;padding:12px 14px;box-sizing:border-box;height:100vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="crm-header" style="margin-bottom:8px;">
+        <div>
+            <h3 style="margin:0;display:flex;align-items:center;gap:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:var(--yl-primary);">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                </svg>
+                Teklif Kalemleri (Arabaslik Tanimi)
+            </h3>
+            <p class="crm-header-subtitle">Tekliflerde kullanilacak arabaslik gruplarini ve detay satirlarini tanimlayin.</p>
+        </div>
+    </div>
+
+    <div class="ab-split-pane">
+        <!-- ═══ LEFT PANE: Grup Listesi ═══ -->
+        <div class="ab-left-pane">
+            <div class="ab-left-header">
+                <div class="ab-search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;opacity:0.45;">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" placeholder="Grup ara..." @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" />
+                </div>
+                <div style="display:flex;gap:4px;">
+                    <button class="ab-btn ab-btn-primary" @onclick="NewGrup" title="Yeni Grup">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ab-group-list">
+                @if (isLoading)
+                {
+                    <div class="ab-empty">Yukleniyor...</div>
+                }
+                else if (gruplar == null || !gruplar.Any())
+                {
+                    <div class="ab-empty">Grup bulunamadi</div>
+                }
+                else
+                {
+                    @foreach (var g in gruplar)
+                    {
+                        <div class="ab-group-item @(selectedGrup?.Id == g.Id ? "selected" : "")"
+                             @onclick="() => SelectGrup(g)">
+                            <div class="ab-group-name">@g.GrupAdi</div>
+                            <div class="ab-group-meta">
+                                <span class="ab-type-badge">@(g.TablTipi == 1 ? "Tablo" : "Liste")</span>
+                                <span>Sira: @g.SortOrder</span>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- ═══ RIGHT PANE: Grup Detay ═══ -->
+        <div class="ab-right-pane">
+            @if (selectedGrup == null && !isNewMode)
+            {
+                <div class="ab-right-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="width:48px;height:48px;opacity:0.2;margin-bottom:12px;">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                    <span>Sol panelden bir grup secin veya yeni grup olusturun.</span>
+                </div>
+            }
+            else
+            {
+                <div class="ab-right-content">
+                    <!-- === GRUP HEADER (Dil Alanlari) === -->
+                    <div class="ab-section-bar">
+                        <span class="ab-section-title">Grup Bilgileri</span>
+                        <div class="ab-section-actions">
+                            <button class="ab-btn ab-btn-danger" @onclick="DeleteSelectedGrup" title="Grubu Sil" disabled="@(isNewMode)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                Sil
+                            </button>
+                            <button class="ab-btn ab-btn-save" @onclick="SaveAll" disabled="@isSaving">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                @(isSaving ? "Kaydediliyor..." : "Kaydet")
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="ab-lang-grid">
+                        <div class="ab-field">
+                            <label>Grup Adi (TR) <span class="ab-req">*</span></label>
+                            <input type="text" @bind="editGrup.GrupAdi" @bind:event="oninput" placeholder="Turkce baslik" />
+                        </div>
+                        <div class="ab-field">
+                            <label>EN</label>
+                            <input type="text" @bind="editGrup.GrupAdi_EN" @bind:event="oninput" placeholder="English" />
+                        </div>
+                        <div class="ab-field">
+                            <label>DE</label>
+                            <input type="text" @bind="editGrup.GrupAdi_DE" @bind:event="oninput" placeholder="Deutsch" />
+                        </div>
+                        <div class="ab-field">
+                            <label>FR</label>
+                            <input type="text" @bind="editGrup.GrupAdi_FR" @bind:event="oninput" placeholder="Francais" />
+                        </div>
+                        <div class="ab-field">
+                            <label>RU</label>
+                            <input type="text" @bind="editGrup.GrupAdi_RU" @bind:event="oninput" placeholder="Russian" />
+                        </div>
+                        <div class="ab-field">
+                            <label>RO</label>
+                            <input type="text" @bind="editGrup.GrupAdi_RO" @bind:event="oninput" placeholder="Romanian" />
+                        </div>
+                        <div class="ab-field">
+                            <label>AR</label>
+                            <input type="text" @bind="editGrup.GrupAdi_AR" @bind:event="oninput" placeholder="Arabic" dir="rtl" />
+                        </div>
+                        <div class="ab-field">
+                            <label>Tablo Tipi</label>
+                            <select @bind="editGrup.TablTipi">
+                                <option value="1">1 - Iki Kolon Tablo</option>
+                                <option value="2">2 - Numarali Liste</option>
+                            </select>
+                        </div>
+                        <div class="ab-field">
+                            <label>Sira No</label>
+                            <input type="number" @bind="editGrup.SortOrder" style="max-width:100px;" />
+                        </div>
+                    </div>
+
+                    <!-- === DETAY GRID === -->
+                    <div class="ab-section-bar" style="margin-top:12px;">
+                        <span class="ab-section-title">Detay Satirlari</span>
+                        <button class="ab-btn ab-btn-primary" @onclick="AddDetayRow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Satir Ekle
+                        </button>
+                    </div>
+
+                    <div class="ab-detail-table-wrap">
+                        <table class="ab-detail-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:36px;">#</th>
+                                    <th style="min-width:180px;">TR</th>
+                                    <th style="min-width:180px;">EN</th>
+                                    <th style="min-width:150px;">DE</th>
+                                    <th style="min-width:150px;">FR</th>
+                                    <th style="min-width:150px;">RU</th>
+                                    <th style="min-width:90px;">Fiyat</th>
+                                    <th style="min-width:70px;">Para</th>
+                                    <th style="width:40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (editDetaylar.Count == 0)
+                                {
+                                    <tr><td colspan="9" class="ab-empty-row">Henuz satir eklenmemis. "Satir Ekle" ile baslayabilirsiniz.</td></tr>
+                                }
+                                else
+                                {
+                                    @for (int idx = 0; idx < editDetaylar.Count; idx++)
+                                    {
+                                        var i = idx;
+                                        var row = editDetaylar[i];
+                                        <tr>
+                                            <td class="ab-row-num">@(i + 1)</td>
+                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni" @bind:event="oninput" /></td>
+                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_EN" @bind:event="oninput" /></td>
+                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_DE" @bind:event="oninput" /></td>
+                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_FR" @bind:event="oninput" /></td>
+                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_RU" @bind:event="oninput" /></td>
+                                            <td><input type="number" class="ab-cell-input" step="0.01" @bind="row.Fiyat" /></td>
+                                            <td>
+                                                <select class="ab-cell-input" @bind="row.ParaBirimi">
+                                                    <option value="">-</option>
+                                                    <option value="EUR">EUR</option>
+                                                    <option value="USD">USD</option>
+                                                    <option value="TRY">TRY</option>
+                                                    <option value="GBP">GBP</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <button class="ab-btn-icon ab-btn-icon-danger" @onclick="() => RemoveDetayRow(i)" title="Satiri Sil">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* === TOAST OVERLAY === *@
+@if (showToast)
+{
+    <div class="toast-overlay">
+        <div class="toast-card">
+            @if (toastIsSuccess)
+            {
+                <div class="toast-icon-success">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" opacity="0.15" fill="#059669" stroke="none"/><path class="check-path" d="M7 13l3 3 7-7"/></svg>
+                </div>
+                <div class="toast-title success">Basarili!</div>
+            }
+            else
+            {
+                <div class="toast-icon-error">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </div>
+                <div class="toast-title error">Hata!</div>
+            }
+            <div class="toast-message">@toastMessage</div>
+        </div>
+    </div>
+}
+
+@* === DELETE CONFIRM === *@
+@if (showDeleteConfirm)
+{
+    <div class="toast-overlay" @onclick="() => showDeleteConfirm = false">
+        <div class="toast-card" @onclick:stopPropagation="true" style="min-width:300px;">
+            <div class="toast-icon-error">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <div class="toast-title" style="color:#991b1b;">Grubu Sil?</div>
+            <div class="toast-message" style="margin-bottom:16px;">
+                "<strong>@editGrup.GrupAdi</strong>" grubu ve tum satirlari silinecek.
+            </div>
+            <div style="display:flex;gap:8px;justify-content:center;">
+                <button class="ab-btn" @onclick="() => showDeleteConfirm = false">Iptal</button>
+                <button class="ab-btn ab-btn-danger" @onclick="ConfirmDelete">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isNewMode = false;
+    private bool showToast;
+    private bool toastIsSuccess;
+    private string toastMessage = "";
+    private bool showDeleteConfirm;
+
+    private string searchQuery = "";
+    private List<ArabaslikGrupModel> gruplar = new();
+    private ArabaslikGrupModel? selectedGrup;
+    private ArabaslikGrupModel editGrup = new();
+    private List<ArabaslikDetayModel> editDetaylar = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGruplarAsync();
+    }
+
+    private async Task LoadGruplarAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+        try
+        {
+            gruplar = await ArabaslikSvc.GetGruplarAsync(searchQuery);
+        }
+        catch (Exception ex)
+        {
+            await ShowToast(false, ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSearch(KeyboardEventArgs e)
+    {
+        await LoadGruplarAsync();
+    }
+
+    private async Task SelectGrup(ArabaslikGrupModel grup)
+    {
+        isNewMode = false;
+        selectedGrup = grup;
+
+        // Clone to edit buffer
+        editGrup = new ArabaslikGrupModel
+        {
+            Id = grup.Id,
+            GrupAdi = grup.GrupAdi,
+            GrupAdi_EN = grup.GrupAdi_EN,
+            GrupAdi_FR = grup.GrupAdi_FR,
+            GrupAdi_DE = grup.GrupAdi_DE,
+            GrupAdi_RO = grup.GrupAdi_RO,
+            GrupAdi_AR = grup.GrupAdi_AR,
+            GrupAdi_RU = grup.GrupAdi_RU,
+            TablTipi = grup.TablTipi,
+            SortOrder = grup.SortOrder,
+            IsActive = grup.IsActive,
+        };
+
+        try
+        {
+            editDetaylar = await ArabaslikSvc.GetDetaylarAsync(grup.Id);
+        }
+        catch (Exception ex)
+        {
+            await ShowToast(false, $"Detaylar yuklenemedi: {ex.Message}");
+            editDetaylar = new();
+        }
+    }
+
+    private void NewGrup()
+    {
+        isNewMode = true;
+        selectedGrup = null;
+        editGrup = new ArabaslikGrupModel
+        {
+            SortOrder = gruplar.Count > 0 ? gruplar.Max(g => g.SortOrder) + 1 : 0
+        };
+        editDetaylar = new();
+    }
+
+    private void AddDetayRow()
+    {
+        editDetaylar.Add(new ArabaslikDetayModel
+        {
+            SortOrder = editDetaylar.Count
+        });
+    }
+
+    private void RemoveDetayRow(int index)
+    {
+        if (index >= 0 && index < editDetaylar.Count)
+            editDetaylar.RemoveAt(index);
+    }
+
+    private async Task SaveAll()
+    {
+        if (string.IsNullOrWhiteSpace(editGrup.GrupAdi))
+        {
+            await ShowToast(false, "Grup adi (TR) zorunludur.");
+            return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            await ArabaslikSvc.SaveGrupWithDetaylarAsync(editGrup, editDetaylar);
+
+            await LoadGruplarAsync();
+
+            // Yeni eklendiyse listeyi guncelle ve sec
+            var saved = gruplar.FirstOrDefault(g => g.Id == editGrup.Id);
+            if (saved != null)
+            {
+                selectedGrup = saved;
+                isNewMode = false;
+            }
+
+            await ShowToast(true, isNewMode ? "Yeni grup basariyla olusturuldu." : "Degisiklikler kaydedildi.");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast(false, $"Kayit hatasi: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void DeleteSelectedGrup()
+    {
+        if (editGrup.Id <= 0) return;
+        showDeleteConfirm = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        showDeleteConfirm = false;
+        try
+        {
+            await ArabaslikSvc.DeleteGrupAsync(editGrup.Id);
+            selectedGrup = null;
+            isNewMode = false;
+            editGrup = new();
+            editDetaylar = new();
+            await LoadGruplarAsync();
+            await ShowToast(true, "Grup silindi.");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast(false, $"Silme hatasi: {ex.Message}");
+        }
+    }
+
+    private async Task ShowToast(bool success, string message)
+    {
+        toastIsSuccess = success;
+        toastMessage = message;
+        showToast = true;
+        StateHasChanged();
+        await Task.Delay(success ? 1800 : 2500);
+        showToast = false;
+        StateHasChanged();
+    }
+}

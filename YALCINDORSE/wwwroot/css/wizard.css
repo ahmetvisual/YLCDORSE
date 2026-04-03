@@ -598,6 +598,239 @@
 .app-root.dark .searchable-select-item:hover { background: rgba(255,255,255,0.05); }
 .app-root.dark .searchable-select-item.selected { background: rgba(59,125,221,0.1); }
 
+/* ============================================================
+   ARABASLIK IMPORT PANEL (QuoteItemsEditor icinde)
+   ============================================================ */
+.ab-import-btn {
+    background: #f0f5ff !important;
+    color: var(--yl-primary) !important;
+    border-color: rgba(59,125,221,0.25) !important;
+    font-weight: 600 !important;
+}
+
+.ab-import-btn:hover {
+    background: #dde8fa !important;
+    border-color: var(--yl-primary) !important;
+}
+
+.ab-import-panel {
+    border-bottom: 1px solid var(--yl-border);
+    background: #f8faff;
+    display: flex;
+    flex-direction: column;
+    max-height: 320px;
+    animation: abSlideDown 0.2s ease-out;
+}
+
+@keyframes abSlideDown {
+    from { max-height: 0; opacity: 0; }
+    to { max-height: 320px; opacity: 1; }
+}
+
+.ab-import-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e3e8f0;
+}
+
+.ab-import-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-radius: 5px;
+    padding: 0 8px;
+    height: 30px;
+}
+
+.ab-import-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.76rem;
+    color: var(--yl-text);
+}
+
+.ab-import-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--yl-text-light);
+    transition: all 0.12s;
+}
+
+.ab-import-close:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.ab-import-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2px 0;
+}
+
+.ab-import-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eef1f6;
+    transition: background 0.1s;
+}
+
+.ab-import-item:hover {
+    background: #eef3ff;
+}
+
+.ab-import-item.selected {
+    background: #e8f5e9;
+}
+
+.ab-import-check {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ab-import-checkbox-empty {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #c0c5cc;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.ab-import-item.selected .ab-import-checkbox-empty {
+    display: none;
+}
+
+.ab-import-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--yl-text);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ab-import-sub {
+    font-size: 0.68rem;
+    color: var(--yl-text-light);
+    margin-top: 1px;
+}
+
+.ab-import-badge {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 2px 6px;
+    background: rgba(59,125,221,0.08);
+    color: var(--yl-primary);
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.ab-import-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+    border-top: 1px solid #e3e8f0;
+    background: #fff;
+}
+
+.ab-import-count {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #059669;
+}
+
+.ab-import-empty {
+    text-align: center;
+    padding: 20px 12px;
+    color: var(--yl-text-light);
+    font-size: 0.78rem;
+}
+
+/* Dark mode - Arabaslik Import */
+.app-root.dark .ab-import-btn {
+    background: rgba(59,125,221,0.1) !important;
+    color: #7db4f5 !important;
+    border-color: rgba(59,125,221,0.2) !important;
+}
+
+.app-root.dark .ab-import-btn:hover {
+    background: rgba(59,125,221,0.18) !important;
+}
+
+.app-root.dark .ab-import-panel {
+    background: #0d1117;
+    border-bottom-color: var(--yl-border);
+}
+
+.app-root.dark .ab-import-header {
+    border-bottom-color: rgba(255,255,255,0.06);
+}
+
+.app-root.dark .ab-import-search {
+    background: #161b22;
+    border-color: var(--yl-border);
+}
+
+.app-root.dark .ab-import-search input {
+    color: var(--yl-text);
+}
+
+.app-root.dark .ab-import-item {
+    border-bottom-color: rgba(255,255,255,0.04);
+}
+
+.app-root.dark .ab-import-item:hover {
+    background: rgba(59,125,221,0.08);
+}
+
+.app-root.dark .ab-import-item.selected {
+    background: rgba(5,150,105,0.1);
+}
+
+.app-root.dark .ab-import-checkbox-empty {
+    border-color: rgba(255,255,255,0.15);
+    background: transparent;
+}
+
+.app-root.dark .ab-import-badge {
+    background: rgba(59,125,221,0.15);
+    color: #7db4f5;
+}
+
+.app-root.dark .ab-import-footer {
+    background: #161b22;
+    border-top-color: rgba(255,255,255,0.06);
+}
+
+.app-root.dark .ab-import-close:hover {
+    background: rgba(248,113,113,0.1);
+    color: #f87171;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .wizard-grid2 { grid-template-columns: 1fr; }

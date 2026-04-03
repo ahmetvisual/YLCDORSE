@@ -60,6 +60,9 @@ namespace YALCINDORSE.Services
         public string Puan { get; set; } = "";
         public DateTime PlanlananTarih { get; set; }
         public int GecenGun { get; set; }
+        public decimal NetTutar { get; set; }
+        public string? ParaBirimi { get; set; }
+        public string? SonTemasNotu { get; set; }
     }
 
     public class DashboardKpiModel
@@ -387,19 +390,7 @@ namespace YALCINDORSE.Services
                 FROM "YLTemaslar" t
                 LEFT JOIN "YLUsers" u ON u."Id" = t."TemasEden"
                 WHERE t."TeklifId" = @teklifId
-
-                UNION ALL
-
-                SELECT 'REVISION' AS "EntryType", r."Id", r."RevizyonTarihi" AS "Tarih",
-                       COALESCE(r."Neden", r."Not") AS "Aciklama", r."Olusturan" AS "KisiAdi",
-                       'R' || r."RevizyonNo" AS "Tipi", r."Fiyat",
-                       NULL::DATE AS "SonrakiTemas",
-                       FALSE AS "YonetimDahil",
-                       r."RevizyonNo"
-                FROM "YLTeklifRevizyonlari" r
-                WHERE r."TeklifId" = @teklifId
-
-                ORDER BY "Tarih" ASC, "EntryType" ASC;
+                ORDER BY "TemasTarihi" ASC;
                 """;
 
             using var cmd = new NpgsqlCommand(sql, conn);
@@ -586,6 +577,12 @@ namespace YALCINDORSE.Services
                 "t.\"SonrakiTemasTarihi\" > CURRENT_DATE AND t.\"SonrakiTemasTarihi\" <= CURRENT_DATE + INTERVAL '7 days'");
         }
 
+        public async Task<List<TouchReminderModel>> GetUpcomingMeetingsAsync()
+        {
+            return await GetRemindersByDateConditionAsync(
+                "t.\"SonrakiTemasTarihi\" > CURRENT_DATE + INTERVAL '7 days' AND t.\"SonrakiTemasTarihi\" <= CURRENT_DATE + INTERVAL '30 days'");
+        }
+
         public async Task<List<TouchReminderModel>> GetStaleTouchesAsync(int days = 30)
         {
             await EnsureSchemaAsync();
@@ -647,7 +644,9 @@ namespace YALCINDORSE.Services
             var sql = $"""
                 SELECT q."Id", q."TeklifNo", c."Title", c."CustomerCode", u."FullName",
                        q."Durum", q."Puan", t."SonrakiTemasTarihi",
-                       EXTRACT(DAY FROM CURRENT_DATE - t."SonrakiTemasTarihi")::INT AS "GecenGun"
+                       EXTRACT(DAY FROM CURRENT_DATE - t."SonrakiTemasTarihi")::INT AS "GecenGun",
+                       q."NetTutar", q."ParaBirimi",
+                       t."Not" AS "SonTemasNotu"
                 FROM "YLTemaslar" t
                 JOIN "YLTeklifler" q ON q."Id" = t."TeklifId"
                 LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
@@ -672,7 +671,10 @@ namespace YALCINDORSE.Services
                     Durum = reader.IsDBNull(5) ? "" : reader.GetString(5),
                     Puan = reader.IsDBNull(6) ? "" : reader.GetString(6),
                     PlanlananTarih = reader.IsDBNull(7) ? DateTime.MinValue : reader.GetDateTime(7),
-                    GecenGun = reader.IsDBNull(8) ? 0 : reader.GetInt32(8)
+                    GecenGun = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
+                    NetTutar = reader.IsDBNull(9) ? 0 : reader.GetDecimal(9),
+                    ParaBirimi = reader.IsDBNull(10) ? null : reader.GetString(10),
+                    SonTemasNotu = reader.IsDBNull(11) ? null : reader.GetString(11)
                 });
             }
             return items;
@@ -691,7 +693,7 @@ namespace YALCINDORSE.Services
             var endDate = startDate.AddMonths(1);
 
             const string sql = """
-                -- Temaslar
+                -- Gorusmeler (temaslar)
                 SELECT 'TOUCH' AS "Tip", t."TemasTarihi"::DATE AS "Tarih",
                        q."TeklifNo" || ' - ' ||
                        CASE t."TemasTipi" WHEN 'CALL' THEN 'Arama' WHEN 'MAIL' THEN 'Mail'
@@ -705,21 +707,10 @@ namespace YALCINDORSE.Services
 
                 UNION ALL
 
-                -- Revizyonlar
-                SELECT 'REVISION', r."RevizyonTarihi"::DATE,
-                       q."TeklifNo" || ' R' || r."RevizyonNo",
-                       q."Id", q."TeklifNo", c."Title", q."Durum"
-                FROM "YLTeklifRevizyonlari" r
-                JOIN "YLTeklifler" q ON q."Id" = r."TeklifId"
-                LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
-                WHERE r."RevizyonTarihi"::DATE >= @startDate AND r."RevizyonTarihi"::DATE < @endDate
-
-                UNION ALL
-
                 -- Planli temaslar (sonraki temas tarihi bu ayda olanlar)
                 SELECT CASE WHEN t."SonrakiTemasTarihi" < CURRENT_DATE THEN 'OVERDUE' ELSE 'PLANNED' END,
                        t."SonrakiTemasTarihi",
-                       q."TeklifNo" || ' - Temas Plani',
+                       COALESCE(c."Title", q."TeklifNo") || ' · Gorusme',
                        q."Id", q."TeklifNo", c."Title", q."Durum"
                 FROM "YLTemaslar" t
                 JOIN "YLTeklifler" q ON q."Id" = t."TeklifId"

@@ -64,24 +64,7 @@
             Yukleniyor...
         </div>
     }
-    else if (errorMessage != null || successMessage != null)
-    {
-        @if (successMessage != null)
-        {
-            <div class="quote-success-state">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                @successMessage
-            </div>
-        }
-        @if (errorMessage != null)
-        {
-            <div class="quote-error-state">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                Hata: @errorMessage
-            </div>
-        }
-    }
-    @if (!isLoading && errorMessage == null)
+    else if (errorMessage == null)
     {
         <div class="quote-grid-container">
             <div class="quote-table-wrapper">
@@ -241,11 +224,37 @@
     }
 </div>
 
+@* === TOAST OVERLAY === *@
+@if (showToast)
+{
+    <div class="toast-overlay">
+        <div class="toast-card">
+            @if (toastIsSuccess)
+            {
+                <div class="toast-icon-success">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" opacity="0.15" fill="#059669" stroke="none"/><path class="check-path" d="M7 13l3 3 7-7"/></svg>
+                </div>
+                <div class="toast-title success">Basarili!</div>
+            }
+            else
+            {
+                <div class="toast-icon-error">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </div>
+                <div class="toast-title error">Hata!</div>
+            }
+            <div class="toast-message">@toastMessage</div>
+        </div>
+    </div>
+}
+
 @code {
     private bool isLoading = true;
     private bool isDetailsLoading = false;
     private string? errorMessage;
-    private string? successMessage;
+    private bool showToast;
+    private bool toastIsSuccess;
+    private string toastMessage = "";
 
     private List<QuoteListItemModel>? quotes;
     private List<QuoteRevisionModel>? expandedRevisions;
@@ -265,13 +274,22 @@
     private async Task ReloadAsync()
     {
         await LoadQuotesAsync();
+
+        // Acik detay varsa revizyon gecmisini de yenile
+        if (expandedQuoteId > 0)
+        {
+            try
+            {
+                expandedRevisions = await QuoteService.GetRevisionsAsync(expandedQuoteId);
+            }
+            catch { }
+        }
     }
 
     private async Task LoadQuotesAsync()
     {
         isLoading = true;
         errorMessage = null;
-        successMessage = null;
         StateHasChanged();
 
         try
@@ -286,6 +304,29 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task ShowToastSuccess(string message)
+    {
+        toastIsSuccess = true;
+        toastMessage = message;
+        showToast = true;
+        errorMessage = null;
+        StateHasChanged();
+        await Task.Delay(2000);
+        showToast = false;
+        StateHasChanged();
+    }
+
+    private async Task ShowToastError(string message)
+    {
+        toastIsSuccess = false;
+        toastMessage = message;
+        showToast = true;
+        StateHasChanged();
+        await Task.Delay(2500);
+        showToast = false;
+        StateHasChanged();
     }
 
     private async Task HandleSearch(KeyboardEventArgs e)
@@ -348,18 +389,11 @@
         WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Duzenle", 860, 700, parameters);
     }
 
-    private async Task CopyQuote(int quoteId)
+    private void CopyQuote(int quoteId)
     {
-        try
-        {
-            var newId = await QuoteService.CopyQuoteAsync(quoteId);
-            await LoadQuotesAsync();
-            successMessage = "Teklif basariyla kopyalandi.";
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Kopyalama hatasi: {ex.Message}";
-        }
+        var parameters = new Dictionary<string, object> { { "CopyFromQuoteId", quoteId } };
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Kopyala", 860, 700, parameters))
+            Nav.NavigateTo("/satis/teklif-olustur");
     }
 
     private async Task ChangeStatusAsync(int quoteId, string newStatus)
@@ -370,17 +404,16 @@
         {
             await QuoteService.TransitionStatusAsync(quoteId, newStatus);
             await LoadQuotesAsync();
+            expandedQuoteId = quoteId;
             expandedRevisions = await QuoteService.GetRevisionsAsync(quoteId);
+            isTransitioning = false;
             var statusName = GetStatusName(newStatus);
-            successMessage = $"Durum guncellendi: {statusName}";
+            await ShowToastSuccess($"Durum guncellendi: {statusName}");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Durum degisikligi hatasi: {ex.Message}";
-        }
-        finally
-        {
             isTransitioning = false;
+            await ShowToastError($"Durum degisikligi hatasi: {ex.Message}");
         }
     }
 

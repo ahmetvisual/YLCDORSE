@@ -5,82 +5,46 @@
 @inject CustomerService CustomerSvc
 @inject AuthService Auth
 
-<div class="crm-shell">
-    <div class="crm-header">
-        <div>
-            <h2 style="margin:0;font-size:1.3rem;font-weight:700;color:var(--yl-primary)">Touch CRM</h2>
-            <p style="margin:2px 0 0;font-size:0.8rem;color:var(--yl-text-light)">Teklif temas takibi ve yonetimi</p>
-        </div>
-    </div>
-
+<div class="crm-shell" style="display:flex;flex-direction:column;height:100vh;padding:12px 14px;box-sizing:border-box;overflow:hidden;">
     @if (isLoading)
     {
         <div style="text-align:center;padding:40px;color:var(--yl-text-light)">Yukleniyor...</div>
     }
     else
     {
-        <!-- KPI Kartlari -->
-        <div class="touch-kpi-row">
-            <div class="touch-kpi">
-                <div class="touch-kpi-label">Toplam Teklif</div>
-                <div class="touch-kpi-value">@kpi.ToplamTeklif</div>
-            </div>
-            <div class="touch-kpi">
-                <div class="touch-kpi-label">HOT</div>
-                <div class="touch-kpi-value kv-red">@kpi.HotSayisi</div>
-            </div>
-            <div class="touch-kpi">
-                <div class="touch-kpi-label">WARM</div>
-                <div class="touch-kpi-value kv-amber">@kpi.WarmSayisi</div>
-            </div>
-            <div class="touch-kpi">
-                <div class="touch-kpi-label">COLD</div>
-                <div class="touch-kpi-value kv-blue">@kpi.ColdSayisi</div>
-            </div>
-            <div class="touch-kpi">
-                <div class="touch-kpi-label">Siparis</div>
-                <div class="touch-kpi-value kv-green">@kpi.OrderSayisi</div>
-            </div>
-            <div class="touch-kpi">
-                <div class="touch-kpi-label">Geciken Temas</div>
-                <div class="touch-kpi-value kv-red">@kpi.GecikenTemasSayisi</div>
-                <div class="touch-kpi-sub">@kpi.HareketsizSayisi hareketsiz</div>
-            </div>
-            <div class="touch-kpi">
-                <div class="touch-kpi-label">Toplam Temas</div>
-                <div class="touch-kpi-value kv-blue">@kpi.ToplamTemas</div>
-            </div>
-        </div>
-
         <!-- Filtre Cubugu -->
         <div class="touch-filter-bar">
-            @foreach (var f in filters)
-            {
-                <button class="touch-chip-btn @(puanFilter == f.Key ? f.Value : "")"
-                        @onclick="() => SetPuanFilter(f.Key)">
-                    @(f.Key == "ALL" ? "Tumu" : f.Key)
-                </button>
-            }
-
-            <select class="touch-filter-select" @onchange="OnKanalChanged" style="margin-left:auto">
-                <option value="">Tum Kanallar</option>
-                <option value="BAYI">Bayi</option>
-                <option value="ZIYARET">Ziyaret</option>
-                <option value="ONLINE">Online</option>
-                <option value="WHATSAPP">WhatsApp</option>
-                <option value="EMAIL">E-Mail</option>
-                <option value="WEB_SITESI">Web Sitesi</option>
-                <option value="FUAR">Fuar</option>
-            </select>
-
-            <input class="touch-search" type="text" placeholder="Teklif no, musteri, stok kodu..."
-                   @bind="searchText" @bind:event="oninput" @bind:after="LoadQuotes" />
+            <div class="touch-search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="touch-search" type="text" placeholder="Teklif no, musteri ara..."
+                       @bind="searchText" @bind:event="oninput" @bind:after="LoadQuotes" />
+            </div>
+            <div class="touch-filter-right">
+                @foreach (var f in filters)
+                {
+                    <button class="touch-chip-btn @(puanFilter == f.Key ? f.Value : "")"
+                            @onclick="() => SetPuanFilter(f.Key)">
+                        @(f.Key == "ALL" ? "Tumu" : f.Key)
+                    </button>
+                }
+                <select class="touch-filter-select" @onchange="OnKanalChanged">
+                    <option value="">Tum Kanallar</option>
+                    <option value="BAYI">Bayi</option>
+                    <option value="ZIYARET">Ziyaret</option>
+                    <option value="ONLINE">Online</option>
+                    <option value="WHATSAPP">WhatsApp</option>
+                    <option value="EMAIL">E-Mail</option>
+                    <option value="WEB_SITESI">Web Sitesi</option>
+                    <option value="FUAR">Fuar</option>
+                </select>
+            </div>
         </div>
 
         <!-- Ana Icerik: Liste + Detay -->
         <div class="touch-layout">
             <!-- Teklif Listesi -->
             <div class="touch-list-panel @(selectedQuoteId > 0 ? "with-detail" : "")">
+                <div class="touch-grid-container">
                 <div class="touch-table-wrap">
                     <table class="touch-table">
                         <thead>
@@ -168,6 +132,7 @@
                         </tbody>
                     </table>
                 </div>
+                </div>
             </div>
 
             <!-- Detay Paneli -->
@@ -185,7 +150,6 @@
 
 @code {
     private bool isLoading = true;
-    private DashboardKpiModel kpi = new();
     private List<QuoteListItemModel> quotes = new();
     private Dictionary<int, QuoteTouchSummary> quoteTouchInfo = new();
     private int selectedQuoteId;
@@ -216,7 +180,6 @@
 
         try
         {
-            kpi = await TouchSvc.GetDashboardKpisAsync();
             await LoadQuotes();
         }
         catch { }

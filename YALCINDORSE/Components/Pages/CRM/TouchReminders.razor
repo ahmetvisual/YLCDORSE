@@ -2,13 +2,60 @@
 @using YALCINDORSE.Services
 @inject TouchService TouchSvc
 @inject NavigationManager Nav
+@inject DesktopWindowService WindowService
 
-<div class="crm-shell">
-    <div class="crm-header">
-        <div>
-            <h2 style="margin:0;font-size:1.3rem;font-weight:700;color:var(--yl-primary)">Hatirlatmalar</h2>
-            <p style="margin:2px 0 0;font-size:0.8rem;color:var(--yl-text-light)">Temas planlari ve geciken takipler</p>
+@* === NOTIFICATION POPUP (top-right slide-in) === *@
+@if (showNotifPopup)
+{
+    <div class="notif-popup @(notifClosing ? "notif-out" : "notif-in")">
+        <div class="notif-popup-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" style="width:24px;height:24px;">
+                <circle cx="12" cy="12" r="10" opacity="0.12" fill="#dc2626" stroke="none"/>
+                <path d="M12 8v4M12 16h.01" stroke="#dc2626"/>
+            </svg>
         </div>
+        <div class="notif-popup-body">
+            <div class="notif-popup-title">Acil Hatirlatma</div>
+            <div class="notif-popup-lines">
+                @if (overdue.Count > 0)
+                {
+                    <div class="notif-line"><span class="notif-dot notif-dot-red"></span> @overdue.Count geciken temas var</div>
+                }
+                @if (today.Count > 0)
+                {
+                    <div class="notif-line"><span class="notif-dot notif-dot-amber"></span> @today.Count gorusme bugune planli</div>
+                }
+            </div>
+        </div>
+        <button class="notif-popup-close" @onclick="DismissNotification">&times;</button>
+    </div>
+}
+
+<div class="rem-shell">
+    @* === HEADER === *@
+    <div class="rem-header">
+        <div class="rem-header-left">
+            <div class="rem-bell-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;color:var(--yl-primary)">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                @if (totalUrgent > 0)
+                {
+                    <span class="rem-bell-badge @(totalUrgent > 0 ? "rem-badge-pulse" : "")">@totalUrgent</span>
+                }
+            </div>
+            <div>
+                <h2 class="rem-page-title">Hatirlatma Merkezi</h2>
+                <p class="rem-page-sub">@DateTime.Today.ToString("dd MMMM yyyy, dddd", turkishCulture)</p>
+            </div>
+        </div>
+        <button class="touch-btn" @onclick="ReloadAll" style="font-size:0.76rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:3px;">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Yenile
+        </button>
     </div>
 
     @if (isLoading)
@@ -17,149 +64,371 @@
     }
     else
     {
-        <div style="max-width:780px">
+        @* === SUMMARY STRIP === *@
+        <div class="rem-strip">
+            <div class="rem-strip-item @(overdue.Count > 0 ? "strip-danger" : "strip-empty")">
+                <span class="rem-strip-num">@overdue.Count</span>
+                <span class="rem-strip-lbl">Geciken</span>
+            </div>
+            <div class="rem-strip-item @(today.Count > 0 ? "strip-warn" : "strip-empty")">
+                <span class="rem-strip-num">@today.Count</span>
+                <span class="rem-strip-lbl">Bugun</span>
+            </div>
+            <div class="rem-strip-item @(thisWeek.Count > 0 ? "strip-info" : "strip-empty")">
+                <span class="rem-strip-num">@thisWeek.Count</span>
+                <span class="rem-strip-lbl">Bu Hafta</span>
+            </div>
+            <div class="rem-strip-item @(upcoming.Count > 0 ? "strip-accent" : "strip-empty")">
+                <span class="rem-strip-num">@upcoming.Count</span>
+                <span class="rem-strip-lbl">Yaklasan</span>
+            </div>
+            <div class="rem-strip-item @(stale.Count > 0 ? "strip-muted" : "strip-empty")">
+                <span class="rem-strip-num">@stale.Count</span>
+                <span class="rem-strip-lbl">Sessiz</span>
+            </div>
+        </div>
+
+        @* === SECTIONS === *@
+        <div class="rem-content">
+            @if (totalAll == 0)
+            {
+                <div class="rem-empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:56px;height:56px;opacity:0.12;margin-bottom:14px;">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <div style="font-size:0.88rem;font-weight:600;margin-bottom:4px;">Hersey Yolunda!</div>
+                    <div>Bekleyen hatirlatma yok. Tum gorusmeler guncel.</div>
+                </div>
+            }
+
+            @* --- GECIKEN --- *@
             @if (overdue.Count > 0)
             {
-                <div style="background:#fff;border:1px solid #A32D2D;border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
-                    <div style="font-size:0.7rem;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.6px;color:#A32D2D">
-                        Geciken Temas (@overdue.Count)
-                    </div>
-                    @foreach (var r in overdue)
-                    {
-                        <div class="reminder-row" @onclick="() => GoToQuote(r.TeklifId)">
-                            <div style="min-width:100px;font-size:0.72rem;font-weight:700;color:#A32D2D">@r.GecenGun gun gecikti</div>
-                            <div style="flex:1">
-                                <span style="font-weight:700;color:#185FA5">@r.TeklifNo</span>
-                                <span style="color:var(--yl-text-light);margin-left:8px;font-size:0.72rem">@r.Musteri</span>
-                            </div>
-                            <span class="yl-chip @GetPuanChip(r.Puan)">@r.Puan</span>
-                            <span style="font-size:0.72rem;color:var(--yl-text-light);margin-left:8px">@r.Satici</span>
+                <div class="rem-sec">
+                    <div class="rem-sec-bar rem-bar-danger">
+                        <div class="rem-sec-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
                         </div>
-                    }
+                        <div>
+                            <div class="rem-sec-title">Geciken Temaslar</div>
+                            <div class="rem-sec-desc">Planlanan temas tarihi gecmis. Acil aksiyon gerekli.</div>
+                        </div>
+                        <span class="rem-sec-badge rem-badge-danger">@overdue.Count</span>
+                    </div>
+                    <div class="rem-sec-body">
+                        @foreach (var r in overdue) { @RenderCard(r, "danger") }
+                    </div>
                 </div>
             }
 
+            @* --- BUGUN --- *@
             @if (today.Count > 0)
             {
-                <div style="background:#fff;border:1px solid #854F0B;border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
-                    <div style="font-size:0.7rem;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.6px;color:#854F0B">
-                        Bugun (@today.Count)
-                    </div>
-                    @foreach (var r in today)
-                    {
-                        <div class="reminder-row" @onclick="() => GoToQuote(r.TeklifId)">
-                            <div style="min-width:100px;font-size:0.72rem;font-weight:700;color:#854F0B">Bugun</div>
-                            <div style="flex:1">
-                                <span style="font-weight:700;color:#185FA5">@r.TeklifNo</span>
-                                <span style="color:var(--yl-text-light);margin-left:8px;font-size:0.72rem">@r.Musteri</span>
-                            </div>
-                            <span class="yl-chip @GetPuanChip(r.Puan)">@r.Puan</span>
-                            <span style="font-size:0.72rem;color:var(--yl-text-light);margin-left:8px">@r.Satici</span>
+                <div class="rem-sec">
+                    <div class="rem-sec-bar rem-bar-warn">
+                        <div class="rem-sec-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            </svg>
                         </div>
-                    }
+                        <div>
+                            <div class="rem-sec-title">Bugunun Gorusmeleri</div>
+                            <div class="rem-sec-desc">Bugun icin planlanmis gorusme randevulari.</div>
+                        </div>
+                        <span class="rem-sec-badge rem-badge-warn">@today.Count</span>
+                    </div>
+                    <div class="rem-sec-body">
+                        @foreach (var r in today) { @RenderCard(r, "warn") }
+                    </div>
                 </div>
             }
 
+            @* --- BU HAFTA --- *@
             @if (thisWeek.Count > 0)
             {
-                <div style="background:#fff;border:1px solid var(--yl-border);border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
-                    <div style="font-size:0.7rem;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.6px;color:#185FA5">
-                        Bu Hafta (@thisWeek.Count)
-                    </div>
-                    @foreach (var r in thisWeek)
-                    {
-                        <div class="reminder-row" @onclick="() => GoToQuote(r.TeklifId)">
-                            <div style="min-width:100px;font-size:0.72rem;font-weight:700;color:#185FA5">@r.PlanlananTarih.ToString("dd.MM.yyyy")</div>
-                            <div style="flex:1">
-                                <span style="font-weight:700;color:#185FA5">@r.TeklifNo</span>
-                                <span style="color:var(--yl-text-light);margin-left:8px;font-size:0.72rem">@r.Musteri</span>
-                            </div>
-                            <span class="yl-chip @GetPuanChip(r.Puan)">@r.Puan</span>
-                            <span style="font-size:0.72rem;color:var(--yl-text-light);margin-left:8px">@r.Satici</span>
+                <div class="rem-sec">
+                    <div class="rem-sec-bar rem-bar-info">
+                        <div class="rem-sec-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
                         </div>
-                    }
+                        <div>
+                            <div class="rem-sec-title">Bu Hafta</div>
+                            <div class="rem-sec-desc">Onumuzdeki 7 gun icinde planli gorusmeler.</div>
+                        </div>
+                        <span class="rem-sec-badge rem-badge-info">@thisWeek.Count</span>
+                    </div>
+                    <div class="rem-sec-body">
+                        @foreach (var r in thisWeek) { @RenderCard(r, "info") }
+                    </div>
                 </div>
             }
 
+            @* --- YAKLASAN GORUSMELER --- *@
+            @if (upcoming.Count > 0)
+            {
+                <div class="rem-sec">
+                    <div class="rem-sec-bar rem-bar-accent">
+                        <div class="rem-sec-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="rem-sec-title">Yaklasan Gorusmeler</div>
+                            <div class="rem-sec-desc">8-30 gun icinde planlanmis gorusme randevulari.</div>
+                        </div>
+                        <span class="rem-sec-badge rem-badge-accent">@upcoming.Count</span>
+                    </div>
+                    <div class="rem-sec-body">
+                        @foreach (var r in upcoming) { @RenderCard(r, "accent") }
+                    </div>
+                </div>
+            }
+
+            @* --- SESSIZ --- *@
             @if (stale.Count > 0)
             {
-                <div style="background:#fff;border:1px solid var(--yl-border);border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
-                    <div style="font-size:0.7rem;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.6px;color:#5F5E5A">
-                        30+ Gun Sessiz (@stale.Count)
-                    </div>
-                    @foreach (var r in stale)
-                    {
-                        <div class="reminder-row" @onclick="() => GoToQuote(r.TeklifId)">
-                            <div style="min-width:100px;font-size:0.72rem;font-weight:700;color:#5F5E5A">@r.GecenGun gun sessiz</div>
-                            <div style="flex:1">
-                                <span style="font-weight:700;color:#185FA5">@r.TeklifNo</span>
-                                <span style="color:var(--yl-text-light);margin-left:8px;font-size:0.72rem">@r.Musteri</span>
-                            </div>
-                            <span class="yl-chip @GetPuanChip(r.Puan)">@r.Puan</span>
-                            <span style="font-size:0.72rem;color:var(--yl-text-light);margin-left:8px">@r.Satici</span>
+                <div class="rem-sec">
+                    <div class="rem-sec-bar rem-bar-muted">
+                        <div class="rem-sec-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/>
+                            </svg>
                         </div>
-                    }
-                </div>
-            }
-
-            @if (overdue.Count == 0 && today.Count == 0 && thisWeek.Count == 0 && stale.Count == 0)
-            {
-                <div style="text-align:center;padding:48px 20px;color:var(--yl-text-light)">
-                    <div style="font-size:2.5rem;margin-bottom:12px">&#10003;</div>
-                    <div>Bekleyen hatirlatma yok.</div>
+                        <div>
+                            <div class="rem-sec-title">Sessiz Teklifler</div>
+                            <div class="rem-sec-desc">30+ gundur iletisim kurulmamis teklifler.</div>
+                        </div>
+                        <span class="rem-sec-badge rem-badge-muted">@stale.Count</span>
+                    </div>
+                    <div class="rem-sec-body">
+                        @foreach (var r in stale) { @RenderCard(r, "muted") }
+                    </div>
                 </div>
             }
         </div>
     }
 </div>
 
-<style>
-    .reminder-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 9px 0;
-        border-bottom: 1px solid var(--yl-border);
-        cursor: pointer;
-    }
-    .reminder-row:hover {
-        background: #f5f8ff;
-        margin: 0 -6px;
-        padding: 9px 6px;
-        border-radius: 6px;
-    }
-    .reminder-row:last-child {
-        border-bottom: none;
-    }
-</style>
+@* === HIZLI GORUSME MODAL === *@
+@if (showQuickTouch)
+{
+    <div class="toast-overlay" @onclick="() => showQuickTouch = false">
+        <div class="toast-card" style="min-width:400px;max-width:480px;padding:24px 28px;text-align:left;" @onclick:stopPropagation="true">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <div style="width:36px;height:36px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" style="width:18px;height:18px;">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.72c.12.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 11.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45c.91.34 1.85.58 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:0.92rem;font-weight:700;color:var(--yl-primary);">Hizli Gorusme</div>
+                    <div style="font-size:0.74rem;color:var(--yl-text-light);">@quickTouchQuote?.TeklifNo &middot; @quickTouchQuote?.Musteri</div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                <div class="touch-form-row">
+                    <label>Tur</label>
+                    <select @bind="quickTouch.TemasTipi">
+                        <option value="CALL">Arama</option>
+                        <option value="MAIL">Mail</option>
+                        <option value="VISIT">Ziyaret</option>
+                        <option value="NOTE">Not</option>
+                        <option value="MEETING">Toplanti</option>
+                    </select>
+                </div>
+                <div class="touch-form-row">
+                    <label>Sonraki Temas</label>
+                    <input type="date" @bind="quickTouch.SonrakiTemasTarihi" @bind:format="yyyy-MM-dd" />
+                </div>
+            </div>
+            <div class="touch-form-row" style="margin-bottom:12px;">
+                <label>Not *</label>
+                <textarea @bind="quickTouch.Not" placeholder="Gorusme ozeti yazin..." style="min-height:70px;"></textarea>
+            </div>
+            @if (!string.IsNullOrEmpty(quickTouchError))
+            {
+                <div style="color:#A32D2D;font-size:0.76rem;margin-bottom:8px;padding:6px 10px;background:#fef2f2;border-radius:6px;">@quickTouchError</div>
+            }
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button class="touch-btn" @onclick="() => showQuickTouch = false">Iptal</button>
+                <button class="touch-btn touch-btn-primary" @onclick="SaveQuickTouch" disabled="@isSavingQuick">
+                    @(isSavingQuick ? "Kaydediliyor..." : "Kaydet")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* === TOAST === *@
+@if (showToast)
+{
+    <div class="toast-overlay">
+        <div class="toast-card">
+            <div class="toast-icon-success">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" opacity="0.15" fill="#059669" stroke="none"/><path class="check-path" d="M7 13l3 3 7-7"/></svg>
+            </div>
+            <div class="toast-title success">Basarili!</div>
+            <div class="toast-message">@toastMessage</div>
+        </div>
+    </div>
+}
 
 @code {
+    private static readonly System.Globalization.CultureInfo turkishCulture = new("tr-TR");
+
     private bool isLoading = true;
     private List<TouchReminderModel> overdue = new();
     private List<TouchReminderModel> today = new();
     private List<TouchReminderModel> thisWeek = new();
+    private List<TouchReminderModel> upcoming = new();
     private List<TouchReminderModel> stale = new();
+
+    private int totalUrgent => overdue.Count + today.Count;
+    private int totalAll => overdue.Count + today.Count + thisWeek.Count + upcoming.Count + stale.Count;
+
+    // Notification popup
+    private bool showNotifPopup;
+    private bool notifClosing;
+
+    // Quick touch
+    private bool showQuickTouch;
+    private bool isSavingQuick;
+    private TouchReminderModel? quickTouchQuote;
+    private TouchModel quickTouch = new();
+    private string quickTouchError = "";
+
+    // Toast
+    private bool showToast;
+    private string toastMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
+        await ReloadAll();
+    }
+
+    private async Task ReloadAll()
+    {
+        isLoading = true;
+        StateHasChanged();
         try
         {
             overdue = await TouchSvc.GetOverdueTouchesAsync();
             today = await TouchSvc.GetTodayTouchesAsync();
             thisWeek = await TouchSvc.GetWeekTouchesAsync();
+            upcoming = await TouchSvc.GetUpcomingMeetingsAsync();
             stale = await TouchSvc.GetStaleTouchesAsync(30);
         }
         catch { }
         finally
         {
             isLoading = false;
+            StateHasChanged();
+        }
+
+        // Show notification popup if urgent items exist
+        if (totalUrgent > 0)
+        {
+            showNotifPopup = true;
+            notifClosing = false;
+            StateHasChanged();
+            _ = AutoDismissNotification();
+        }
+    }
+
+    private async Task AutoDismissNotification()
+    {
+        await Task.Delay(6000);
+        if (showNotifPopup)
+        {
+            notifClosing = true;
+            StateHasChanged();
+            await Task.Delay(350);
+            showNotifPopup = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DismissNotification()
+    {
+        notifClosing = true;
+        StateHasChanged();
+        await Task.Delay(300);
+        showNotifPopup = false;
+        StateHasChanged();
+    }
+
+    private void OpenQuickTouch(TouchReminderModel r)
+    {
+        quickTouchQuote = r;
+        quickTouch = new TouchModel
+        {
+            TeklifId = r.TeklifId,
+            TemasTarihi = DateTime.Now,
+            TemasTipi = "CALL",
+            SonrakiTemasTarihi = DateTime.Today.AddDays(7)
+        };
+        quickTouchError = "";
+        showQuickTouch = true;
+    }
+
+    private async Task SaveQuickTouch()
+    {
+        if (string.IsNullOrWhiteSpace(quickTouch.Not))
+        {
+            quickTouchError = "Gorusme notu zorunludur.";
+            return;
+        }
+        isSavingQuick = true;
+        try
+        {
+            await TouchSvc.CreateTouchAsync(quickTouch);
+            showQuickTouch = false;
+            toastMessage = "Gorusme kaydedildi. Sonraki temas takvime eklendi.";
+            showToast = true;
+            StateHasChanged();
+            await Task.Delay(1800);
+            showToast = false;
+            await ReloadAll();
+        }
+        catch (Exception ex)
+        {
+            quickTouchError = "Hata: " + ex.Message;
+        }
+        finally
+        {
+            isSavingQuick = false;
         }
     }
 
     private void GoToQuote(int teklifId)
     {
-        Nav.NavigateTo($"/crm/touch-crm");
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchCRM>("Touch CRM", 1400, 900))
+            Nav.NavigateTo("/crm/touch-crm");
     }
+
+    private string GetTimeLabel(TouchReminderModel r, string type) => type switch
+    {
+        "danger" => $"{r.GecenGun} gun gecikti",
+        "warn" => "Bugun",
+        "muted" => $"{r.GecenGun} gun sessiz",
+        _ => r.PlanlananTarih.ToString("dd.MM.yyyy")
+    };
+
+    private string GetTimeSub(TouchReminderModel r, string type) => type switch
+    {
+        "danger" => "Acil",
+        "warn" => DateTime.Now.ToString("HH:mm"),
+        "info" => r.PlanlananTarih.ToString("dddd", turkishCulture),
+        "accent" => r.PlanlananTarih.ToString("dd MMM", turkishCulture),
+        "muted" => "Takip gerekli",
+        _ => ""
+    };
 
     private string GetPuanChip(string puan) => puan switch
     {
@@ -168,4 +437,58 @@
         "COLD" => "chip-cold",
         _ => "chip-draft"
     };
+
+    private RenderFragment RenderCard(TouchReminderModel r, string type) => __builder =>
+    {
+        <div class="rcard">
+            <div class="rcard-accent rcard-accent-@type"></div>
+            <div class="rcard-body">
+                <div class="rcard-row1">
+                    <div class="rcard-time rcard-time-@type">
+                        <span>@GetTimeLabel(r, type)</span>
+                        <span class="rcard-time-sub">@GetTimeSub(r, type)</span>
+                    </div>
+                    <div class="rcard-meta">
+                        <span class="yl-chip @GetPuanChip(r.Puan)">@r.Puan</span>
+                        @if (!string.IsNullOrEmpty(r.Satici))
+                        {
+                            <span class="rcard-satici">@r.Satici</span>
+                        }
+                    </div>
+                </div>
+                <div class="rcard-row2">
+                    <span class="rcard-quote" @onclick="() => GoToQuote(r.TeklifId)">@r.TeklifNo</span>
+                    <span class="rcard-sep">&middot;</span>
+                    <span class="rcard-customer">@r.Musteri</span>
+                </div>
+                <div class="rcard-row3">
+                    @if (r.NetTutar > 0)
+                    {
+                        <span class="rcard-amount">@r.NetTutar.ToString("N0") <small>@(r.ParaBirimi ?? "EUR")</small></span>
+                    }
+                    @if (!string.IsNullOrEmpty(r.SonTemasNotu))
+                    {
+                        <span class="rcard-note" title="@r.SonTemasNotu">@TruncateNote(r.SonTemasNotu)</span>
+                    }
+                </div>
+                <div class="rcard-actions">
+                    <button class="rcard-btn" @onclick="() => OpenQuickTouch(r)" @onclick:stopPropagation="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.72c.12.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 11.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45c.91.34 1.85.58 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                        Hizli Gorusme
+                    </button>
+                    <button class="rcard-btn rcard-btn-outline" @onclick="() => GoToQuote(r.TeklifId)" @onclick:stopPropagation="true">
+                        Detay
+                    </button>
+                </div>
+            </div>
+        </div>
+    };
+
+    private string TruncateNote(string note)
+    {
+        if (note.Length <= 55) return note;
+        return note[..52] + "...";
+    }
 }
