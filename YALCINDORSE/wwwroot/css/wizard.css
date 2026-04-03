@@ -524,6 +524,80 @@
 .app-root.dark .custom-select-option:hover { background: rgba(255,255,255,0.05); }
 .app-root.dark .custom-select-option.selected { background: rgba(59,125,221,0.1); }
 
+/* Searchable Select (Musteri autocomplete) */
+.searchable-select {
+    position: relative;
+}
+
+.searchable-select input {
+    width: 100%;
+    padding: 4px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--yl-border);
+    background: #fff;
+    color: var(--yl-text);
+    font-size: 0.78rem;
+    box-sizing: border-box;
+}
+
+.searchable-select input:focus {
+    outline: none;
+    border-color: #185FA5;
+    box-shadow: 0 0 0 2px rgba(24,95,165,0.1);
+}
+
+.searchable-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    z-index: 500;
+}
+
+.searchable-select-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.76rem;
+    color: var(--yl-text);
+    text-align: left;
+    font-family: inherit;
+    transition: background 0.1s;
+}
+
+.searchable-select-item:hover { background: #eef2ff; }
+.searchable-select-item.selected { background: #e8f0fe; font-weight: 600; }
+
+.searchable-select-code {
+    color: var(--yl-primary);
+    font-weight: 600;
+    font-size: 0.72rem;
+    min-width: 50px;
+}
+
+.searchable-select-empty {
+    padding: 12px;
+    text-align: center;
+    color: var(--yl-text-light);
+    font-size: 0.76rem;
+}
+
+.app-root.dark .searchable-select-dropdown { background: var(--yl-bg); }
+.app-root.dark .searchable-select-item:hover { background: rgba(255,255,255,0.05); }
+.app-root.dark .searchable-select-item.selected { background: rgba(59,125,221,0.1); }
+
 /* Responsive */
 @media (max-width: 768px) {
     .wizard-grid2 { grid-template-columns: 1fr; }

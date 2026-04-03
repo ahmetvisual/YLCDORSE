@@ -82,13 +82,33 @@
                     <div class="wizard-field compact">
                         <label>Musteri <span class="required">*</span></label>
                         <div style="display:flex;gap:6px">
-                            <select @bind="quote.MusteriId" @bind:after="OnCustomerChanged" style="flex:1">
-                                <option value="0">--- Secilmedi ---</option>
-                                @foreach (var c in customers)
+                            <div class="searchable-select" style="flex:1" @onfocusout="CloseCustomerDropdown">
+                                <input type="text" @bind="customerSearchText" @bind:event="oninput"
+                                       @onfocus="OpenCustomerDropdown"
+                                       placeholder="Musteri ara..." autocomplete="off" />
+                                @if (showCustomerDropdown)
                                 {
-                                    <option value="@c.Id">@c.CustomerCode - @c.Title</option>
+                                    <div class="searchable-select-dropdown">
+                                        @{ var filtered = GetFilteredCustomers(); }
+                                        @if (!filtered.Any())
+                                        {
+                                            <div class="searchable-select-empty">Sonuc bulunamadi</div>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var c in filtered.Take(50))
+                                            {
+                                                <button class="searchable-select-item @(quote.MusteriId == c.Id ? "selected" : "")"
+                                                        @onmousedown="() => SelectCustomer(c)"
+                                                        @onmousedown:preventDefault>
+                                                    <span class="searchable-select-code">@c.CustomerCode</span>
+                                                    <span>@c.Title</span>
+                                                </button>
+                                            }
+                                        }
+                                    </div>
                                 }
-                            </select>
+                            </div>
                             <button class="wizard-btn wizard-btn-primary" style="padding:4px 10px;font-size:0.72rem" @onclick="() => showQuickAdd = true">+ Yeni</button>
                         </div>
                     </div>
@@ -431,6 +451,10 @@
     private bool isSaving;
     private string? errorMessage;
 
+    // Customer search
+    private string customerSearchText = "";
+    private bool showCustomerDropdown = false;
+
     // Custom dropdown state
     private string? openDropdown;
     private void ToggleDropdown(string name) => openDropdown = openDropdown == name ? null : name;
@@ -464,6 +488,32 @@
                 days--;
         }
         return current;
+    }
+
+    private List<CustomerListItemModel> GetFilteredCustomers()
+    {
+        if (string.IsNullOrWhiteSpace(customerSearchText))
+            return customers;
+        var q = customerSearchText.Trim().ToLowerInvariant();
+        return customers.Where(c =>
+            (c.Title?.ToLowerInvariant().Contains(q) == true) ||
+            (c.CustomerCode?.ToLowerInvariant().Contains(q) == true)
+        ).ToList();
+    }
+
+    private async Task SelectCustomer(CustomerListItemModel c)
+    {
+        quote.MusteriId = c.Id;
+        customerSearchText = $"{c.CustomerCode} - {c.Title}";
+        showCustomerDropdown = false;
+        await OnCustomerChanged();
+    }
+
+    private void OpenCustomerDropdown() => showCustomerDropdown = true;
+
+    private void CloseCustomerDropdown()
+    {
+        _ = Task.Delay(200).ContinueWith(_ => InvokeAsync(() => { showCustomerDropdown = false; StateHasChanged(); }));
     }
 
     private async Task OnCustomerChanged()
@@ -598,6 +648,8 @@
 
             customers = await CustomerSvc.GetCustomersAsync();
             quote.MusteriId = result.customerId;
+            var added = customers.FirstOrDefault(c => c.Id == result.customerId);
+            if (added != null) customerSearchText = $"{added.CustomerCode} - {added.Title}";
             await OnCustomerChanged();
 
             showQuickAdd = false;
