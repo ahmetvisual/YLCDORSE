@@ -497,33 +497,8 @@ namespace YALCINDORSE.Services
             return newId;
         }
 
-        private bool _revTableEnsured;
-
-        public async Task EnsureRevisionTableAsync()
-        {
-            if (_revTableEnsured) return;
-
-            using var conn = _db.GetConnection();
-            await conn.OpenAsync();
-
-            const string sql = """
-                CREATE TABLE IF NOT EXISTS "YLTeklifRevLog" (
-                    "Id" SERIAL PRIMARY KEY,
-                    "TeklifId" INTEGER NOT NULL,
-                    "RevizyonNo" INTEGER NOT NULL DEFAULT 0,
-                    "DegisiklikDetayi" TEXT NOT NULL DEFAULT '',
-                    "Tarih" TIMESTAMP NOT NULL DEFAULT NOW(),
-                    "Yapan" VARCHAR(200) NOT NULL DEFAULT ''
-                );
-                """;
-            using var cmd = new NpgsqlCommand(sql, conn);
-            await cmd.ExecuteNonQueryAsync();
-            _revTableEnsured = true;
-        }
-
         public async Task<List<QuoteRevisionModel>> GetRevisionsAsync(int quoteId)
         {
-            await EnsureRevisionTableAsync();
             var items = new List<QuoteRevisionModel>();
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
@@ -556,7 +531,6 @@ namespace YALCINDORSE.Services
 
         public async Task CreateRevisionEntryAsync(int quoteId, int revNo, string detail)
         {
-            await EnsureRevisionTableAsync();
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
 
