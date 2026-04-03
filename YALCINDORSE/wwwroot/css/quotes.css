@@ -221,24 +221,23 @@
 
 /* === DETAIL / REVISION ROW === */
 .quote-detail-wrapper {
-    background: #f9fafb;
+    background: #fafbfc;
     padding: 0;
-    border-bottom: 1px solid var(--yl-border);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-    border-left: 3px solid var(--yl-accent);
+    border-bottom: 1px solid #eef0f3;
 }
 
 .quote-detail-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: 5px 12px;
     border-bottom: 1px solid #eef0f3;
+    background: #f6f7f9;
 }
 
 .quote-detail-title {
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     color: var(--yl-primary);
 }
 
@@ -248,41 +247,43 @@
 }
 
 .quote-detail-loading {
-    padding: 10px 14px;
+    padding: 8px 14px;
     color: var(--yl-text-light);
-    font-size: 0.8rem;
+    font-size: 0.76rem;
 }
 
 .quote-detail-wrapper .detail-table {
     border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-    border-bottom: 0;
+    border: 0;
 }
 
 .detail-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.78rem;
-    background: var(--yl-white);
+    font-size: 0.74rem;
+    background: transparent;
     font-variant-numeric: tabular-nums;
 }
 
 .detail-table th {
-    background: #f4f5f7;
-    padding: 7px 12px;
-    color: #6b7280;
+    background: #f0f1f3;
+    padding: 4px 10px;
+    color: #8b919a;
     font-weight: 600;
-    font-size: 0.66rem;
+    font-size: 0.62rem;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    border-bottom: 1px solid #e2e5ea;
+    border-bottom: 1px solid #e4e6ea;
 }
 
 .detail-table td {
-    padding: 7px 12px;
-    border-bottom: 1px solid #eef0f3;
+    padding: 4px 10px;
+    border-bottom: 1px solid #f0f1f3;
     vertical-align: middle;
+}
+
+.detail-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .detail-table tr.header-row td {
@@ -293,7 +294,6 @@
 
 .detail-table tr.active-rev-row td {
     background: #f0f4ff;
-    box-shadow: inset 3px 0 0 var(--yl-accent);
 }
 
 .rev-number-cell {
@@ -519,13 +519,12 @@
 .app-root.dark .quote-currency { color: #6b7280; }
 
 .app-root.dark .quote-detail-wrapper {
-    background: #161b22;
-    border-left-color: var(--yl-accent);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-    border-bottom-color: #30363d;
+    background: #13171e;
+    border-bottom-color: #21262d;
 }
 
 .app-root.dark .quote-detail-header {
+    background: #161b22;
     border-bottom-color: #21262d;
 }
 
@@ -540,8 +539,11 @@
 }
 
 .app-root.dark .detail-table tr.active-rev-row td {
-    background: rgba(59,125,221,0.1);
-    box-shadow: inset 3px 0 0 var(--yl-accent);
+    background: rgba(59,125,221,0.08);
+}
+
+.app-root.dark .detail-table td {
+    border-bottom-color: #1c2028;
 }
 
 .app-root.dark .detail-table tr.header-row td {
