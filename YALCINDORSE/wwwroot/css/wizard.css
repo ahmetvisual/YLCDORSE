@@ -442,6 +442,74 @@
     border-top: 1px solid var(--yl-border);
 }
 
+/* Custom Select (native select replacement) */
+.custom-select {
+    position: relative;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 4px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--yl-border);
+    background: #fff;
+    color: var(--yl-text);
+    font-size: 0.78rem;
+    cursor: pointer;
+    box-sizing: border-box;
+    text-align: left;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.custom-select-trigger:focus {
+    outline: none;
+    border-color: #185FA5;
+    box-shadow: 0 0 0 2px rgba(24,95,165,0.1);
+}
+
+.custom-select-trigger svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--yl-text-light);
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    z-index: 500;
+}
+
+.custom-select-option {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.76rem;
+    color: var(--yl-text);
+    text-align: left;
+    font-family: inherit;
+    transition: background 0.1s;
+}
+
+.custom-select-option:hover { background: #eef2ff; }
+.custom-select-option.selected { background: #e8f0fe; font-weight: 600; }
+
 /* Dark mode */
 .app-root.dark .wizard-content { background: var(--yl-bg); border-color: var(--yl-border); }
 .app-root.dark .wizard-step-circle { background: var(--yl-bg); }
@@ -451,6 +519,10 @@
 .app-root.dark .item-row-header { background: rgba(30,108,56,0.1); }
 .app-root.dark .quick-modal-content { background: var(--yl-bg); }
 .app-root.dark .wizard-summary { background: #1a1e2e; }
+.app-root.dark .custom-select-trigger { background: var(--yl-bg); }
+.app-root.dark .custom-select-dropdown { background: var(--yl-bg); }
+.app-root.dark .custom-select-option:hover { background: rgba(255,255,255,0.05); }
+.app-root.dark .custom-select-option.selected { background: rgba(59,125,221,0.1); }
 
 /* Responsive */
 @media (max-width: 768px) {
