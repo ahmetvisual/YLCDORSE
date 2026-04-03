@@ -506,20 +506,41 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
 
-            // Tabloyu sil ve yeniden olustur (gelistirme asamasi)
-            const string sql = """
-                DROP TABLE IF EXISTS "YLTeklifRevizyonlari";
-                CREATE TABLE "YLTeklifRevizyonlari" (
+            // Tablo yoksa olustur
+            const string createSql = """
+                CREATE TABLE IF NOT EXISTS "YLTeklifRevizyonlari" (
                     "Id" SERIAL PRIMARY KEY,
-                    "TeklifId" INTEGER NOT NULL REFERENCES "YLTeklifler"("Id") ON DELETE CASCADE,
+                    "TeklifId" INTEGER NOT NULL,
                     "RevizyonNo" INTEGER NOT NULL DEFAULT 0,
                     "DegisiklikDetayi" TEXT NOT NULL DEFAULT '',
                     "Tarih" TIMESTAMP NOT NULL DEFAULT NOW(),
                     "Yapan" VARCHAR(200) NOT NULL DEFAULT ''
                 );
                 """;
-            using var cmd = new NpgsqlCommand(sql, conn);
-            await cmd.ExecuteNonQueryAsync();
+            using var createCmd = new NpgsqlCommand(createSql, conn);
+            await createCmd.ExecuteNonQueryAsync();
+
+            // Eksik kolonlari ekle (tablo eski semada olabilir)
+            var columns = new[] {
+                ("DegisiklikDetayi", "TEXT NOT NULL DEFAULT ''"),
+                ("Tarih", "TIMESTAMP NOT NULL DEFAULT NOW()"),
+                ("Yapan", "VARCHAR(200) NOT NULL DEFAULT ''"),
+                ("RevizyonNo", "INTEGER NOT NULL DEFAULT 0"),
+                ("TeklifId", "INTEGER NOT NULL DEFAULT 0")
+            };
+
+            foreach (var (colName, colType) in columns)
+            {
+                var alterSql = $"""
+                    DO $$ BEGIN
+                        ALTER TABLE "YLTeklifRevizyonlari" ADD COLUMN IF NOT EXISTS "{colName}" {colType};
+                    EXCEPTION WHEN duplicate_column THEN NULL;
+                    END $$;
+                    """;
+                using var alterCmd = new NpgsqlCommand(alterSql, conn);
+                await alterCmd.ExecuteNonQueryAsync();
+            }
+
             _revTableEnsured = true;
         }
 
