@@ -616,11 +616,25 @@
             quote.Durum = durum;
             var quoteId = await QuoteSvc.CreateDraftQuoteAsync(quote);
 
-            // Kalemleri kaydet
-            foreach (var item in quoteItems)
+            // Kalemleri kaydet - once header'lar, sonra alt kalemler (UstKalemId mapping)
+            var idMap = new Dictionary<int, int>(); // eski temp Id -> yeni DB Id
+            foreach (var item in quoteItems.OrderBy(i => i.UstKalemId.HasValue ? 1 : 0).ThenBy(i => i.SiraNo))
             {
+                var oldId = item.Id;
                 item.TeklifId = quoteId;
+
+                // UstKalemId varsa, gercek DB Id ile degistir
+                if (item.UstKalemId.HasValue)
+                {
+                    if (idMap.ContainsKey(item.UstKalemId.Value))
+                        item.UstKalemId = idMap[item.UstKalemId.Value];
+                    else
+                        item.UstKalemId = null; // parent bulunamazsa null yap
+                }
+
+                item.Id = 0; // yeni kayit olarak insert et
                 await QuoteSvc.SaveQuoteItemAsync(item);
+                idMap[oldId] = item.Id;
             }
 
             Nav.NavigateTo("/satis/teklif-listesi");
