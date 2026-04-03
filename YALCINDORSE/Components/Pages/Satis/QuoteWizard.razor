@@ -506,6 +506,7 @@
         quote.MusteriId = c.Id;
         customerSearchText = $"{c.CustomerCode} - {c.Title}";
         showCustomerDropdown = false;
+        errorMessage = null;
         await OnCustomerChanged();
     }
 
