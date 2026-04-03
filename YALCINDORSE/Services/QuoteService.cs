@@ -506,9 +506,8 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
 
-            // Tablo yoksa olustur
-            const string createSql = """
-                CREATE TABLE IF NOT EXISTS "YLTeklifRevizyonlari" (
+            const string sql = """
+                CREATE TABLE IF NOT EXISTS "YLTeklifRevLog" (
                     "Id" SERIAL PRIMARY KEY,
                     "TeklifId" INTEGER NOT NULL,
                     "RevizyonNo" INTEGER NOT NULL DEFAULT 0,
@@ -517,30 +516,8 @@ namespace YALCINDORSE.Services
                     "Yapan" VARCHAR(200) NOT NULL DEFAULT ''
                 );
                 """;
-            using var createCmd = new NpgsqlCommand(createSql, conn);
-            await createCmd.ExecuteNonQueryAsync();
-
-            // Eksik kolonlari ekle (tablo eski semada olabilir)
-            var columns = new[] {
-                ("DegisiklikDetayi", "TEXT NOT NULL DEFAULT ''"),
-                ("Tarih", "TIMESTAMP NOT NULL DEFAULT NOW()"),
-                ("Yapan", "VARCHAR(200) NOT NULL DEFAULT ''"),
-                ("RevizyonNo", "INTEGER NOT NULL DEFAULT 0"),
-                ("TeklifId", "INTEGER NOT NULL DEFAULT 0")
-            };
-
-            foreach (var (colName, colType) in columns)
-            {
-                var alterSql = $"""
-                    DO $$ BEGIN
-                        ALTER TABLE "YLTeklifRevizyonlari" ADD COLUMN IF NOT EXISTS "{colName}" {colType};
-                    EXCEPTION WHEN duplicate_column THEN NULL;
-                    END $$;
-                    """;
-                using var alterCmd = new NpgsqlCommand(alterSql, conn);
-                await alterCmd.ExecuteNonQueryAsync();
-            }
-
+            using var cmd = new NpgsqlCommand(sql, conn);
+            await cmd.ExecuteNonQueryAsync();
             _revTableEnsured = true;
         }
 
@@ -553,7 +530,7 @@ namespace YALCINDORSE.Services
 
             const string sql = """
                 SELECT "Id", "TeklifId", "RevizyonNo", "DegisiklikDetayi", "Tarih", "Yapan"
-                FROM "YLTeklifRevizyonlari"
+                FROM "YLTeklifRevLog"
                 WHERE "TeklifId" = @quoteId
                 ORDER BY "RevizyonNo" ASC;
                 """;
@@ -584,7 +561,7 @@ namespace YALCINDORSE.Services
             await conn.OpenAsync();
 
             const string sql = """
-                INSERT INTO "YLTeklifRevizyonlari" ("TeklifId", "RevizyonNo", "DegisiklikDetayi", "Tarih", "Yapan")
+                INSERT INTO "YLTeklifRevLog" ("TeklifId", "RevizyonNo", "DegisiklikDetayi", "Tarih", "Yapan")
                 VALUES (@quoteId, @revNo, @detail, NOW(), @yapan);
                 """;
             using var cmd = new NpgsqlCommand(sql, conn);
