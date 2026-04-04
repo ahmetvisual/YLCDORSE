@@ -177,24 +177,86 @@ namespace YALCINDORSE.Services
             return ms.ToArray();
         }
 
-        /// <summary>Teklifi .docx olarak AppData/temp/ klasorune yazar ve Word/LibreOffice ile acar.</summary>
+        /// <summary>DevExpress XtraReport ile PDF uretir ve varsayilan uygulamada acar.</summary>
         public async Task OpenInDefaultAppAsync(int quoteId)
         {
-            var bytes = await GenerateDocxAsync(quoteId);
+            var pdfBytes = await GeneratePdfAsync(quoteId);
 
             var tempDir = Path.Combine(FileSystem.AppDataDirectory, "temp");
             Directory.CreateDirectory(tempDir);
 
-            // Teklif no'yu bul
             var quote = await _quoteSvc.GetQuoteByIdAsync(quoteId);
             var safeName = SanitizeFileName(quote?.TeklifNo ?? quoteId.ToString());
-            var filePath = Path.Combine(tempDir, $"{safeName}.docx");
+            var filePath = Path.Combine(tempDir, $"{safeName}.pdf");
 
-            await File.WriteAllBytesAsync(filePath, bytes);
+            await File.WriteAllBytesAsync(filePath, pdfBytes);
 
 #if WINDOWS
             Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
 #endif
+        }
+
+        /// <summary>DevExpress TeklifReport ile PDF byte[] uretir.</summary>
+        public async Task<byte[]> GeneratePdfAsync(int quoteId)
+        {
+            var quote = await _quoteSvc.GetQuoteByIdAsync(quoteId)
+                ?? throw new Exception($"Teklif bulunamadi: {quoteId}");
+
+            var items = await _quoteSvc.GetQuoteItemsAsync(quoteId);
+
+            // Musteri ve ilgili kisi bilgileri
+            string musteriAdi = "", musteriKodu = "";
+            string ilgiliKisi = "", ilgiliEmail = "", ilgiliMobil = "";
+            string saticiAdi = "", saticiEmail = "";
+            try
+            {
+                using var conn = _db.GetConnection();
+                await conn.OpenAsync();
+                const string sql = """
+                    SELECT c."Title", c."CustomerCode",
+                           cc."ContactName", cc."Email", cc."Mobile",
+                           u."FullName", u."Email" as "SaticiEmail"
+                    FROM "YLTeklifler" q
+                    LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
+                    LEFT JOIN "YLCustomerContacts" cc ON cc."Id" = q."IlgiliKisiId"
+                    LEFT JOIN "YLUsers" u ON u."Id" = q."SaticiId"
+                    WHERE q."Id" = @id;
+                    """;
+                using var cmd = new NpgsqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("id", quoteId);
+                using var r = await cmd.ExecuteReaderAsync();
+                if (await r.ReadAsync())
+                {
+                    musteriAdi   = r.IsDBNull(0) ? "" : r.GetString(0);
+                    musteriKodu  = r.IsDBNull(1) ? "" : r.GetString(1);
+                    ilgiliKisi   = r.IsDBNull(2) ? "" : r.GetString(2);
+                    ilgiliEmail  = r.IsDBNull(3) ? "" : r.GetString(3);
+                    ilgiliMobil  = r.IsDBNull(4) ? "" : r.GetString(4);
+                    saticiAdi    = r.IsDBNull(5) ? "" : r.GetString(5);
+                    saticiEmail  = r.IsDBNull(6) ? "" : r.GetString(6);
+                }
+            }
+            catch { }
+
+            // Raporu olustur ve doldur
+            var report = new TeklifReport();
+            report.SetQuoteData(
+                teklifNo: quote.TeklifNo,
+                tarih: quote.TalepTarihi.ToString("dd.MM.yyyy"),
+                gecerlilikTarihi: quote.GecerlilikTarihi.ToString("dd.MM.yyyy"),
+                musteriAdi: musteriAdi,
+                musteriKodu: musteriKodu,
+                ilgiliKisi: ilgiliKisi,
+                ilgiliEmail: ilgiliEmail,
+                ilgiliMobil: ilgiliMobil,
+                saticiAdi: saticiAdi,
+                saticiEmail: saticiEmail,
+                netTutar: quote.NetTutar.ToString("N2"),
+                paraBirimi: quote.ParaBirimi,
+                urunAdi: items.FirstOrDefault(i => i.KalemTipi == "HEADER")?.Aciklama ?? ""
+            );
+
+            return report.ExportToPdfBytes();
         }
 
         /// <summary>PDF'e donusturmeyi dener. LibreOffice kuruluysa PDF yolunu, yoksa null doner.</summary>
