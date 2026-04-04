@@ -281,7 +281,7 @@
                             <button type="button" class="btn-secondary" @onclick="ResetCurrentAsync" disabled="@isSaving">
                                 Vazgec
                             </button>
-                            <button type="button" class="btn-primary-action" @onclick="SaveCurrentAsync" disabled="@isSaving">
+                            <button type="button" class="btn-primary-action" @onclick="OpenSaveConfirm" disabled="@isSaving">
                                 @(isSaving ? "Kaydediliyor..." : "Kaydet")
                             </button>
                         </div>
@@ -291,6 +291,33 @@
         </div>
     </div>
 </div>
+
+@if (showSaveConfirm)
+{
+    <div class="modal-overlay" @onclick="CloseSaveConfirm">
+        <div class="modal-panel modal-sm" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h4>Kaydet</h4>
+            </div>
+            <div class="modal-body">
+                @if (currentCustomer.Id == 0)
+                {
+                    <p>Yeni cari kart kaydedilecek. Onayliyor musunuz?</p>
+                }
+                else
+                {
+                    <p><strong>@currentCustomer.Title</strong> kartindaki degisiklikler kaydedilecek. Onayliyor musunuz?</p>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="CloseSaveConfirm" disabled="@isSaving">Iptal</button>
+                <button class="btn-primary-action" @onclick="ConfirmSaveAsync" disabled="@isSaving">
+                    @(isSaving ? "Kaydediliyor..." : "Evet, Kaydet")
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @if (showDeleteConfirm)
 {
@@ -328,6 +355,7 @@
     private bool isSaving;
     private bool isDeleting;
     private bool showDeleteConfirm;
+    private bool showSaveConfirm;
     private string searchTerm = "";
     private string activeTab = "general";
     private string? message;
@@ -444,6 +472,22 @@
         }
 
         await SelectCustomerAsync(currentCustomer.Id);
+    }
+
+    private void OpenSaveConfirm()
+    {
+        showSaveConfirm = true;
+    }
+
+    private void CloseSaveConfirm()
+    {
+        showSaveConfirm = false;
+    }
+
+    private async Task ConfirmSaveAsync()
+    {
+        showSaveConfirm = false;
+        await SaveCurrentAsync();
     }
 
     private async Task SaveCurrentAsync()
