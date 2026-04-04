@@ -108,7 +108,7 @@ namespace YALCINDORSE.Services
             _auth = auth;
         }
 
-        public async Task<List<QuoteListItemModel>> GetQuotesAsync(string search = "", string durum = "", int? saticiId = null, string puan = "")
+        public async Task<List<QuoteListItemModel>> GetQuotesAsync(string search = "", string durum = "", int? saticiId = null, string puan = "", IReadOnlyList<string>? durumList = null)
         {
             var items = new List<QuoteListItemModel>();
             using var conn = _db.GetConnection();
@@ -142,7 +142,9 @@ namespace YALCINDORSE.Services
 
             if (!string.IsNullOrWhiteSpace(search))
                 sql += " AND (q.\"TeklifNo\" ILIKE @search OR c.\"Title\" ILIKE @search OR u.\"FullName\" ILIKE @search)";
-            if (!string.IsNullOrWhiteSpace(durum))
+            if (durumList != null && durumList.Count > 0)
+                sql += " AND q.\"Durum\" = ANY(@durumList)";
+            else if (!string.IsNullOrWhiteSpace(durum))
                 sql += " AND q.\"Durum\" = @durum";
             if (saticiId.HasValue && saticiId > 0)
                 sql += " AND q.\"SaticiId\" = @saticiId";
@@ -155,7 +157,9 @@ namespace YALCINDORSE.Services
 
             if (!string.IsNullOrWhiteSpace(search))
                 cmd.Parameters.AddWithValue("search", $"%{search}%");
-            if (!string.IsNullOrWhiteSpace(durum))
+            if (durumList != null && durumList.Count > 0)
+                cmd.Parameters.AddWithValue("durumList", durumList.ToArray());
+            else if (!string.IsNullOrWhiteSpace(durum))
                 cmd.Parameters.AddWithValue("durum", durum);
             if (saticiId.HasValue && saticiId > 0)
                 cmd.Parameters.AddWithValue("saticiId", saticiId.Value);

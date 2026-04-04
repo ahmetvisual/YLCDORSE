@@ -212,17 +212,18 @@
     color: #6b7280;
     font-weight: 600;
     padding: 10px var(--yl-space-md);
+    border-top: 1px solid #d0d5dd;
     border-bottom: 1px solid #d0d5dd;
     white-space: nowrap;
     font-size: 0.68rem;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.05em;
     user-select: none;
 }
 
 .quote-grid td {
     padding: 9px var(--yl-space-md);
-    border-bottom: 1px solid #eef0f3;
+    border-bottom: 1px solid #e2e8f0;
     color: var(--yl-text);
     vertical-align: middle;
 }
@@ -961,11 +962,16 @@
 }
 
 .qt-merged-grid tbody tr:hover td {
-    background: #f5f7fa;
+    background: #f7f9fc;
 }
 
 .qt-merged-grid tbody tr.qt-selected td {
     background: #eef4ff;
+}
+
+.qt-merged-grid tbody tr.qt-selected td:first-child {
+    border-left: 3px solid var(--yl-accent);
+    padding-left: calc(var(--yl-space-md) - 3px);
 }
 
 /* Kolon gizleme */
@@ -1170,4 +1176,83 @@
 @media (max-width: 700px) {
     .qt-kpi-row { display: none; }
     .qt-header-sub { display: none; }
+}
+
+/* ============================================================
+   STATUS SEKME BARI  (qt-status-tabs / qt-stab)
+   ============================================================ */
+.qt-status-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px var(--yl-space-md) 0;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--yl-border);
+    background: #fff;
+}
+
+.qt-stab {
+    padding: 7px 18px;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    color: var(--yl-text-light);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    line-height: 1.4;
+    margin-bottom: -1px;
+}
+
+.qt-stab:hover:not(.qt-stab-active) {
+    background: #f0f2f5;
+    color: var(--yl-text);
+}
+
+.qt-stab-active {
+    background: #fff;
+    color: #0f2548;
+    border-color: var(--yl-border);
+    border-bottom-color: #fff;
+    font-weight: 700;
+}
+
+/* ============================================================
+   TARIH HUCRESINDE GORECELI ZAMAN
+   ============================================================ */
+.quote-date-rel {
+    font-size: 0.68rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   TH SIRALAMA IKONU HIZALAMA
+   ============================================================ */
+.qt-th-sort {
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   DARK MODE — yeni elemanlar
+   ============================================================ */
+.app-root.dark .qt-status-tabs {
+    background: var(--yl-white);
+    border-bottom-color: var(--yl-border);
+}
+
+.app-root.dark .qt-stab-active {
+    background: var(--yl-white);
+    color: #7eb3f5;
+    border-color: var(--yl-border);
+    border-bottom-color: var(--yl-white);
+}
+
+.app-root.dark .qt-stab:hover:not(.qt-stab-active) {
+    background: rgba(255,255,255,0.06);
+    color: var(--yl-text);
 }
