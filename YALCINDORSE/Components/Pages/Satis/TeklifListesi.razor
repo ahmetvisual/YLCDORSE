@@ -8,40 +8,29 @@
 
 <div class="qt-shell">
 
-    <!-- ===== HEADER ===== -->
-    <div class="qt-header">
-        <div class="qt-header-left">
-            <div class="qt-header-title-block">
-                <span class="qt-header-title">Teklif &amp; Temas</span>
-                <span class="qt-header-sub">Revizyonlar, durum gecisleri ve temas gecmisi</span>
-            </div>
-
-        </div>
-
-        <div class="qt-header-actions">
+    <!-- ===== STATUS SEKMELERI + AKSIYONLAR ===== -->
+    <div class="qt-status-tabs">
+        <button class="qt-stab @(selectedDurumTab == "ALL"      ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("ALL")'>Tumu</button>
+        <button class="qt-stab @(selectedDurumTab == "AWAIT"    ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("AWAIT")'>Cevap Beklenenler</button>
+        <button class="qt-stab @(selectedDurumTab == "APPROVED" ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("APPROVED")'>Onaylananlar</button>
+        <button class="qt-stab @(selectedDurumTab == "REJECTED" ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("REJECTED")'>Reddedilenler</button>
+        <div class="qt-stab-spacer"></div>
+        <div class="qt-stab-actions">
             <button class="btn-secondary" @onclick="ReloadAsync" disabled="@isLoading">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="@(isLoading ? "animation:spin 1s linear infinite" : "")">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="@(isLoading ? "animation:spin 1s linear infinite" : "")">
                     <polyline points="23 4 23 10 17 10"/>
                     <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                 </svg>
                 Yenile
             </button>
             <button class="btn-add" @onclick="GoToNewQuote">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
                     <line x1="12" y1="5" x2="12" y2="19"/>
                     <line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
                 <span>Teklif Olustur</span>
             </button>
         </div>
-    </div>
-
-    <!-- ===== STATUS SEKMELERI ===== -->
-    <div class="qt-status-tabs">
-        <button class="qt-stab @(selectedDurumTab == "ALL"      ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("ALL")'>Tumu</button>
-        <button class="qt-stab @(selectedDurumTab == "AWAIT"    ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("AWAIT")'>Cevap Beklenenler</button>
-        <button class="qt-stab @(selectedDurumTab == "APPROVED" ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("APPROVED")'>Onaylananlar</button>
-        <button class="qt-stab @(selectedDurumTab == "REJECTED" ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("REJECTED")'>Reddedilenler</button>
     </div>
 
     <!-- ===== FILTER BAR ===== -->
