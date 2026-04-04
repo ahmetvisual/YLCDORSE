@@ -1,62 +1,75 @@
 @page "/satis/teklif-listesi"
 @using YALCINDORSE.Services
+@using YALCINDORSE.Components.Pages.CRM
 @inject QuoteService QuoteService
+@inject TouchService TouchSvc
 @inject NavigationManager Nav
 @inject DesktopWindowService WindowService
 
-<div class="crm-workspace-panel" style="flex: 1; padding:12px 14px; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
-    <div class="crm-header" style="margin-bottom: 8px;">
-        <div>
-            <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: var(--yl-primary);">
+<div class="qt-shell">
+
+    <!-- ===== HEADER ===== -->
+    <div class="crm-header">
+        <div class="crm-header-copy">
+            <div class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                     <polyline points="14 2 14 8 20 8"/>
                     <line x1="16" y1="13" x2="8" y2="13"/>
                     <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10 9 9 9 8 9"/>
                 </svg>
-                Teklif Listesi
-            </h3>
-            <p class="crm-header-subtitle">Teklif basliklarini ve revizyon gecmisini goruntuleyebilirsiniz.</p>
+                <div>
+                    <h3>Teklif & Temas</h3>
+                    <p class="crm-header-subtitle">Teklif revizyonlari, durum gecisleri ve musteri temas gecmisi tek ekranda.</p>
+                </div>
+            </div>
         </div>
         <div class="crm-header-actions">
-            <button class="btn-primary-action" @onclick="GoToNewQuote">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; margin-right:4px; vertical-align:text-bottom;">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            <button class="btn-secondary" @onclick="ReloadAsync" disabled="@isLoading">Yenile</button>
+            <button class="btn-add" @onclick="GoToNewQuote">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
-                Teklif Olustur
+                <span>Teklif Olustur</span>
             </button>
-            <button class="btn-secondary" @onclick="ReloadAsync">Yenile</button>
         </div>
     </div>
 
-    <!-- Filters -->
-    <div class="quote-filter-bar">
-        <div class="crm-search-box" style="flex: 1; max-width: 300px;">
+    <!-- ===== FILTER BAR ===== -->
+    <div class="qt-filter-bar">
+        <div class="crm-search-box qt-search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input type="text" class="form-control" placeholder="Teklif No, Musteri, Satici ara..." @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" />
+            <input type="text" class="form-input" placeholder="Teklif No, Musteri, Satici ara..."
+                   @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" />
         </div>
-        <select class="quote-filter-select" @onchange="OnStatusChanged">
-            <option value="">Tumu (Durum)</option>
-            <option value="Draft">Taslak</option>
-            <option value="Sent">Gonderildi</option>
-            <option value="WaitingApproval">Onay Bekliyor</option>
-            <option value="Approved">Onaylandi</option>
-            <option value="Rejected">Reddedildi</option>
-            <option value="OPEN">Acik</option>
-            <option value="ORDER">Siparis</option>
-            <option value="CLOSED">Kapali</option>
-        </select>
-        <select class="quote-filter-select" @onchange="OnPuanChanged">
-            <option value="">Tumu (Puan)</option>
-            <option value="HOT">HOT</option>
-            <option value="WARM">WARM</option>
-            <option value="COLD">COLD</option>
+
+        <div class="qt-filter-chips">
+            @foreach (var f in puanFilters)
+            {
+                <button class="touch-chip-btn @(selectedPuan == f.Key ? f.Value : "")"
+                        @onclick="() => SetPuanFilter(f.Key)">
+                    @(f.Key == "ALL" ? "Tumu" : f.Key)
+                </button>
+            }
+        </div>
+
+        <select class="quote-filter-select" @onchange="OnKanalChanged">
+            <option value="">Tum Kanallar</option>
+            <option value="BAYI">Bayi</option>
+            <option value="ZIYARET">Ziyaret</option>
+            <option value="ONLINE">Online</option>
+            <option value="WHATSAPP">WhatsApp</option>
+            <option value="EMAIL">E-Mail</option>
+            <option value="WEB_SITESI">Web Sitesi</option>
+            <option value="FUAR">Fuar</option>
         </select>
     </div>
 
+    <!-- ===== ICERIK ===== -->
     @if (isLoading)
     {
         <div class="quote-loading-state">
@@ -64,167 +77,259 @@
             Yukleniyor...
         </div>
     }
-    else if (errorMessage == null)
+    else if (errorMessage != null)
     {
-        <div class="quote-grid-container">
-            <div class="quote-table-wrapper">
-                <table class="quote-grid">
-                    <thead>
-                        <tr>
-                            <th style="width: 36px;"></th>
-                            <th>Tarih</th>
-                            <th>Teklif No</th>
-                            <th>Musteri & Ilgili</th>
-                            <th class="hide-mobile">Satici</th>
-                            <th>Durum</th>
-                            <th>Net Tutar</th>
-                            <th class="hide-tablet">Puan</th>
-                            <th style="width: 80px;">Isl.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (quotes == null || !quotes.Any())
-                        {
-                            <tr><td colspan="9" class="quote-empty-state">Goruntulenecek kayit bulunamadi.</td></tr>
-                        }
-                        else
-                        {
-                            @foreach (var quote in quotes)
-                            {
-                                bool isExpanded = expandedQuoteId == quote.Id;
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    else
+    {
+        <div class="qt-layout">
 
-                                <tr class="@(isExpanded ? "expanded-master" : "")">
-                                    <td style="text-align: center;">
-                                        <button class="btn-expand" @onclick="() => ToggleRowAsync(quote.Id)">
-                                            @if (isExpanded) {
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-                                            } else {
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                                            }
-                                        </button>
-                                    </td>
-                                    <td class="quote-date-cell">@quote.TalepTarihi.ToString("dd.MM.yyyy")</td>
-                                    <td>
-                                        <div class="quote-no">@quote.TeklifNo</div>
-                                        <div class="quote-rev">Rev @quote.Rev</div>
-                                    </td>
-                                    <td>
-                                        <div class="quote-customer">@quote.Musteri</div>
-                                        @if (!string.IsNullOrEmpty(quote.Ilgili))
-                                        {
-                                            <div class="quote-contact">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px; height:11px; margin-right:3px; vertical-align:middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                                @quote.Ilgili
-                                            </div>
-                                        }
-                                    </td>
-                                    <td class="hide-mobile">@quote.Satici</td>
-                                    <td>
-                                        <span class="yl-chip @GetStatusChipClass(quote.Durum)">
-                                            @GetStatusName(quote.Durum)
-                                        </span>
-                                    </td>
-                                    <td class="quote-amount-cell">
-                                        <span class="quote-amount">@quote.NetTutar.ToString("N2")</span>
-                                        <span class="quote-currency">@quote.Para</span>
-                                    </td>
-                                    <td class="hide-tablet">
-                                        <span class="yl-chip @GetStandingChipClass(quote.Puan)">
-                                            @quote.Puan
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="quote-row-actions">
-                                            <button class="btn-expand" title="Duzenle" @onclick="() => EditQuote(quote.Id)">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                            </button>
-                                            <button class="btn-expand" title="Kopyala" @onclick="() => CopyQuote(quote.Id)">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                            </button>
-                                            <button class="btn-expand" title="PDF Ciktisi" style="color: var(--yl-danger);">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                                            </button>
-                                        </div>
-                                    </td>
+            <!-- ========== SOL: TEKLIF LISTESI ========== -->
+            <div class="qt-list-panel @(selectedQuoteId > 0 ? "qt-with-detail" : "")">
+                <div class="quote-grid-container">
+                    <div class="quote-table-wrapper">
+                        <table class="quote-grid qt-merged-grid">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Teklif No</th>
+                                    <th>Musteri</th>
+                                    <th class="qt-hide-sm">Durum</th>
+                                    <th class="qt-hide-sm">Puan</th>
+                                    <th class="qt-hide-md">Net Tutar</th>
+                                    <th style="text-align:center; width:56px;">Touch</th>
+                                    <th class="qt-hide-md">Sonraki Temas</th>
+                                    <th style="width:68px;">Isl.</th>
                                 </tr>
-
-                                @if (isExpanded)
+                            </thead>
+                            <tbody>
+                                @if (quotes == null || !quotes.Any())
                                 {
-                                    <tr class="detail-row">
-                                        <td colspan="9" style="padding: 0;">
-                                            <div class="quote-detail-wrapper">
-                                                @if (isDetailsLoading)
+                                    <tr>
+                                        <td colspan="9" class="quote-empty-state">Goruntulenecek kayit bulunamadi.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var quote in quotes)
+                                    {
+                                        var touchInfo = quoteTouchInfo.GetValueOrDefault(quote.Id);
+                                        var isSelected = selectedQuoteId == quote.Id;
+                                        <tr class="@(isSelected ? "qt-selected" : "")"
+                                            @onclick="() => SelectQuoteAsync(quote.Id)">
+                                            <td class="quote-date-cell">@quote.TalepTarihi.ToString("dd.MM.yy")</td>
+                                            <td>
+                                                <div class="quote-no">@quote.TeklifNo</div>
+                                                @if (quote.Rev > 0)
                                                 {
-                                                    <div class="quote-detail-loading">Revizyonlar yukleniyor...</div>
+                                                    <div class="quote-rev">Rev @quote.Rev</div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="quote-customer">@quote.Musteri</div>
+                                                @if (!string.IsNullOrEmpty(quote.Ilgili))
+                                                {
+                                                    <div class="quote-contact">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                             style="width:10px;height:10px;margin-right:2px;vertical-align:middle;">
+                                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                                            <circle cx="12" cy="7" r="4"/>
+                                                        </svg>
+                                                        @quote.Ilgili
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="qt-hide-sm">
+                                                <span class="yl-chip @GetStatusChipClass(quote.Durum)">
+                                                    @GetStatusName(quote.Durum)
+                                                </span>
+                                            </td>
+                                            <td class="qt-hide-sm">
+                                                <span class="yl-chip @GetStandingChipClass(quote.Puan)">@quote.Puan</span>
+                                            </td>
+                                            <td class="qt-hide-md quote-amount-cell">
+                                                <span class="quote-amount">@quote.NetTutar.ToString("N2")</span>
+                                                <span class="quote-currency">@quote.Para</span>
+                                            </td>
+                                            <td style="text-align:center; font-weight:700; color:var(--yl-accent);">
+                                                @(touchInfo?.TouchCount ?? 0)
+                                            </td>
+                                            <td class="qt-hide-md" style="font-size:0.72rem;">
+                                                @if (touchInfo?.NextTouchDate != null)
+                                                {
+                                                    var isOverdue = touchInfo.NextTouchDate < DateTime.Today;
+                                                    var isToday = touchInfo.NextTouchDate?.Date == DateTime.Today;
+                                                    @if (isOverdue) { <span class="overdue-dot"></span> }
+                                                    else if (isToday) { <span class="today-dot"></span> }
+                                                    <span style="@(isOverdue ? "color:#A32D2D;font-weight:700" : isToday ? "color:#854F0B;font-weight:700" : "")">
+                                                        @touchInfo.NextTouchDate?.ToString("dd.MM.yyyy")
+                                                    </span>
                                                 }
                                                 else
                                                 {
-                                                    <div class="quote-detail-header">
-                                                        <span class="quote-detail-title">
-                                                            Degisiklik Gecmisi - @quote.TeklifNo
-                                                        </span>
-                                                        <div class="quote-detail-actions">
-                                                            @{ var transitions = GetAvailableTransitions(quote.Durum); }
-                                                            @foreach (var tr in transitions)
-                                                            {
-                                                                <button class="btn-transition @tr.CssClass" @onclick="() => ChangeStatusAsync(quote.Id, tr.NewStatus)" disabled="@isTransitioning">
-                                                                    @tr.Label
-                                                                </button>
-                                                            }
-                                                            <button class="btn-transition btn-revize" @onclick="() => EditQuote(quote.Id)" title="Teklifi duzenle (revizyon olusturur)">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:3px;vertical-align:text-bottom;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                                                Revize Et
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    @if (expandedRevisions == null || !expandedRevisions.Any())
-                                                    {
-                                                        <div class="quote-detail-loading">Henuz revizyon kaydi yok.</div>
-                                                    }
-                                                    else
-                                                    {
-                                                        <table class="detail-table">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th style="width:45px; text-align:center;">Rev</th>
-                                                                    <th style="width:120px;">Tarih</th>
-                                                                    <th>Degisiklik Detayi</th>
-                                                                    <th style="width:100px;">Yapan</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach (var rev in expandedRevisions)
-                                                                {
-                                                                    <tr>
-                                                                        <td class="rev-number-cell">@rev.RevizyonNo</td>
-                                                                        <td class="rev-meta-cell">@rev.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
-                                                                        <td class="rev-detail-cell">@rev.DegisiklikDetayi</td>
-                                                                        <td class="rev-meta-cell">@rev.Yapan</td>
-                                                                    </tr>
-                                                                }
-                                                            </tbody>
-                                                        </table>
-                                                    }
+                                                    <span style="color:var(--yl-text-light);">—</span>
                                                 }
-                                            </div>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td @onclick:stopPropagation="true">
+                                                <div class="quote-row-actions">
+                                                    <button class="btn-expand" title="Duzenle" @onclick="() => EditQuote(quote.Id)">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button class="btn-expand" title="Kopyala" @onclick="() => CopyQuote(quote.Id)">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="quote-grid-footer">
+                        <span>Toplam @(quotes?.Count ?? 0) kayit gosteriliyor.</span>
+                        @if (isTouchLoading)
+                        {
+                            <span style="color:var(--yl-text-light); font-size:0.75rem; margin-left:12px;">
+                                Temas bilgileri yukleniyor...
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== SAG: DETAY PANELI ========== -->
+            @if (selectedQuoteId > 0)
+            {
+                var sel = quotes?.FirstOrDefault(q => q.Id == selectedQuoteId);
+                <div class="qt-detail-panel">
+
+                    <!-- Panel Basligi -->
+                    <div class="qt-detail-header">
+                        <div>
+                            <div class="crm-detail-code">@sel?.TeklifNo</div>
+                            <div style="font-weight:700; font-size:0.92rem; color:var(--yl-primary);">@sel?.Musteri</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            @if (sel != null)
+                            {
+                                <span class="yl-chip @GetStatusChipClass(sel.Durum)">@GetStatusName(sel.Durum)</span>
+                                <span class="yl-chip @GetStandingChipClass(sel.Puan)">@sel.Puan</span>
+                            }
+                            <button class="btn-expand" title="Kapat" @onclick="CloseDetail">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab Basliklar -->
+                    <div class="qt-detail-tabs">
+                        <button class="qt-detail-tab @(detailTab == "rev" ? "active" : "")"
+                                @onclick='() => detailTab = "rev"'>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            Revizyonlar
+                        </button>
+                        <button class="qt-detail-tab @(detailTab == "touch" ? "active" : "")"
+                                @onclick='() => detailTab = "touch"'>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.6 3.39 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.5a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/>
+                            </svg>
+                            Temas Gecmisi
+                        </button>
+                    </div>
+
+                    <!-- Tab Icerigi -->
+                    <div class="qt-detail-body">
+                        @if (detailTab == "rev")
+                        {
+                            <!-- Durum Gecis Butonlari -->
+                            @if (sel != null)
+                            {
+                                var transitions = GetAvailableTransitions(sel.Durum);
+                                @if (transitions.Any())
+                                {
+                                    <div class="qt-transitions">
+                                        @foreach (var tr in transitions)
+                                        {
+                                            <button class="btn-transition @tr.CssClass"
+                                                    @onclick="() => ChangeStatusAsync(sel.Id, tr.NewStatus)"
+                                                    disabled="@isTransitioning">
+                                                @tr.Label
+                                            </button>
+                                        }
+                                        <button class="btn-transition btn-revize" @onclick="() => EditQuote(sel.Id)">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                 style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom;">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                            </svg>
+                                            Revize Et
+                                        </button>
+                                    </div>
                                 }
                             }
-                        }
-                    </tbody>
-                </table>
-            </div>
 
-            <div class="quote-grid-footer">
-                <span>Toplam @(quotes?.Count ?? 0) kayit gosteriliyor.</span>
-            </div>
+                            <!-- Revizyon Tablosu -->
+                            @if (isDetailsLoading)
+                            {
+                                <div class="quote-detail-loading">Revizyonlar yukleniyor...</div>
+                            }
+                            else if (expandedRevisions == null || !expandedRevisions.Any())
+                            {
+                                <div class="quote-detail-loading">Henuz revizyon kaydi yok.</div>
+                            }
+                            else
+                            {
+                                <table class="detail-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:45px;text-align:center;">Rev</th>
+                                            <th style="width:120px;">Tarih</th>
+                                            <th>Degisiklik Detayi</th>
+                                            <th style="width:90px;">Yapan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var rev in expandedRevisions)
+                                        {
+                                            <tr>
+                                                <td class="rev-number-cell">@rev.RevizyonNo</td>
+                                                <td class="rev-meta-cell">@rev.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                                                <td class="rev-detail-cell">@rev.DegisiklikDetayi</td>
+                                                <td class="rev-meta-cell">@rev.Yapan</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                        }
+                        else
+                        {
+                            <TouchDetailPanel TeklifId="selectedQuoteId"
+                                              OnClose="CloseDetail"
+                                              OnDataChanged="OnDetailChanged" />
+                        }
+                    </div>
+                </div>
+            }
         </div>
     }
 </div>
 
-@* === TOAST OVERLAY === *@
+@* === TOAST === *@
 @if (showToast)
 {
     <div class="toast-overlay">
@@ -232,14 +337,21 @@
             @if (toastIsSuccess)
             {
                 <div class="toast-icon-success">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" opacity="0.15" fill="#059669" stroke="none"/><path class="check-path" d="M7 13l3 3 7-7"/></svg>
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" opacity="0.15" fill="#059669" stroke="none"/>
+                        <path class="check-path" d="M7 13l3 3 7-7"/>
+                    </svg>
                 </div>
                 <div class="toast-title success">Basarili!</div>
             }
             else
             {
                 <div class="toast-icon-error">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
                 </div>
                 <div class="toast-title error">Hata!</div>
             }
@@ -249,22 +361,39 @@
 }
 
 @code {
+    // Yukleme & hata
     private bool isLoading = true;
     private bool isDetailsLoading = false;
+    private bool isTouchLoading = false;
     private string? errorMessage;
-    private bool showToast;
-    private bool toastIsSuccess;
+    private bool showToast, toastIsSuccess;
     private string toastMessage = "";
 
+    // Veri
     private List<QuoteListItemModel>? quotes;
     private List<QuoteRevisionModel>? expandedRevisions;
+    private Dictionary<int, QuoteTouchSummary> quoteTouchInfo = new();
     private bool isTransitioning = false;
 
-    private string searchQuery = "";
-    private string selectedStatus = "";
-    private string selectedPuan = "";
+    // Secim & tab
+    private int selectedQuoteId;
+    private string detailTab = "rev";
 
-    private int expandedQuoteId = 0;
+    // Filtreler
+    private string searchQuery = "";
+    private string selectedPuan = "ALL";
+    private string kanalFilter = "";
+
+    private readonly Dictionary<string, string> puanFilters = new()
+    {
+        { "ALL",    "active-all"    },
+        { "HOT",    "active-hot"    },
+        { "WARM",   "active-warm"   },
+        { "COLD",   "active-cold"   },
+        { "OPEN",   "active-open"   },
+        { "ORDER",  "active-order"  },
+        { "CLOSED", "active-closed" }
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -274,15 +403,13 @@
     private async Task ReloadAsync()
     {
         await LoadQuotesAsync();
-
-        // Acik detay varsa revizyon gecmisini de yenile
-        if (expandedQuoteId > 0)
+        if (selectedQuoteId > 0 && detailTab == "rev")
         {
-            try
-            {
-                expandedRevisions = await QuoteService.GetRevisionsAsync(expandedQuoteId);
-            }
+            isDetailsLoading = true;
+            StateHasChanged();
+            try { expandedRevisions = await QuoteService.GetRevisionsAsync(selectedQuoteId); }
             catch { }
+            finally { isDetailsLoading = false; }
         }
     }
 
@@ -294,87 +421,108 @@
 
         try
         {
-            quotes = await QuoteService.GetQuotesAsync(searchQuery, selectedStatus, null, selectedPuan);
+            // Puan / durum filtresi ayristir (ORDER, CLOSED, OPEN durum; diger puan)
+            var durumFilter = "";
+            var puanParam = "";
+            if (selectedPuan is "ORDER" or "CLOSED" or "OPEN")
+                durumFilter = selectedPuan;
+            else if (selectedPuan != "ALL")
+                puanParam = selectedPuan;
+
+            quotes = await QuoteService.GetQuotesAsync(searchQuery, durumFilter, null, puanParam);
+
+            // Kanal filtresi (client-side)
+            if (!string.IsNullOrEmpty(kanalFilter))
+                quotes = quotes.Where(q => q.TeklifKanali == kanalFilter).ToList();
+
+            isLoading = false;
+            StateHasChanged();
+
+            // Touch ozetlerini arka planda yukle
+            await LoadTouchInfoAsync();
         }
         catch (Exception ex)
         {
             errorMessage = ex.Message;
-        }
-        finally
-        {
             isLoading = false;
         }
     }
 
-    private async Task ShowToastSuccess(string message)
+    private async Task LoadTouchInfoAsync()
     {
-        toastIsSuccess = true;
-        toastMessage = message;
-        showToast = true;
-        errorMessage = null;
+        if (quotes == null || !quotes.Any()) return;
+
+        isTouchLoading = true;
+        quoteTouchInfo.Clear();
         StateHasChanged();
-        await Task.Delay(2000);
-        showToast = false;
+
+        foreach (var q in quotes)
+        {
+            try
+            {
+                var touches = await TouchSvc.GetTouchesForQuoteAsync(q.Id);
+                var last = touches.LastOrDefault();
+                quoteTouchInfo[q.Id] = new QuoteTouchSummary
+                {
+                    TouchCount    = touches.Count,
+                    LastTouchDate = last?.TemasTarihi,
+                    NextTouchDate = last?.SonrakiTemasTarihi,
+                    HasManagement = touches.Any(t => t.YonetimDahilMi)
+                };
+            }
+            catch
+            {
+                quoteTouchInfo[q.Id] = new QuoteTouchSummary();
+            }
+        }
+
+        isTouchLoading = false;
         StateHasChanged();
     }
 
-    private async Task ShowToastError(string message)
+    private async Task SelectQuoteAsync(int quoteId)
     {
-        toastIsSuccess = false;
-        toastMessage = message;
-        showToast = true;
+        // Ayni satira tekrar tiklama → kapat
+        if (selectedQuoteId == quoteId) { CloseDetail(); return; }
+
+        selectedQuoteId = quoteId;
+        detailTab = "rev";
+        isDetailsLoading = true;
+        expandedRevisions = null;
         StateHasChanged();
-        await Task.Delay(2500);
-        showToast = false;
+
+        try { expandedRevisions = await QuoteService.GetRevisionsAsync(quoteId); }
+        catch { }
+        finally { isDetailsLoading = false; }
+    }
+
+    private void CloseDetail()
+    {
+        selectedQuoteId = 0;
+        expandedRevisions = null;
         StateHasChanged();
+    }
+
+    private async Task OnDetailChanged()
+    {
+        await LoadQuotesAsync();
+    }
+
+    private void SetPuanFilter(string puan)
+    {
+        selectedPuan = puan;
+        _ = LoadQuotesAsync();
+    }
+
+    private void OnKanalChanged(ChangeEventArgs e)
+    {
+        kanalFilter = e.Value?.ToString() ?? "";
+        _ = LoadQuotesAsync();
     }
 
     private async Task HandleSearch(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter")
-        {
-            await LoadQuotesAsync();
-        }
-    }
-
-    private async Task OnStatusChanged(ChangeEventArgs e)
-    {
-        selectedStatus = e.Value?.ToString() ?? "";
-        await LoadQuotesAsync();
-    }
-
-    private async Task ToggleRowAsync(int quoteId)
-    {
-        if (expandedQuoteId == quoteId)
-        {
-            expandedQuoteId = 0;
-        }
-        else
-        {
-            expandedQuoteId = quoteId;
-            isDetailsLoading = true;
-            expandedRevisions = null;
-            StateHasChanged();
-
-            try
-            {
-                expandedRevisions = await QuoteService.GetRevisionsAsync(quoteId);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Error] Loading Revisions: {ex.Message}");
-            }
-            finally
-            {
-                isDetailsLoading = false;
-            }
-        }
-    }
-
-    private async Task OnPuanChanged(ChangeEventArgs e)
-    {
-        selectedPuan = e.Value?.ToString() ?? "";
-        await LoadQuotesAsync();
+        if (e.Key == "Enter") await LoadQuotesAsync();
     }
 
     private void GoToNewQuote()
@@ -385,14 +533,14 @@
 
     private void EditQuote(int quoteId)
     {
-        var parameters = new Dictionary<string, object> { { "QuoteId", quoteId } };
-        WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Duzenle", 860, 700, parameters);
+        var p = new Dictionary<string, object> { { "QuoteId", quoteId } };
+        WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Duzenle", 860, 700, p);
     }
 
     private void CopyQuote(int quoteId)
     {
-        var parameters = new Dictionary<string, object> { { "CopyFromQuoteId", quoteId } };
-        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Kopyala", 860, 700, parameters))
+        var p = new Dictionary<string, object> { { "CopyFromQuoteId", quoteId } };
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Kopyala", 860, 700, p))
             Nav.NavigateTo("/satis/teklif-olustur");
     }
 
@@ -404,11 +552,11 @@
         {
             await QuoteService.TransitionStatusAsync(quoteId, newStatus);
             await LoadQuotesAsync();
-            expandedQuoteId = quoteId;
+            selectedQuoteId = quoteId;
+            detailTab = "rev";
             expandedRevisions = await QuoteService.GetRevisionsAsync(quoteId);
             isTransitioning = false;
-            var statusName = GetStatusName(newStatus);
-            await ShowToastSuccess($"Durum guncellendi: {statusName}");
+            await ShowToastSuccess($"Durum guncellendi: {GetStatusName(newStatus)}");
         }
         catch (Exception ex)
         {
@@ -417,51 +565,73 @@
         }
     }
 
-    private record StatusTransition(string Label, string NewStatus, string CssClass);
-
-    private List<StatusTransition> GetAvailableTransitions(string currentStatus)
+    private async Task ShowToastSuccess(string msg)
     {
-        return currentStatus switch
-        {
-            "Draft" => new() { new("Gonder", "Sent", "btn-ts-sent") },
-            "Sent" => new() { new("Onaya Sun", "WaitingApproval", "btn-ts-waiting"), new("Siparis", "ORDER", "btn-ts-order") },
-            "WaitingApproval" => new() { new("Onayla", "Approved", "btn-ts-approved"), new("Reddet", "Rejected", "btn-ts-rejected") },
-            "Approved" => new() { new("Siparis", "ORDER", "btn-ts-order") },
-            "OPEN" => new() { new("Siparis", "ORDER", "btn-ts-order"), new("Kapat", "CLOSED", "btn-ts-closed") },
-            "ORDER" => new() { new("Kapat", "CLOSED", "btn-ts-closed") },
-            _ => new()
-        };
+        toastIsSuccess = true; toastMessage = msg; showToast = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        showToast = false;
+        StateHasChanged();
     }
 
-    // --- Helpers
+    private async Task ShowToastError(string msg)
+    {
+        toastIsSuccess = false; toastMessage = msg; showToast = true;
+        StateHasChanged();
+        await Task.Delay(2500);
+        showToast = false;
+        StateHasChanged();
+    }
+
+    private record StatusTransition(string Label, string NewStatus, string CssClass);
+
+    private List<StatusTransition> GetAvailableTransitions(string currentStatus) => currentStatus switch
+    {
+        "Draft"          => new() { new("Gonder", "Sent", "btn-ts-sent") },
+        "Sent"           => new() { new("Onaya Sun", "WaitingApproval", "btn-ts-waiting"), new("Siparis", "ORDER", "btn-ts-order") },
+        "WaitingApproval"=> new() { new("Onayla", "Approved", "btn-ts-approved"), new("Reddet", "Rejected", "btn-ts-rejected") },
+        "Approved"       => new() { new("Siparis", "ORDER", "btn-ts-order") },
+        "OPEN"           => new() { new("Siparis", "ORDER", "btn-ts-order"), new("Kapat", "CLOSED", "btn-ts-closed") },
+        "ORDER"          => new() { new("Kapat", "CLOSED", "btn-ts-closed") },
+        _                => new()
+    };
+
     private string GetStatusName(string code) => code switch {
-        "Draft" => "Taslak",
-        "Sent" => "Gonderildi",
+        "Draft"           => "Taslak",
+        "Sent"            => "Gonderildi",
         "WaitingApproval" => "Onay Bek.",
-        "Approved" => "Onaylandi",
-        "Rejected" => "Reddedildi",
-        "OPEN" => "Acik",
-        "ORDER" => "Siparis",
-        "CLOSED" => "Kapali",
-        _ => code
+        "Approved"        => "Onaylandi",
+        "Rejected"        => "Reddedildi",
+        "OPEN"            => "Acik",
+        "ORDER"           => "Siparis",
+        "CLOSED"          => "Kapali",
+        _                 => code
     };
 
     private string GetStatusChipClass(string status) => status switch {
-        "Draft" => "chip-draft",
-        "Sent" => "chip-sent",
+        "Draft"           => "chip-draft",
+        "Sent"            => "chip-sent",
         "WaitingApproval" => "chip-waiting",
-        "Approved" => "chip-approved",
-        "Rejected" => "chip-rejected",
-        "OPEN" => "chip-sent",
-        "ORDER" => "chip-approved",
-        "CLOSED" => "chip-draft",
-        _ => ""
+        "Approved"        => "chip-approved",
+        "Rejected"        => "chip-rejected",
+        "OPEN"            => "chip-sent",
+        "ORDER"           => "chip-approved",
+        "CLOSED"          => "chip-draft",
+        _                 => ""
     };
 
-    private string GetStandingChipClass(string standing) => standing switch {
-        "HOT" => "chip-hot",
+    private string GetStandingChipClass(string s) => s switch {
+        "HOT"  => "chip-hot",
         "WARM" => "chip-warm",
         "COLD" => "chip-cold",
-        _ => ""
+        _      => ""
     };
+
+    private class QuoteTouchSummary
+    {
+        public int       TouchCount    { get; set; }
+        public DateTime? LastTouchDate { get; set; }
+        public DateTime? NextTouchDate { get; set; }
+        public bool      HasManagement { get; set; }
+    }
 }
