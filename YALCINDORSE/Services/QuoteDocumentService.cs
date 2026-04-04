@@ -42,22 +42,20 @@ namespace YALCINDORSE.Services
         public static string TemplatesDir =>
             Path.Combine(FileSystem.AppDataDirectory, "templates");
 
-        public static string GetTemplatePath(string dil) =>
-            Path.Combine(TemplatesDir, $"teklif_template_{dil}.docx");
+        /// <summary>Tek sablon dosyasi — dil farki veri duzeyinde ceviri ile cozulur.</summary>
+        public static string GetTemplatePath(string dil = "") =>
+            Path.Combine(TemplatesDir, "teklif_template.docx");
 
         /// <summary>
         /// Sablon dosyasini ilk calismada olusturur (yoksa).
-        /// Kullanici bu dosyayi Word'de acip duzenliyebilir.
+        /// Kullanici bu dosyayi kendi Word sablonuyla degistirebilir.
         /// </summary>
         public async Task EnsureTemplatesAsync()
         {
             Directory.CreateDirectory(TemplatesDir);
-            foreach (var dil in new[] { "TR", "EN" })
-            {
-                var path = GetTemplatePath(dil);
-                if (!File.Exists(path))
-                    await CreateDefaultTemplateAsync(path, dil);
-            }
+            var path = GetTemplatePath();
+            if (!File.Exists(path))
+                await CreateDefaultTemplateAsync(path, "TR");
         }
 
         public static void OpenTemplatesFolder()
@@ -83,16 +81,18 @@ namespace YALCINDORSE.Services
             var specs = await _specSvc.GetSpecsAsync(quoteId);
             var attachments = await _attachSvc.GetAttachmentsAsync(quoteId);
 
-            // Musteri bilgileri
-            string musteriAdi = "", musteriKodu = "", ilgiliKisi = "", saticiAdi = "", saticiEmail = "";
+            // Musteri ve ilgili kisi bilgileri
+            string musteriAdi = "", musteriKodu = "";
+            string ilgiliKisi = "", ilgiliEmail = "", ilgiliMobil = "";
+            string saticiAdi = "", saticiEmail = "";
             try
             {
                 using var conn = _db.GetConnection();
                 await conn.OpenAsync();
                 const string sql = """
                     SELECT c."Title", c."CustomerCode",
-                           cc."ContactName",
-                           u."FullName", u."Email"
+                           cc."ContactName", cc."Email", cc."Mobile",
+                           u."FullName", u."Email" as "SaticiEmail"
                     FROM "YLTeklifler" q
                     LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
                     LEFT JOIN "YLCustomerContacts" cc ON cc."Id" = q."IlgiliKisiId"
@@ -104,20 +104,20 @@ namespace YALCINDORSE.Services
                 using var r = await cmd.ExecuteReaderAsync();
                 if (await r.ReadAsync())
                 {
-                    musteriAdi = r.IsDBNull(0) ? "" : r.GetString(0);
-                    musteriKodu = r.IsDBNull(1) ? "" : r.GetString(1);
-                    ilgiliKisi = r.IsDBNull(2) ? "" : r.GetString(2);
-                    saticiAdi = r.IsDBNull(3) ? "" : r.GetString(3);
-                    saticiEmail = r.IsDBNull(4) ? "" : r.GetString(4);
+                    musteriAdi   = r.IsDBNull(0) ? "" : r.GetString(0);
+                    musteriKodu  = r.IsDBNull(1) ? "" : r.GetString(1);
+                    ilgiliKisi   = r.IsDBNull(2) ? "" : r.GetString(2);
+                    ilgiliEmail  = r.IsDBNull(3) ? "" : r.GetString(3);
+                    ilgiliMobil  = r.IsDBNull(4) ? "" : r.GetString(4);
+                    saticiAdi    = r.IsDBNull(5) ? "" : r.GetString(5);
+                    saticiEmail  = r.IsDBNull(6) ? "" : r.GetString(6);
                 }
             }
             catch { }
 
-            // Sablon dosyasini belirle (dil yoksa TR)
+            // Tek sablon dosyasi
             var dil = string.IsNullOrEmpty(quote.Dil) ? "TR" : quote.Dil;
-            var templatePath = GetTemplatePath(dil);
-            if (!File.Exists(templatePath))
-                templatePath = GetTemplatePath("TR");
+            var templatePath = GetTemplatePath();
 
             // Sablon'u memory'e kopyala, orijinali koru
             var ms = new MemoryStream();
@@ -139,6 +139,8 @@ namespace YALCINDORSE.Services
                 ["{{MUSTERI_ADI}}"]        = musteriAdi,
                 ["{{MUSTERI_KODU}}"]       = musteriKodu,
                 ["{{ILGILI_KISI}}"]        = ilgiliKisi,
+                ["{{ILGILI_EMAIL}}"]       = ilgiliEmail,
+                ["{{ILGILI_MOBIL}}"]       = ilgiliMobil,
                 ["{{SATICI_ADI}}"]         = saticiAdi,
                 ["{{SATICI_EMAIL}}"]       = saticiEmail,
                 ["{{AKS_SAYISI}}"]         = quote.AksSayisi?.ToString() ?? "",
