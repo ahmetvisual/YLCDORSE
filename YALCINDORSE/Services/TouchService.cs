@@ -107,7 +107,7 @@ namespace YALCINDORSE.Services
         private readonly DatabaseHelper _db;
         private readonly AuthService _auth;
         private readonly SemaphoreSlim _schemaLock = new(1, 1);
-        private static bool _schemaEnsured;
+        private bool _schemaEnsured;  // static degil: her restart'ta yeniden calisir (IF NOT EXISTS ile guvenli)
 
         private const string SchemaSql = """
             CREATE TABLE IF NOT EXISTS "YLTemaslar" (
