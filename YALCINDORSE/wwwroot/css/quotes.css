@@ -482,9 +482,9 @@
 .btn-ts-closed:hover:not(:disabled) { background: #e0e0e0; }
 
 .btn-revize {
-    background: #f3e8ff; color: #7c3aed; border-color: #d8b4fe;
+    background: #fff7e6; color: #b45309; border-color: #fbbf24;
 }
-.btn-revize:hover:not(:disabled) { background: #ede0ff; }
+.btn-revize:hover:not(:disabled) { background: #fef3c7; }
 
 /* === CHIPS (BADGES) — ERP rounded rectangle === */
 .yl-chip {
@@ -733,7 +733,7 @@
 .app-root.dark .btn-ts-rejected { background: rgba(207,19,34,0.15); color: #FCA5A5; border-color: rgba(207,19,34,0.3); }
 .app-root.dark .btn-ts-order { background: rgba(46,125,50,0.15); color: #86EFAC; border-color: rgba(46,125,50,0.3); }
 .app-root.dark .btn-ts-closed { background: rgba(100,100,100,0.15); color: #aaa; border-color: rgba(100,100,100,0.3); }
-.app-root.dark .btn-revize { background: rgba(124,58,237,0.15); color: #d8b4fe; border-color: rgba(124,58,237,0.3); }
+.app-root.dark .btn-revize { background: rgba(180,83,9,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.3); }
 
 /* Dark Chips */
 .app-root.dark .chip-hot { background: rgba(220,40,40,0.2); color: #FCA5A5; }
