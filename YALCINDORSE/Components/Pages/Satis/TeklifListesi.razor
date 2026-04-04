@@ -24,32 +24,6 @@
                 <span class="qt-header-sub">Revizyonlar, durum gecisleri ve temas gecmisi</span>
             </div>
 
-            <!-- KPI Ozet Bantlari -->
-            @if (quotes != null)
-            {
-                var total  = quotes.Count;
-                var open   = quotes.Count(q => q.Durum == "OPEN");
-                var order  = quotes.Count(q => q.Durum == "ORDER");
-                var hot    = quotes.Count(q => q.Puan  == "HOT" && q.Durum != "CLOSED");
-                <div class="qt-kpi-row">
-                    <div class="qt-kpi-chip qt-kpi-total" @onclick='() => { selectedPuan="ALL"; selectedDurum=""; ApplyFilter(); }'>
-                        <span class="qt-kpi-num">@total</span>
-                        <span class="qt-kpi-lbl">Toplam</span>
-                    </div>
-                    <div class="qt-kpi-chip qt-kpi-open" @onclick='() => { selectedPuan="ALL"; selectedDurum="OPEN"; ApplyFilter(); }'>
-                        <span class="qt-kpi-num">@open</span>
-                        <span class="qt-kpi-lbl">Acik</span>
-                    </div>
-                    <div class="qt-kpi-chip qt-kpi-order" @onclick='() => { selectedPuan="ALL"; selectedDurum="ORDER"; ApplyFilter(); }'>
-                        <span class="qt-kpi-num">@order</span>
-                        <span class="qt-kpi-lbl">Siparis</span>
-                    </div>
-                    <div class="qt-kpi-chip qt-kpi-hot" @onclick='() => { selectedPuan="HOT"; selectedDurum=""; ApplyFilter(); }'>
-                        <span class="qt-kpi-num">@hot</span>
-                        <span class="qt-kpi-lbl">HOT</span>
-                    </div>
-                </div>
-            }
         </div>
 
         <div class="qt-header-actions">
