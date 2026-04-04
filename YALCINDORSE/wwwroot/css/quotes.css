@@ -1251,6 +1251,19 @@
     font-weight: 700;
 }
 
+/* Sekme barindaki spacer ve aksiyon butonlari */
+.qt-stab-spacer {
+    flex: 1;
+}
+
+.qt-stab-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 6px;
+    align-self: flex-end;
+}
+
 /* ============================================================
    TARIH HUCRESINDE GORECELI ZAMAN
    ============================================================ */
