@@ -44,6 +44,14 @@
         </div>
     </div>
 
+    <!-- ===== STATUS SEKMELERI ===== -->
+    <div class="qt-status-tabs">
+        <button class="qt-stab @(selectedDurumTab == "ALL"      ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("ALL")'>Tumu</button>
+        <button class="qt-stab @(selectedDurumTab == "AWAIT"    ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("AWAIT")'>Cevap Beklenenler</button>
+        <button class="qt-stab @(selectedDurumTab == "APPROVED" ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("APPROVED")'>Onaylananlar</button>
+        <button class="qt-stab @(selectedDurumTab == "REJECTED" ? "qt-stab-active" : "")" @onclick='() => SetDurumTab("REJECTED")'>Reddedilenler</button>
+    </div>
+
     <!-- ===== FILTER BAR ===== -->
     <div class="qt-filter-bar">
         <div class="crm-search-box qt-search">
@@ -64,18 +72,6 @@
                 </button>
             }
         </div>
-
-        <select class="quote-filter-select" @onchange="OnDurumChanged">
-            <option value="">Tum Durumlar</option>
-            <option value="Draft">Taslak</option>
-            <option value="Sent">Gonderildi</option>
-            <option value="WaitingApproval">Onay Bekliyor</option>
-            <option value="Approved">Onaylandi</option>
-            <option value="Rejected">Reddedildi</option>
-            <option value="OPEN">Acik</option>
-            <option value="ORDER">Siparis</option>
-            <option value="CLOSED">Kapali</option>
-        </select>
     </div>
 
     <!-- ===== ICERIK ===== -->
@@ -101,14 +97,21 @@
                         <table class="quote-grid qt-merged-grid">
                             <thead>
                                 <tr>
-                                    <th>Tarih</th>
-                                    <th>Teklif No</th>
                                     <th>Musteri</th>
+                                    <th>Teklif No</th>
+                                    <th>Duzenleme Tarihi</th>
                                     <th class="qt-hide-sm">Durum</th>
                                     <th class="qt-hide-sm">Puan</th>
-                                    <th class="qt-hide-md">Net Tutar</th>
                                     <th style="text-align:center; width:56px;">Touch</th>
                                     <th class="qt-hide-md">Sonraki Temas</th>
+                                    <th class="qt-hide-md qt-th-sort">
+                                        Teklif Toplami
+                                        <svg viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.8"
+                                             width="9" height="9" style="margin-left:3px; vertical-align:middle; opacity:0.4;">
+                                            <path d="M5 1 L1 6 M5 1 L9 6" stroke-linecap="round"/>
+                                            <path d="M5 15 L1 10 M5 15 L9 10" stroke-linecap="round"/>
+                                        </svg>
+                                    </th>
                                     <th style="width:68px;">Isl.</th>
                                 </tr>
                             </thead>
@@ -127,14 +130,7 @@
                                         var isSelected = selectedQuoteId == quote.Id;
                                         <tr class="@(isSelected ? "qt-selected" : "")"
                                             @onclick="() => SelectQuoteAsync(quote.Id)">
-                                            <td class="quote-date-cell">@quote.TalepTarihi.ToString("dd.MM.yy")</td>
-                                            <td>
-                                                <div class="quote-no">@quote.TeklifNo</div>
-                                                @if (quote.Rev > 0)
-                                                {
-                                                    <div class="quote-rev">Rev @quote.Rev</div>
-                                                }
-                                            </td>
+                                            <!-- 1. Musteri -->
                                             <td>
                                                 <div class="quote-customer">@quote.Musteri</div>
                                                 @if (!string.IsNullOrEmpty(quote.Ilgili))
@@ -149,21 +145,34 @@
                                                     </div>
                                                 }
                                             </td>
+                                            <!-- 2. Teklif No -->
+                                            <td>
+                                                <div class="quote-no">@quote.TeklifNo</div>
+                                                @if (quote.Rev > 0)
+                                                {
+                                                    <div class="quote-rev">Rev @quote.Rev</div>
+                                                }
+                                            </td>
+                                            <!-- 3. Duzenleme Tarihi -->
+                                            <td class="quote-date-cell">
+                                                <div>@quote.TalepTarihi.ToString("dd.MM.yyyy")</div>
+                                                <div class="quote-date-rel">@GetRelativeTime(quote.TalepTarihi)</div>
+                                            </td>
+                                            <!-- 4. Durum -->
                                             <td class="qt-hide-sm">
                                                 <span class="yl-chip @GetStatusChipClass(quote.Durum)">
                                                     @GetStatusName(quote.Durum)
                                                 </span>
                                             </td>
+                                            <!-- 5. Puan -->
                                             <td class="qt-hide-sm">
                                                 <span class="yl-chip @GetStandingChipClass(quote.Puan)">@quote.Puan</span>
                                             </td>
-                                            <td class="qt-hide-md quote-amount-cell">
-                                                <span class="quote-amount">@quote.NetTutar.ToString("N2")</span>
-                                                <span class="quote-currency">@quote.Para</span>
-                                            </td>
+                                            <!-- 6. Touch -->
                                             <td style="text-align:center; font-weight:700; color:var(--yl-accent);">
                                                 @(touchInfo?.TouchCount ?? 0)
                                             </td>
+                                            <!-- 7. Sonraki Temas -->
                                             <td class="qt-hide-md" style="font-size:0.72rem;">
                                                 @if (touchInfo?.NextTouchDate != null)
                                                 {
@@ -180,6 +189,12 @@
                                                     <span style="color:var(--yl-text-light);">—</span>
                                                 }
                                             </td>
+                                            <!-- 8. Teklif Toplami -->
+                                            <td class="qt-hide-md quote-amount-cell">
+                                                <span class="quote-amount">@quote.NetTutar.ToString("N2")</span>
+                                                <span class="quote-currency">@quote.Para</span>
+                                            </td>
+                                            <!-- 9. ISL. -->
                                             <td @onclick:stopPropagation="true">
                                                 <div class="quote-row-actions">
                                                     <button class="btn-expand" title="Duzenle" @onclick="() => EditQuote(quote.Id)">
@@ -391,18 +406,15 @@
     // Filtreler
     private string searchQuery = "";
     private string selectedPuan = "ALL";
-    private string selectedDurum = "";
+    private string selectedDurumTab = "ALL"; // ALL | AWAIT | APPROVED | REJECTED
 
     private readonly Dictionary<string, string> puanFilters = new()
     {
-        { "ALL",    "active-all"    },
-        { "HOT",    "active-hot"    },
-        { "WARM",   "active-warm"   },
-        { "COLD",   "active-cold"   },
-        { "DRAFT",  "active-draft"  },
-        { "OPEN",   "active-open"   },
-        { "ORDER",  "active-order"  },
-        { "CLOSED", "active-closed" }
+        { "ALL",   "active-all"   },
+        { "HOT",   "active-hot"   },
+        { "WARM",  "active-warm"  },
+        { "COLD",  "active-cold"  },
+        { "DRAFT", "active-draft" },
     };
 
     protected override async Task OnInitializedAsync()
@@ -431,28 +443,34 @@
 
         try
         {
-            // Durum ve puan filtrelerini ayristir
-            // Chip butonlarindaki OPEN/ORDER/CLOSED durum olarak, HOT/WARM/COLD puan olarak kullanilir
-            var durumFilter = selectedDurum; // dropdown secimi her zaman durum olarak kullanilir
+            // Durum sekme filtresi → birden fazla durum degeri
+            IReadOnlyList<string>? durumList = selectedDurumTab switch
+            {
+                "AWAIT"    => new[] { "Sent", "WaitingApproval", "OPEN" },
+                "APPROVED" => new[] { "Approved", "ORDER" },
+                "REJECTED" => new[] { "Rejected", "CLOSED" },
+                _          => null  // ALL — durum filtresi yok
+            };
+
+            var durumFilter = "";
             var puanParam = "";
 
-            if (string.IsNullOrEmpty(durumFilter))
+            if (durumList == null)
             {
-                // Dropdown bos ise chip butonlarindan durum/puan belirle
-                if (selectedPuan is "ORDER" or "CLOSED" or "OPEN")
-                    durumFilter = selectedPuan;
-                else if (selectedPuan == "DRAFT")
-                    durumFilter = "Draft";   // DB'deki deger "Draft" (buyuk D)
+                // "Tumu" sekmesi: puan chip'leri eski mantikla calisir
+                if (selectedPuan == "DRAFT")
+                    durumFilter = "Draft";
                 else if (selectedPuan != "ALL")
                     puanParam = selectedPuan;
             }
-            else if (selectedPuan != "ALL" && selectedPuan is not ("ORDER" or "CLOSED" or "OPEN" or "DRAFT"))
+            else
             {
-                // Hem durum dropdown hem puan chip secili
-                puanParam = selectedPuan;
+                // Sekme aktif: DRAFT chip yok sayilir, HOT/WARM/COLD ek filtre olarak gelir
+                if (selectedPuan != "ALL" && selectedPuan != "DRAFT")
+                    puanParam = selectedPuan;
             }
 
-            quotes = await QuoteService.GetQuotesAsync(searchQuery, durumFilter, null, puanParam);
+            quotes = await QuoteService.GetQuotesAsync(searchQuery, durumFilter, null, puanParam, durumList);
 
             isLoading = false;
             StateHasChanged();
@@ -535,10 +553,21 @@
         _ = LoadQuotesAsync();
     }
 
-    private void OnDurumChanged(ChangeEventArgs e)
+    private void SetDurumTab(string tab)
     {
-        selectedDurum = e.Value?.ToString() ?? "";
+        selectedDurumTab = tab;
         _ = LoadQuotesAsync();
+    }
+
+    private static string GetRelativeTime(DateTime date)
+    {
+        int days = (int)(DateTime.Today - date.Date).TotalDays;
+        if (days < 1)   return "bugun";
+        if (days < 2)   return "dun";
+        if (days < 7)   return $"{days} gun once";
+        if (days < 30)  return $"{days / 7} hafta once";
+        if (days < 365) return $"{days / 30} ay once";
+        return $"{days / 365} yil once";
     }
 
     // Arama: her tuşta debounce ile 350ms sonra arar (Enter beklemiyor)
