@@ -37,9 +37,9 @@
             </div>
         </div>
 
-        @if (message != null)
+        @if (!messageSuccess && message != null)
         {
-            <div class="alert @(messageSuccess ? "alert-success" : "alert-danger")">
+            <div class="alert alert-danger">
                 @message
                 <button class="alert-close" @onclick='() => message = null'>X</button>
             </div>
@@ -292,6 +292,35 @@
     </div>
 </div>
 
+@if (showToast)
+{
+    <div class="toast-overlay">
+        <div class="toast-card">
+            @if (toastIsSuccess)
+            {
+                <div class="toast-icon-success">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" opacity="0.15" fill="#059669" stroke="none" />
+                        <path class="check-path" d="M7 13l3 3 7-7" />
+                    </svg>
+                </div>
+                <div class="toast-title success">Basarili!</div>
+            }
+            else
+            {
+                <div class="toast-icon-error">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </div>
+                <div class="toast-title error">Hata!</div>
+            }
+            <div class="toast-message">@toastMessage</div>
+        </div>
+    </div>
+}
+
 @if (showSaveConfirm)
 {
     <div class="modal-overlay" @onclick="CloseSaveConfirm">
@@ -356,6 +385,9 @@
     private bool isDeleting;
     private bool showDeleteConfirm;
     private bool showSaveConfirm;
+    private bool showToast;
+    private bool toastIsSuccess;
+    private string toastMessage = "";
     private string searchTerm = "";
     private string activeTab = "general";
     private string? message;
@@ -496,16 +528,27 @@
         message = null;
 
         var (success, resultMessage, customerId) = await CustomerSvc.SaveCustomerAsync(currentCustomer);
-        message = resultMessage;
-        messageSuccess = success;
         isSaving = false;
 
-        if (!success)
-            return;
+        if (success)
+        {
+            toastIsSuccess = true;
+            toastMessage = resultMessage;
+            showToast = true;
+            StateHasChanged();
+            await Task.Delay(1800);
+            showToast = false;
+            StateHasChanged();
 
-        await LoadCustomersAsync(false);
-        if (customerId > 0)
-            await SelectCustomerAsync(customerId);
+            await LoadCustomersAsync(false);
+            if (customerId > 0)
+                await SelectCustomerAsync(customerId);
+        }
+        else
+        {
+            message = resultMessage;
+            messageSuccess = false;
+        }
     }
 
     private void OpenDeleteConfirm()
