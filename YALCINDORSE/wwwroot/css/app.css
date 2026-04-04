@@ -1838,6 +1838,7 @@ h4 {
 .crm-layout {
     display: grid;
     grid-template-columns: 290px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     gap: 16px;
     flex: 1;
     min-height: 0;
