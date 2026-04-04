@@ -637,7 +637,7 @@ namespace YALCINDORSE.Services
                 var run = new Run();
                 var rPr = new RunProperties();
                 if (bold) rPr.AppendChild(new Bold());
-                if (fontSize != null) rPr.AppendChild(new FontSize { Val = fontSize });
+                if (fontSize != null) rPr.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.FontSize { Val = fontSize });
                 if (rPr.HasChildren) run.AppendChild(rPr);
                 run.AppendChild(new Text(line) { Space = SpaceProcessingModeValues.Preserve });
                 para.AppendChild(run);
@@ -675,7 +675,7 @@ namespace YALCINDORSE.Services
             var pPr = new ParagraphProperties(new ParagraphStyleId { Val = "Heading1" });
             para.AppendChild(pPr);
             var run = new Run(
-                new RunProperties(new Bold(), new FontSize { Val = "22" }),
+                new RunProperties(new Bold(), new DocumentFormat.OpenXml.Wordprocessing.FontSize { Val = "22" }),
                 new Text(text));
             para.AppendChild(run);
             body.AppendChild(para);
