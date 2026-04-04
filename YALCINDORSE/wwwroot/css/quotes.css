@@ -854,9 +854,41 @@
 
 .qt-filter-chips {
     display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
+    gap: 0;
+    flex-wrap: nowrap;
+    border-radius: 7px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(15, 37, 72, 0.13), 0 0 0 1px rgba(15, 37, 72, 0.10);
 }
+
+/* Segmented buton grubu — sadece filtre chips alanindaki chip'ler */
+.qt-filter-chips .touch-chip-btn {
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid #d8dfe8;
+    padding: 6px 15px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #fff;
+    color: #4b5563;
+    transition: background 0.12s, color 0.12s;
+}
+
+.qt-filter-chips .touch-chip-btn:last-child {
+    border-right: none;
+}
+
+.qt-filter-chips .touch-chip-btn:hover:not(.active-all):not(.active-hot):not(.active-warm):not(.active-cold):not(.active-draft) {
+    background: #f0f5ff;
+    color: #1e3a6e;
+}
+
+/* Aktif durumlar — arka plan dolgu, kenarlık yok */
+.qt-filter-chips .touch-chip-btn.active-all  { background: #e8eef7; color: #0C447C; border-right-color: #b8c8de; }
+.qt-filter-chips .touch-chip-btn.active-hot  { background: #DC2828; color: #fff;    border-right-color: #b01e1e; }
+.qt-filter-chips .touch-chip-btn.active-warm { background: #DC8200; color: #fff;    border-right-color: #b56800; }
+.qt-filter-chips .touch-chip-btn.active-cold { background: #3C82C8; color: #fff;    border-right-color: #2e68a8; }
+.qt-filter-chips .touch-chip-btn.active-draft { background: #E6ECF5; color: #3C5A8C; border-right-color: #c0cedf; }
 
 .qt-layout {
     display: flex;
