@@ -504,10 +504,12 @@ namespace YALCINDORSE.Services
             await conn.OpenAsync();
 
             const string sql = """
-                SELECT "Id", "TeklifId", "RevizyonNo", "DegisiklikDetayi", "Tarih", "Yapan"
-                FROM "YLTeklifRevLog"
-                WHERE "TeklifId" = @quoteId
-                ORDER BY "RevizyonNo" ASC;
+                SELECT r."Id", r."TeklifId", r."RevizyonNo", r."DegisiklikDetayi", r."Tarih",
+                       COALESCE(u."FullName", r."Yapan") AS "Yapan"
+                FROM "YLTeklifRevLog" r
+                LEFT JOIN "YLUsers" u ON u."Username" = r."Yapan"
+                WHERE r."TeklifId" = @quoteId
+                ORDER BY r."RevizyonNo" ASC;
                 """;
 
             using var cmd = new NpgsqlCommand(sql, conn);
