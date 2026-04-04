@@ -1,7 +1,6 @@
 @page "/satis/teklif-olustur"
 @using YALCINDORSE.Services
 @inject QuoteService QuoteSvc
-@inject QuoteSpecService SpecSvc
 @inject QuoteAttachmentService AttachSvc
 @inject QuoteDocumentService DocSvc
 @inject CustomerService CustomerSvc
@@ -40,7 +39,7 @@
             <div class="wizard-step-line @(currentStep > 3 ? "completed" : "")"></div>
             <div class="wizard-step">
                 <div class="wizard-step-circle @(currentStep == 4 ? "active" : "")">4</div>
-                <span class="wizard-step-label @(currentStep == 4 ? "active" : "")">Teknik & Ekler</span>
+                <span class="wizard-step-label @(currentStep == 4 ? "active" : "")">Ekler & Belgeler</span>
             </div>
         </div>
 
@@ -398,14 +397,10 @@
             </div>
         }
 
-        <!-- ADIM 4: Teknik Ozellikler & Ekler -->
+        <!-- ADIM 4: Ekler & Belgeler -->
         @if (currentStep == 4)
         {
             <div class="wizard-content">
-                <!-- Teknik Ozellikler -->
-                <div class="wizard-section-title tight">Teknik Ozellikler</div>
-                <TeknikOzelliklerEditor specs="@quoteSpecs" specsChanged="OnSpecsChanged" />
-
                 <!-- Fotograf & Teknik Cizim -->
                 @if (isEditMode && quote.Id > 0)
                 {
@@ -516,7 +511,6 @@
     private int currentStep = 1;
     private QuoteModel quote = new();
     private List<QuoteItemModel> quoteItems = new();
-    private List<QuoteSpecModel> quoteSpecs = new();
     private List<CustomerListItemModel> customers = new();
     private List<CustomerContactModel> contacts = new();
     private List<SalesRepOption> salesReps = new();
@@ -567,7 +561,6 @@
                 {
                     quote = existing;
                     quoteItems = await QuoteSvc.GetQuoteItemsAsync(QuoteId);
-                    quoteSpecs = await SpecSvc.GetSpecsAsync(QuoteId);
 
                     // Musteri arama alanini doldur
                     var customer = customers.FirstOrDefault(c => c.Id == quote.MusteriId);
@@ -715,8 +708,6 @@
         quote.NetTutar = quote.ToplamTutar - quote.IndirimTutar;
     }
 
-    private void OnSpecsChanged(List<QuoteSpecModel> updated) => quoteSpecs = updated;
-
     private void OpenTemplatesFolder() => QuoteDocumentService.OpenTemplatesFolder();
 
     private void NextStep()
@@ -806,10 +797,6 @@
                 await QuoteSvc.SaveQuoteItemAsync(item);
                 idMap[oldId] = item.Id;
             }
-
-            // Teknik ozellikleri kaydet
-            if (quoteSpecs.Any())
-                await SpecSvc.SaveSpecsAsync(quoteId, quoteSpecs);
 
             // Toast goster
             toastIsSuccess = true;
