@@ -78,7 +78,7 @@
                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input type="text" class="form-input" placeholder="Teklif No, Musteri, Satici ara..."
-                   @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleSearch" />
+                   value="@searchQuery" @oninput="OnSearchInput" />
         </div>
 
         <div class="qt-filter-chips">
@@ -564,9 +564,19 @@
         _ = LoadQuotesAsync();
     }
 
-    private async Task HandleSearch(KeyboardEventArgs e)
+    // Arama: her tuşta debounce ile 350ms sonra arar (Enter beklemiyor)
+    private CancellationTokenSource? _searchCts;
+    private async Task OnSearchInput(ChangeEventArgs e)
     {
-        if (e.Key == "Enter") await LoadQuotesAsync();
+        searchQuery = e.Value?.ToString() ?? "";
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(350, _searchCts.Token);
+            await LoadQuotesAsync();
+        }
+        catch (TaskCanceledException) { /* kullanici hala yaziyor, normal */ }
     }
 
     private void GoToNewQuote()
