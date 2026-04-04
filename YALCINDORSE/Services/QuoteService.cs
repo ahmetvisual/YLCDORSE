@@ -64,6 +64,9 @@ namespace YALCINDORSE.Services
         public string? TeslimatTipiKodu { get; set; }
         public string? TeslimatYeri { get; set; }
         public string? SiparisNo { get; set; }
+        // Ikinci el alanları
+        public string? SasiNo { get; set; }
+        public int? ModelYili { get; set; }
     }
 
     public class QuoteItemModel
@@ -249,7 +252,8 @@ namespace YALCINDORSE.Services
                     "RevizyonNo", "OnayGerektirir", "Olusturan",
                     "TeklifKanali", "TeklifTipi", "AksSayisi", "OdemeSistemi",
                     "IskontoAciklama", "KdvDahilMi", "IhracatMi", "IhracKayitliMi",
-                    "TeslimatHaftasi", "TeslimatTipiKodu", "TeslimatYeri"
+                    "TeslimatHaftasi", "TeslimatTipiKodu", "TeslimatYeri",
+                    "SasiNo", "ModelYili"
                 )
                 VALUES
                 (
@@ -260,7 +264,8 @@ namespace YALCINDORSE.Services
                     0, false, @Olusturan,
                     @TeklifKanali, @TeklifTipi, @AksSayisi, @OdemeSistemi,
                     @IskontoAciklama, @KdvDahilMi, @IhracatMi, @IhracKayitliMi,
-                    @TeslimatHaftasi, @TeslimatTipiKodu, @TeslimatYeri
+                    @TeslimatHaftasi, @TeslimatTipiKodu, @TeslimatYeri,
+                    @SasiNo, @ModelYili
                 )
                 RETURNING "Id";
                 """;
@@ -295,6 +300,8 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("TeslimatHaftasi", (object?)quote.TeslimatHaftasi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TeslimatTipiKodu", (object?)quote.TeslimatTipiKodu ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("SasiNo", (object?)quote.SasiNo ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("ModelYili", (object?)quote.ModelYili ?? DBNull.Value);
 
             var idResult = await cmd.ExecuteScalarAsync();
             var newId = Convert.ToInt32(idResult);
@@ -354,7 +361,8 @@ namespace YALCINDORSE.Services
                     "TeklifKanali" = @TeklifKanali, "TeklifTipi" = @TeklifTipi, "AksSayisi" = @AksSayisi,
                     "OdemeSistemi" = @OdemeSistemi, "IskontoAciklama" = @IskontoAciklama,
                     "KdvDahilMi" = @KdvDahilMi, "IhracatMi" = @IhracatMi, "IhracKayitliMi" = @IhracKayitliMi,
-                    "TeslimatHaftasi" = @TeslimatHaftasi, "TeslimatTipiKodu" = @TeslimatTipiKodu, "TeslimatYeri" = @TeslimatYeri
+                    "TeslimatHaftasi" = @TeslimatHaftasi, "TeslimatTipiKodu" = @TeslimatTipiKodu, "TeslimatYeri" = @TeslimatYeri,
+                    "SasiNo" = @SasiNo, "ModelYili" = @ModelYili
                 WHERE "Id" = @Id;
                 """;
 
@@ -387,6 +395,8 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("TeslimatHaftasi", (object?)quote.TeslimatHaftasi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TeslimatTipiKodu", (object?)quote.TeslimatTipiKodu ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("SasiNo", (object?)quote.SasiNo ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("ModelYili", (object?)quote.ModelYili ?? DBNull.Value);
 
             await cmd.ExecuteNonQueryAsync();
         }
@@ -413,7 +423,8 @@ namespace YALCINDORSE.Services
                        "RevizyonNo", "OnayGerektirir", "OlusturmaTarihi", "Olusturan",
                        "TeklifKanali", "TeklifTipi", "AksSayisi", "OdemeSistemi", "IskontoAciklama",
                        "KdvDahilMi", "IhracatMi", "IhracKayitliMi", "TeslimatHaftasi",
-                       "TeslimatTipiKodu", "TeslimatYeri", "SiparisNo"
+                       "TeslimatTipiKodu", "TeslimatYeri", "SiparisNo",
+                       "SasiNo", "ModelYili"
                 FROM "YLTeklifler"
                 WHERE "Id" = @id;
                 """;
@@ -459,7 +470,9 @@ namespace YALCINDORSE.Services
                 TeslimatHaftasi = r.IsDBNull(30) ? null : r.GetString(30),
                 TeslimatTipiKodu = r.IsDBNull(31) ? null : r.GetString(31),
                 TeslimatYeri = r.IsDBNull(32) ? null : r.GetString(32),
-                SiparisNo = r.IsDBNull(33) ? null : r.GetString(33)
+                SiparisNo = r.IsDBNull(33) ? null : r.GetString(33),
+                SasiNo = r.IsDBNull(34) ? null : r.GetString(34),
+                ModelYili = r.IsDBNull(35) ? null : r.GetInt32(35)
             };
         }
 

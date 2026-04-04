@@ -98,6 +98,14 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='YLTeklifler' AND column_name='SiparisNo') THEN
         ALTER TABLE "YLTeklifler" ADD COLUMN "SiparisNo" VARCHAR(30);
     END IF;
+    -- Sasi No (Ikinci El icin)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='YLTeklifler' AND column_name='SasiNo') THEN
+        ALTER TABLE "YLTeklifler" ADD COLUMN "SasiNo" VARCHAR(50);
+    END IF;
+    -- Model Yili (Ikinci El icin)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='YLTeklifler' AND column_name='ModelYili') THEN
+        ALTER TABLE "YLTeklifler" ADD COLUMN "ModelYili" INT;
+    END IF;
 END $$;
 
 -- 5. ALTER YLTeklifKalemleri - Hiyerarsik Yapi

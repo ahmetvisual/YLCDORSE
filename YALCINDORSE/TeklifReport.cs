@@ -19,8 +19,9 @@ namespace YALCINDORSE
             string teklifNo = "", string tarih = "", string gecerlilikTarihi = "",
             string musteriAdi = "", string musteriKodu = "",
             string ilgiliKisi = "", string ilgiliEmail = "", string ilgiliMobil = "",
-            string saticiAdi = "", string saticiEmail = "",
-            string netTutar = "", string paraBirimi = "", string urunAdi = "")
+            string saticiAdi = "", string saticiEmail = "", string saticiTelefon = "",
+            string netTutar = "", string paraBirimi = "", string urunAdi = "",
+            string sasiNo = "", string modelYili = "")
         {
             Parameters["pTeklifNo"].Value = teklifNo;
             Parameters["pTarih"].Value = tarih;
@@ -32,9 +33,12 @@ namespace YALCINDORSE
             Parameters["pIlgiliMobil"].Value = ilgiliMobil;
             Parameters["pSaticiAdi"].Value = saticiAdi;
             Parameters["pSaticiEmail"].Value = saticiEmail;
+            Parameters["pSaticiTelefon"].Value = saticiTelefon;
             Parameters["pNetTutar"].Value = netTutar;
             Parameters["pParaBirimi"].Value = paraBirimi;
             Parameters["pUrunAdi"].Value = urunAdi;
+            Parameters["pSasiNo"].Value = sasiNo;
+            Parameters["pModelYili"].Value = modelYili;
         }
 
         /// <summary>

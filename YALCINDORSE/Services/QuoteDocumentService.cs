@@ -207,7 +207,7 @@ namespace YALCINDORSE.Services
             // Musteri ve ilgili kisi bilgileri
             string musteriAdi = "", musteriKodu = "";
             string ilgiliKisi = "", ilgiliEmail = "", ilgiliMobil = "";
-            string saticiAdi = "", saticiEmail = "";
+            string saticiAdi = "", saticiEmail = "", saticiTelefon = "";
             try
             {
                 using var conn = _db.GetConnection();
@@ -215,7 +215,7 @@ namespace YALCINDORSE.Services
                 const string sql = """
                     SELECT c."Title", c."CustomerCode",
                            cc."ContactName", cc."Email", cc."Mobile",
-                           u."FullName", u."Email" as "SaticiEmail"
+                           u."FullName", u."Email" as "SaticiEmail", u."Phone" as "SaticiTelefon"
                     FROM "YLTeklifler" q
                     LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
                     LEFT JOIN "YLCustomerContacts" cc ON cc."Id" = q."IlgiliKisiId"
@@ -227,13 +227,14 @@ namespace YALCINDORSE.Services
                 using var r = await cmd.ExecuteReaderAsync();
                 if (await r.ReadAsync())
                 {
-                    musteriAdi   = r.IsDBNull(0) ? "" : r.GetString(0);
-                    musteriKodu  = r.IsDBNull(1) ? "" : r.GetString(1);
-                    ilgiliKisi   = r.IsDBNull(2) ? "" : r.GetString(2);
-                    ilgiliEmail  = r.IsDBNull(3) ? "" : r.GetString(3);
-                    ilgiliMobil  = r.IsDBNull(4) ? "" : r.GetString(4);
-                    saticiAdi    = r.IsDBNull(5) ? "" : r.GetString(5);
-                    saticiEmail  = r.IsDBNull(6) ? "" : r.GetString(6);
+                    musteriAdi    = r.IsDBNull(0) ? "" : r.GetString(0);
+                    musteriKodu   = r.IsDBNull(1) ? "" : r.GetString(1);
+                    ilgiliKisi    = r.IsDBNull(2) ? "" : r.GetString(2);
+                    ilgiliEmail   = r.IsDBNull(3) ? "" : r.GetString(3);
+                    ilgiliMobil   = r.IsDBNull(4) ? "" : r.GetString(4);
+                    saticiAdi     = r.IsDBNull(5) ? "" : r.GetString(5);
+                    saticiEmail   = r.IsDBNull(6) ? "" : r.GetString(6);
+                    saticiTelefon = r.IsDBNull(7) ? "" : r.GetString(7);
                 }
             }
             catch { }
@@ -251,9 +252,12 @@ namespace YALCINDORSE.Services
                 ilgiliMobil: ilgiliMobil,
                 saticiAdi: saticiAdi,
                 saticiEmail: saticiEmail,
+                saticiTelefon: saticiTelefon,
                 netTutar: quote.NetTutar.ToString("N2"),
                 paraBirimi: quote.ParaBirimi,
-                urunAdi: items.FirstOrDefault(i => i.KalemTipi == "HEADER")?.Aciklama ?? ""
+                urunAdi: items.FirstOrDefault(i => i.KalemTipi == "HEADER")?.Aciklama ?? "",
+                sasiNo: quote.SasiNo ?? "",
+                modelYili: quote.ModelYili?.ToString() ?? ""
             );
 
             return report.ExportToPdfBytes();
