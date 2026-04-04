@@ -1990,6 +1990,7 @@ h4 {
     gap: 16px;
     padding: 18px 18px 0;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .crm-detail-code {
@@ -2042,6 +2043,7 @@ h4 {
     gap: 8px;
     padding: 16px 18px 0;
     border-bottom: 1px solid var(--yl-border);
+    flex-shrink: 0;
 }
 
 .crm-tab {
@@ -2064,6 +2066,7 @@ h4 {
     flex: 1;
     overflow: auto;
     padding: 18px;
+    min-height: 0;
 }
 
 .crm-form-grid {
@@ -2172,6 +2175,7 @@ h4 {
     flex-wrap: wrap;
     border-top: 1px solid var(--yl-border);
     padding: 14px 18px 18px;
+    flex-shrink: 0;
 }
 
 .crm-audit-text {
