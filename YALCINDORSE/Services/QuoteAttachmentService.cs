@@ -41,6 +41,8 @@ namespace YALCINDORSE.Services
                 );
                 CREATE INDEX IF NOT EXISTS idx_ylteklifekleri_teklif
                     ON "YLTeklifEkleri"("TeklifId");
+                ALTER TABLE "YLTeklifEkleri"
+                    ADD COLUMN IF NOT EXISTS "DosyaIcerigi" BYTEA;
                 """;
             using var cmd = new NpgsqlCommand(sql, conn);
             await cmd.ExecuteNonQueryAsync();
@@ -195,6 +197,98 @@ namespace YALCINDORSE.Services
         }
 
         /// <summary>
+        /// Hazir teklif dosyasini (Word/PDF) dogrudan PostgreSQL BYTEA olarak kaydeder.
+        /// Herhangi bir makineden erisim icin uygundur.
+        /// Onceki hazir_teklif kaydini siler, yerine yenisini koyar.
+        /// </summary>
+        public async Task SaveHazirTeklifToDbAsync(int quoteId, Stream stream, string fileName)
+        {
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+
+            // Eski kayitlari sil (hem DB hem disk)
+            await DeleteHazirTeklifInternalAsync(conn, quoteId);
+
+            // Yeni kaydi DB'ye ekle (DosyaYolu bos, icerik BYTEA)
+            const string ins = """
+                INSERT INTO "YLTeklifEkleri"
+                    ("TeklifId","DosyaAdi","Tip","DosyaYolu","SiraNo","PdfeDahilEt","DosyaIcerigi")
+                VALUES
+                    (@tid, @ad, 'hazir_teklif', '', 0, FALSE, @icerik)
+                RETURNING "Id";
+                """;
+            using var cmd = new NpgsqlCommand(ins, conn);
+            cmd.Parameters.AddWithValue("tid", quoteId);
+            cmd.Parameters.AddWithValue("ad", fileName);
+            cmd.Parameters.AddWithValue("icerik", bytes);
+            await cmd.ExecuteScalarAsync();
+        }
+
+        /// <summary>
+        /// Hazir teklif dosyasinin baytlarini ve adini DB'den getirir.
+        /// Dosya actirmak icin temp klasore yazilir, Launcher ile acilir.
+        /// </summary>
+        public async Task<(byte[]? Bytes, string FileName)> GetHazirTeklifContentAsync(int quoteId)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+
+            const string sql = """
+                SELECT "DosyaAdi", "DosyaIcerigi"
+                FROM "YLTeklifEkleri"
+                WHERE "TeklifId" = @tid AND "Tip" = 'hazir_teklif'
+                ORDER BY "OlusturmaTarihi" DESC
+                LIMIT 1;
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("tid", quoteId);
+            using var r = await cmd.ExecuteReaderAsync();
+            if (!await r.ReadAsync()) return (null, "");
+
+            var dosyaAdi = r.IsDBNull(0) ? "teklif.pdf" : r.GetString(0);
+            byte[]? bytes = null;
+            if (!r.IsDBNull(1))
+                bytes = (byte[])r.GetValue(1);
+
+            return (bytes, dosyaAdi);
+        }
+
+        /// <summary>
+        /// Bir teklifin tum hazir_teklif kayitlarini (DB + disk) siler.
+        /// Acik baglanti gerektiren ic metot.
+        /// </summary>
+        private static async Task DeleteHazirTeklifInternalAsync(NpgsqlConnection conn, int quoteId)
+        {
+            // Eski disk dosyalarini bul ve sil (eski yaklasim uyumlulugu)
+            var paths = new List<string>();
+            using (var sel = new NpgsqlCommand(
+                "SELECT \"DosyaYolu\" FROM \"YLTeklifEkleri\" WHERE \"TeklifId\"=@tid AND \"Tip\"='hazir_teklif'", conn))
+            {
+                sel.Parameters.AddWithValue("tid", quoteId);
+                using var r = await sel.ExecuteReaderAsync();
+                while (await r.ReadAsync())
+                {
+                    var p = r.IsDBNull(0) ? null : r.GetString(0);
+                    if (!string.IsNullOrEmpty(p)) paths.Add(p);
+                }
+            }
+            foreach (var p in paths)
+                if (File.Exists(p)) try { File.Delete(p); } catch { }
+
+            // DB kayitlarini sil
+            using var del = new NpgsqlCommand(
+                "DELETE FROM \"YLTeklifEkleri\" WHERE \"TeklifId\"=@tid AND \"Tip\"='hazir_teklif'", conn);
+            del.Parameters.AddWithValue("tid", quoteId);
+            await del.ExecuteNonQueryAsync();
+        }
+
+        /// <summary>
         /// Birden fazla teklif icin "hazir_teklif" durumunu tek SQL sorgusunda ceker.
         /// Donus: quoteId → attachment bilgisi (yoksa null).
         /// </summary>
@@ -240,38 +334,14 @@ namespace YALCINDORSE.Services
         }
 
         /// <summary>
-        /// Bir teklife ait tum "hazir_teklif" eklerini (DB + disk) siler.
-        /// Yeni upload oncesinde cagirilir.
+        /// Bir teklife ait tum "hazir_teklif" eklerini (DB + varsa disk) siler.
         /// </summary>
         public async Task DeleteHazirTeklifAsync(int quoteId)
         {
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
-
-            // Dosya yollarini bul
-            var paths = new List<string>();
-            using (var sel = new NpgsqlCommand(
-                "SELECT \"DosyaYolu\" FROM \"YLTeklifEkleri\" WHERE \"TeklifId\"=@tid AND \"Tip\"='hazir_teklif'", conn))
-            {
-                sel.Parameters.AddWithValue("tid", quoteId);
-                using var r = await sel.ExecuteReaderAsync();
-                while (await r.ReadAsync())
-                {
-                    var p = r.IsDBNull(0) ? null : r.GetString(0);
-                    if (!string.IsNullOrEmpty(p)) paths.Add(p);
-                }
-            }
-
-            // DB kayitlarini sil
-            using var del = new NpgsqlCommand(
-                "DELETE FROM \"YLTeklifEkleri\" WHERE \"TeklifId\"=@tid AND \"Tip\"='hazir_teklif'", conn);
-            del.Parameters.AddWithValue("tid", quoteId);
-            await del.ExecuteNonQueryAsync();
-
-            // Fiziksel dosyalari sil
-            foreach (var p in paths)
-                if (File.Exists(p)) try { File.Delete(p); } catch { /* sessiz kal */ }
+            await DeleteHazirTeklifInternalAsync(conn, quoteId);
         }
 
         private static string SanitizeFileName(string name)

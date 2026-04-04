@@ -711,16 +711,39 @@
 
     private async Task HazirTeklifClickAsync(int quoteId)
     {
-        // Dosya varsa → ac
-        if (hazirTeklifInfo.TryGetValue(quoteId, out var info) && info != null
-            && !string.IsNullOrEmpty(info.DosyaYolu) && File.Exists(info.DosyaYolu))
+        // Dosya varsa → DB'den baytlari cek, temp'e yaz, ac
+        if (hazirTeklifInfo.TryGetValue(quoteId, out var info) && info != null)
         {
-            try { await Launcher.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(info.DosyaYolu) }); }
-            catch { await ShowToastError("Dosya acilamadi."); }
+            isUploading = true;
+            StateHasChanged();
+            try
+            {
+                var (bytes, fileName) = await AttachSvc.GetHazirTeklifContentAsync(quoteId);
+                if (bytes == null || bytes.Length == 0)
+                {
+                    await ShowToastError("Dosya icerigi bulunamadi.");
+                    return;
+                }
+                // Temp klasore yaz
+                var tempDir = Path.Combine(Path.GetTempPath(), "YLTeklif");
+                Directory.CreateDirectory(tempDir);
+                var tempPath = Path.Combine(tempDir, fileName);
+                await File.WriteAllBytesAsync(tempPath, bytes);
+                await Launcher.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(tempPath) });
+            }
+            catch (Exception ex)
+            {
+                await ShowToastError($"Dosya acilamadi: {ex.Message}");
+            }
+            finally
+            {
+                isUploading = false;
+                StateHasChanged();
+            }
             return;
         }
 
-        // Dosya yoksa → yukle
+        // Dosya yoksa → FilePicker ile sec, DB'ye kaydet (BYTEA)
         try
         {
             var pickOpts = new PickOptions
@@ -728,10 +751,10 @@
                 PickerTitle = "Hazir Teklif Sec (.pdf, .doc, .docx)",
                 FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
                 {
-                    { DevicePlatform.WinUI,   new[] { ".pdf", ".doc", ".docx" } },
-                    { DevicePlatform.iOS,     new[] { "com.adobe.pdf", "org.openxmlformats.wordprocessingml.document" } },
-                    { DevicePlatform.Android, new[] { "application/pdf", "application/msword",
-                                                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" } },
+                    { DevicePlatform.WinUI,       new[] { ".pdf", ".doc", ".docx" } },
+                    { DevicePlatform.iOS,         new[] { "com.adobe.pdf", "org.openxmlformats.wordprocessingml.document" } },
+                    { DevicePlatform.Android,     new[] { "application/pdf", "application/msword",
+                                                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" } },
                     { DevicePlatform.MacCatalyst, new[] { ".pdf", ".doc", ".docx" } }
                 })
             };
@@ -742,18 +765,15 @@
             isUploading = true;
             StateHasChanged();
 
-            // Mevcut hazir_teklifi temizle
-            await AttachSvc.DeleteHazirTeklifAsync(quoteId);
-
-            // Yeni dosyayi kaydet
+            // DB'ye BYTEA olarak kaydet (herhangi bir makineden erisim icin)
             using var stream = await picked.OpenReadAsync();
-            await AttachSvc.SaveAttachmentAsync(quoteId, "hazir_teklif", stream, picked.FileName);
+            await AttachSvc.SaveHazirTeklifToDbAsync(quoteId, stream, picked.FileName);
 
-            // Durumu guncelle
+            // Dictionary guncelle
             var updated = await AttachSvc.GetHazirTeklifBulkAsync(new[] { quoteId });
             hazirTeklifInfo[quoteId] = updated.GetValueOrDefault(quoteId);
 
-            await ShowToastSuccess($"Hazir teklif eklendi: {picked.FileName}");
+            await ShowToastSuccess($"Hazir teklif kaydedildi: {picked.FileName}");
         }
         catch (Exception ex)
         {
