@@ -77,13 +77,13 @@ namespace YALCINDORSE.Services
                             ));
                         }
 
-                        // Owner ayarla
-                        var mainWindow = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
-                        if (mainWindow != null && mainWindow != uiWindow)
-                        {
-                            var mainHandle = WinRT.Interop.WindowNative.GetWindowHandle(mainWindow);
-                            SetOwner(windowHandle, mainHandle);
-                        }
+                        // Gorev cubugunda bagımsız buton goster:
+                        // SetOwner KALDIRILDI - owner iliskisi goreve cubugunu engelliyor.
+                        // WS_EX_APPWINDOW: Windows'a "bu pencere gorev cubugunda ayri gorunsun" der.
+                        // WS_EX_TOOLWINDOW: varsa kaldir (gorev cubugundan gizler).
+                        var exStyle = GetWindowLong(windowHandle, GWL_EXSTYLE);
+                        SetWindowLong(windowHandle, GWL_EXSTYLE,
+                            (exStyle | WS_EX_APPWINDOW) & ~WS_EX_TOOLWINDOW);
                     }
 #endif
                 };
@@ -128,21 +128,15 @@ namespace YALCINDORSE.Services
         }
 
 #if WINDOWS
-        private const int GWLP_HWNDPARENT = -8;
+        private const int GWL_EXSTYLE      = -20;
+        private const int WS_EX_APPWINDOW  = 0x00040000;  // Gorev cubugunda goster
+        private const int WS_EX_TOOLWINDOW = 0x00000080;  // Gorev cubugunden gizle (istemiyoruz)
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-
-        private static void SetOwner(IntPtr childHandle, IntPtr ownerHandle)
-        {
-            if (IntPtr.Size == 8)
-                SetWindowLongPtr(childHandle, GWLP_HWNDPARENT, ownerHandle);
-            else
-                SetWindowLong(childHandle, GWLP_HWNDPARENT, ownerHandle.ToInt32());
-        }
 #endif
     }
 }
