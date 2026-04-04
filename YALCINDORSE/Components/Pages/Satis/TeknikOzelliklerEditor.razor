@@ -1,0 +1,133 @@
+@using YALCINDORSE.Services
+
+<div class="spec-editor">
+
+    @if (!specs.Any())
+    {
+        <div class="spec-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;color:#9ca3af;margin-bottom:8px;">
+                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                <rect x="9" y="3" width="6" height="4" rx="1"/>
+                <line x1="9" y1="12" x2="15" y2="12"/>
+                <line x1="9" y1="16" x2="13" y2="16"/>
+            </svg>
+            <div style="color:#6b7280;font-size:0.82rem;">Henuz teknik ozellik eklenmedi.</div>
+        </div>
+    }
+
+    @{
+        var gruplar = specs.GroupBy(s => s.Grup).ToList();
+    }
+
+    @foreach (var grup in gruplar)
+    {
+        <div class="spec-group">
+            <div class="spec-group-header">
+                <span class="spec-group-name">@grup.Key</span>
+                <button class="spec-group-del" title="Grubu sil"
+                        @onclick="() => RemoveGroup(grup.Key)"
+                        @onclick:stopPropagation>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+                    </svg>
+                </button>
+            </div>
+
+            @foreach (var spec in grup.ToList())
+            {
+                <div class="spec-row">
+                    <input class="spec-input spec-ozellik" type="text"
+                           placeholder="Ozellik adi (orn: Platform Uzunlugu)"
+                           value="@spec.Ozellik"
+                           @oninput="e => spec.Ozellik = e.Value?.ToString() ?? string.Empty" />
+                    <input class="spec-input spec-deger" type="text"
+                           placeholder="Deger (orn: 13.500 mm)"
+                           value="@spec.Deger"
+                           @oninput="e => spec.Deger = e.Value?.ToString() ?? string.Empty" />
+                    <button class="spec-del-btn" title="Satiri sil"
+                            @onclick="() => RemoveSpec(spec)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+            }
+
+            <button class="spec-add-row-btn" @onclick="() => AddSpecToGroup(grup.Key)">
+                + Satir ekle
+            </button>
+        </div>
+    }
+
+    <!-- Yeni Grup Ekleme -->
+    <div class="spec-new-group">
+        <div class="spec-new-group-inputs">
+            <div class="spec-group-suggestions">
+                @foreach (var sug in GroupSuggestions.Where(g => !specs.Any(s => s.Grup == g)))
+                {
+                    <button class="spec-suggestion-btn" @onclick="() => AddGroup(sug)">+ @sug</button>
+                }
+            </div>
+            <div class="spec-custom-group">
+                <input class="spec-input" type="text"
+                       placeholder="Ozel grup adi..."
+                       @bind="newGroupName" />
+                <button class="spec-add-group-btn wizard-btn-primary"
+                        @onclick="AddCustomGroup"
+                        disabled="@string.IsNullOrWhiteSpace(newGroupName)">
+                    Grup Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<QuoteSpecModel> specs { get; set; } = new();
+    [Parameter] public EventCallback<List<QuoteSpecModel>> specsChanged { get; set; }
+
+    private string newGroupName = "";
+
+    private static readonly string[] GroupSuggestions =
+    [
+        "Olcular", "Agirliklar", "Aks Sistemi", "Fren Sistemi",
+        "Lastik / Jant", "Deveboynu", "Yükleme Platformu",
+        "Isik Sistemi", "Elektrik"
+    ];
+
+    private void AddGroup(string grupAdi)
+    {
+        if (string.IsNullOrWhiteSpace(grupAdi)) return;
+        var siraNo = specs.Where(s => s.Grup == grupAdi).Count();
+        var grupSira = specs.Select(s => s.GrupSiraNo).DefaultIfEmpty(-1).Max() + 1;
+        specs.Add(new QuoteSpecModel { Grup = grupAdi, GrupSiraNo = grupSira, Ozellik = "", Deger = "", SiraNo = siraNo });
+        _ = specsChanged.InvokeAsync(specs);
+    }
+
+    private void AddCustomGroup()
+    {
+        if (string.IsNullOrWhiteSpace(newGroupName)) return;
+        AddGroup(newGroupName.Trim());
+        newGroupName = "";
+    }
+
+    private void AddSpecToGroup(string grup)
+    {
+        var grupSira = specs.Where(s => s.Grup == grup).Select(s => s.GrupSiraNo).FirstOrDefault();
+        var sira = specs.Where(s => s.Grup == grup).Count();
+        specs.Add(new QuoteSpecModel { Grup = grup, GrupSiraNo = grupSira, Ozellik = "", Deger = "", SiraNo = sira });
+        _ = specsChanged.InvokeAsync(specs);
+    }
+
+    private void RemoveSpec(QuoteSpecModel spec)
+    {
+        specs.Remove(spec);
+        _ = specsChanged.InvokeAsync(specs);
+    }
+
+    private void RemoveGroup(string grup)
+    {
+        specs.RemoveAll(s => s.Grup == grup);
+        _ = specsChanged.InvokeAsync(specs);
+    }
+}

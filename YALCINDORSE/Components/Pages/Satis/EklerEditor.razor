@@ -1,0 +1,221 @@
+@using YALCINDORSE.Services
+
+<div class="ekler-editor">
+
+    <!-- Fotograf bolumu -->
+    <div class="ekler-section">
+        <div class="ekler-section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <span>Urun Fotograflari</span>
+            <span class="ekler-count">@(attachments.Count(a => a.Tip == "foto")) / 3</span>
+        </div>
+
+        <div class="ekler-grid">
+            @foreach (var att in attachments.Where(a => a.Tip == "foto").OrderBy(a => a.SiraNo))
+            {
+                <div class="ekler-card">
+                    <div class="ekler-thumb-wrap">
+                        @if (File.Exists(att.DosyaYolu))
+                        {
+                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(GetThumbnailBytes(att.DosyaYolu))"
+                                 alt="@att.DosyaAdi" class="ekler-thumb" />
+                        }
+                        else
+                        {
+                            <div class="ekler-thumb-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;color:#9ca3af;">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                            </div>
+                        }
+                    </div>
+                    <div class="ekler-info">
+                        <span class="ekler-name" title="@att.DosyaAdi">@TruncateName(att.DosyaAdi)</span>
+                        <label class="ekler-pdf-toggle">
+                            <input type="checkbox" checked="@att.PdfeDahilEt"
+                                   @onchange="e => OnPdfeDahilChanged(att, (bool)(e.Value ?? true))" />
+                            PDF'e dahil
+                        </label>
+                    </div>
+                    <button class="ekler-del-btn" title="Sil" @onclick="() => DeleteAttachment(att.Id)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                        </svg>
+                    </button>
+                </div>
+            }
+
+            @if (attachments.Count(a => a.Tip == "foto") < 3)
+            {
+                <button class="ekler-upload-btn" @onclick='() => PickFile("foto")'
+                        disabled="@isUploading">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px;color:#6b7280;">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    <span style="font-size:0.72rem;color:#6b7280;">Fotograf Ekle</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Teknik cizim bolumu -->
+    <div class="ekler-section">
+        <div class="ekler-section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+            </svg>
+            <span>Teknik Cizimler</span>
+            <span class="ekler-count">@(attachments.Count(a => a.Tip == "teknikresim")) / 5</span>
+        </div>
+
+        <div class="ekler-grid">
+            @foreach (var att in attachments.Where(a => a.Tip == "teknikresim").OrderBy(a => a.SiraNo))
+            {
+                <div class="ekler-card">
+                    <div class="ekler-thumb-wrap">
+                        @if (File.Exists(att.DosyaYolu))
+                        {
+                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(GetThumbnailBytes(att.DosyaYolu))"
+                                 alt="@att.DosyaAdi" class="ekler-thumb" />
+                        }
+                        else
+                        {
+                            <div class="ekler-thumb-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;color:#9ca3af;">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                            </div>
+                        }
+                    </div>
+                    <div class="ekler-info">
+                        <span class="ekler-name" title="@att.DosyaAdi">@TruncateName(att.DosyaAdi)</span>
+                        <label class="ekler-pdf-toggle">
+                            <input type="checkbox" checked="@att.PdfeDahilEt"
+                                   @onchange="e => OnPdfeDahilChanged(att, (bool)(e.Value ?? true))" />
+                            PDF'e dahil
+                        </label>
+                    </div>
+                    <button class="ekler-del-btn" title="Sil" @onclick="() => DeleteAttachment(att.Id)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                        </svg>
+                    </button>
+                </div>
+            }
+
+            @if (attachments.Count(a => a.Tip == "teknikresim") < 5)
+            {
+                <button class="ekler-upload-btn" @onclick='() => PickFile("teknikresim")'
+                        disabled="@isUploading">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px;color:#6b7280;">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    <span style="font-size:0.72rem;color:#6b7280;">Cizim Ekle</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(uploadError))
+    {
+        <div class="ekler-error">@uploadError</div>
+    }
+    @if (isUploading)
+    {
+        <div class="ekler-uploading">Yukleniyor...</div>
+    }
+</div>
+
+@code {
+    [Parameter] public int QuoteId { get; set; }
+    [Parameter] public QuoteAttachmentService AttachSvc { get; set; } = default!;
+
+    private List<QuoteAttachmentModel> attachments = new();
+    private bool isUploading;
+    private string uploadError = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (QuoteId > 0)
+            attachments = await AttachSvc.GetAttachmentsAsync(QuoteId);
+    }
+
+    private async Task PickFile(string tip)
+    {
+        try
+        {
+            uploadError = "";
+            var options = new PickOptions
+            {
+                PickerTitle = tip == "foto" ? "Urun Fotografini Sec" : "Teknik Cizim Sec",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.WinUI, new[] { ".jpg", ".jpeg", ".png" } },
+                    { DevicePlatform.iOS, new[] { "public.image" } },
+                    { DevicePlatform.Android, new[] { "image/*" } },
+                    { DevicePlatform.MacCatalyst, new[] { "public.image" } },
+                })
+            };
+
+            var result = await FilePicker.Default.PickAsync(options);
+            if (result == null) return;
+
+            isUploading = true;
+            StateHasChanged();
+
+            using var stream = await result.OpenReadAsync();
+            await AttachSvc.SaveAttachmentAsync(QuoteId, tip, stream, result.FileName);
+            attachments = await AttachSvc.GetAttachmentsAsync(QuoteId);
+        }
+        catch (Exception ex)
+        {
+            uploadError = $"Yukleme hatasi: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteAttachment(int id)
+    {
+        try
+        {
+            await AttachSvc.DeleteAttachmentAsync(id);
+            attachments = await AttachSvc.GetAttachmentsAsync(QuoteId);
+        }
+        catch (Exception ex)
+        {
+            uploadError = ex.Message;
+        }
+    }
+
+    private async Task OnPdfeDahilChanged(QuoteAttachmentModel att, bool value)
+    {
+        att.PdfeDahilEt = value;
+        await AttachSvc.UpdatePdfeDahilAsync(att.Id, value);
+    }
+
+    private static byte[] GetThumbnailBytes(string path)
+    {
+        try
+        {
+            // Kucuk thumbnail icin orijinal dosyayi oku (max 50KB ile sinirla)
+            var bytes = File.ReadAllBytes(path);
+            return bytes.Length > 51200 ? bytes[..51200] : bytes;
+        }
+        catch { return []; }
+    }
+
+    private static string TruncateName(string name) =>
+        name.Length > 18 ? name[..15] + "..." : name;
+}

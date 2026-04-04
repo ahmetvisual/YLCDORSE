@@ -26,6 +26,9 @@ namespace YALCINDORSE
             builder.Services.AddTransient<UserService>();
             builder.Services.AddTransient<CustomerService>();
             builder.Services.AddTransient<QuoteService>();
+            builder.Services.AddTransient<QuoteSpecService>();
+            builder.Services.AddTransient<QuoteAttachmentService>();
+            builder.Services.AddTransient<QuoteDocumentService>();
             builder.Services.AddTransient<TouchService>();
             builder.Services.AddTransient<ArabaslikService>();
 
