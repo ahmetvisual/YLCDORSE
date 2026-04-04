@@ -74,6 +74,7 @@
 .touch-chip-btn.active-cold { border-color: #185FA5; color: #fff; background: #3C82C8; }
 .touch-chip-btn.active-open { border-color: #534AB7; color: #534AB7; background: #EEEDFE; }
 .touch-chip-btn.active-order { border-color: #3B6D11; color: #3B6D11; background: #EAF3DE; }
+.touch-chip-btn.active-draft  { color: #3C5A8C; background: #E6ECF5; border-color: #3C5A8C; }
 .touch-chip-btn.active-closed { color: #5F5E5A; background: #F1EFE8; border-color: #D3D1C7; }
 
 .touch-filter-select {
@@ -628,9 +629,9 @@
 }
 
 /* -- STATUS CHIPS (extends quotes.css) -- */
-.chip-open { background: #EEEDFE; color: #534AB7; }
-.chip-order { background: #EAF3DE; color: #3B6D11; }
-.chip-closed { background: #F1EFE8; color: #5F5E5A; }
+.chip-open   { background: #EEEDFE; color: #534AB7; }   /* mor   */
+.chip-order  { background: #EAF3DE; color: #3B6D11; }   /* yesil */
+.chip-closed { background: #F0F0F0; color: #888; border: 1px solid #ddd; } /* nötr gri - Taslak'tan farklı */
 
 /* ============================================================
    CALENDAR - Professional ERP Calendar

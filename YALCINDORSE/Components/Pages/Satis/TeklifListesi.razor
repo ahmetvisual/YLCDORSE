@@ -60,7 +60,7 @@
             {
                 <button class="touch-chip-btn @(selectedPuan == f.Key ? f.Value : "")"
                         @onclick="() => SetPuanFilter(f.Key)">
-                    @(f.Key == "ALL" ? "Tumu" : f.Key)
+                    @(f.Key switch { "ALL" => "Tumu", "DRAFT" => "Taslak", _ => f.Key })
                 </button>
             }
         </div>
@@ -399,6 +399,7 @@
         { "HOT",    "active-hot"    },
         { "WARM",   "active-warm"   },
         { "COLD",   "active-cold"   },
+        { "DRAFT",  "active-draft"  },
         { "OPEN",   "active-open"   },
         { "ORDER",  "active-order"  },
         { "CLOSED", "active-closed" }
@@ -440,10 +441,12 @@
                 // Dropdown bos ise chip butonlarindan durum/puan belirle
                 if (selectedPuan is "ORDER" or "CLOSED" or "OPEN")
                     durumFilter = selectedPuan;
+                else if (selectedPuan == "DRAFT")
+                    durumFilter = "Draft";   // DB'deki deger "Draft" (buyuk D)
                 else if (selectedPuan != "ALL")
                     puanParam = selectedPuan;
             }
-            else if (selectedPuan != "ALL" && selectedPuan is not ("ORDER" or "CLOSED" or "OPEN"))
+            else if (selectedPuan != "ALL" && selectedPuan is not ("ORDER" or "CLOSED" or "OPEN" or "DRAFT"))
             {
                 // Hem durum dropdown hem puan chip secili
                 puanParam = selectedPuan;
@@ -637,14 +640,14 @@
     };
 
     private string GetStatusChipClass(string status) => status switch {
-        "Draft"           => "chip-draft",
-        "Sent"            => "chip-sent",
+        "Draft"           => "chip-draft",    // mavi-gri
+        "Sent"            => "chip-sent",     // acik mavi
         "WaitingApproval" => "chip-waiting",
         "Approved"        => "chip-approved",
         "Rejected"        => "chip-rejected",
-        "OPEN"            => "chip-sent",
-        "ORDER"           => "chip-approved",
-        "CLOSED"          => "chip-draft",
+        "OPEN"            => "chip-open",     // mor
+        "ORDER"           => "chip-order",    // yesil
+        "CLOSED"          => "chip-closed",   // sicak gri (taslaktan farkli!)
         _                 => ""
     };
 
