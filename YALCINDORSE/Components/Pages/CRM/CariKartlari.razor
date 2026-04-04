@@ -78,14 +78,9 @@
                                         @(item.IsActive ? "Aktif" : "Pasif")
                                     </span>
                                 </div>
-                                <div class="crm-customer-title">@item.Title</div>
-                                <div class="crm-customer-meta">
-                                    <span>@item.Country</span>
-                                    <span>@(string.IsNullOrWhiteSpace(item.TaxNumber) ? "-" : item.TaxNumber)</span>
-                                </div>
-                                <div class="crm-customer-meta">
-                                    <span>@(string.IsNullOrWhiteSpace(item.SalesRepName) ? "Temsilci yok" : item.SalesRepName)</span>
-                                    <strong>@item.CurrentBalance.ToString("N2") EUR</strong>
+                                <div class="crm-customer-item-bottom">
+                                    <span class="crm-customer-title">@item.Title</span>
+                                    <strong class="crm-customer-balance">@item.CurrentBalance.ToString("N2") EUR</strong>
                                 </div>
                             </button>
                         }

@@ -1891,23 +1891,24 @@ h4 {
 .crm-customer-list {
     flex: 1;
     overflow-y: auto;
-    padding: 8px;
+    padding: 6px 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .crm-customer-item {
     border: 1px solid var(--yl-border);
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--yl-white);
-    padding: 12px;
+    padding: 7px 12px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 3px;
     cursor: pointer;
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
     text-align: left;
+    width: 100%;
 }
 
 .crm-customer-item:hover {
@@ -1936,11 +1937,30 @@ h4 {
     letter-spacing: 0.08em;
 }
 
+.crm-customer-item-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+}
+
 .crm-customer-title {
     color: var(--yl-primary);
-    font-size: 0.95rem;
-    font-weight: 700;
-    line-height: 1.35;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.crm-customer-balance {
+    font-size: 0.75rem;
+    color: var(--yl-text-light);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .crm-customer-meta {
