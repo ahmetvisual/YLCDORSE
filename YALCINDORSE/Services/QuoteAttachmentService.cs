@@ -194,6 +194,86 @@ namespace YALCINDORSE.Services
             return await File.ReadAllBytesAsync(path);
         }
 
+        /// <summary>
+        /// Birden fazla teklif icin "hazir_teklif" durumunu tek SQL sorgusunda ceker.
+        /// Donus: quoteId → attachment bilgisi (yoksa null).
+        /// </summary>
+        public async Task<Dictionary<int, QuoteAttachmentModel?>> GetHazirTeklifBulkAsync(IEnumerable<int> quoteIds)
+        {
+            var result = new Dictionary<int, QuoteAttachmentModel?>();
+            var idList = quoteIds.ToList();
+            if (!idList.Any()) return result;
+            foreach (var id in idList) result[id] = null;
+
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+
+            var idParams = string.Join(",", idList.Select((_, i) => $"@id{i}"));
+            var sql = $"""
+                SELECT "Id","TeklifId","DosyaAdi","DosyaYolu"
+                FROM "YLTeklifEkleri"
+                WHERE "TeklifId" IN ({idParams}) AND "Tip" = 'hazir_teklif'
+                ORDER BY "OlusturmaTarihi" DESC;
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            for (int i = 0; i < idList.Count; i++)
+                cmd.Parameters.AddWithValue($"id{i}", idList[i]);
+
+            using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+            {
+                var tid = r.GetInt32(1);
+                if (result.TryGetValue(tid, out var existing) && existing == null)
+                {
+                    result[tid] = new QuoteAttachmentModel
+                    {
+                        Id        = r.GetInt32(0),
+                        TeklifId  = tid,
+                        DosyaAdi  = r.IsDBNull(2) ? "" : r.GetString(2),
+                        DosyaYolu = r.IsDBNull(3) ? "" : r.GetString(3),
+                        Tip       = "hazir_teklif"
+                    };
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Bir teklife ait tum "hazir_teklif" eklerini (DB + disk) siler.
+        /// Yeni upload oncesinde cagirilir.
+        /// </summary>
+        public async Task DeleteHazirTeklifAsync(int quoteId)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+
+            // Dosya yollarini bul
+            var paths = new List<string>();
+            using (var sel = new NpgsqlCommand(
+                "SELECT \"DosyaYolu\" FROM \"YLTeklifEkleri\" WHERE \"TeklifId\"=@tid AND \"Tip\"='hazir_teklif'", conn))
+            {
+                sel.Parameters.AddWithValue("tid", quoteId);
+                using var r = await sel.ExecuteReaderAsync();
+                while (await r.ReadAsync())
+                {
+                    var p = r.IsDBNull(0) ? null : r.GetString(0);
+                    if (!string.IsNullOrEmpty(p)) paths.Add(p);
+                }
+            }
+
+            // DB kayitlarini sil
+            using var del = new NpgsqlCommand(
+                "DELETE FROM \"YLTeklifEkleri\" WHERE \"TeklifId\"=@tid AND \"Tip\"='hazir_teklif'", conn);
+            del.Parameters.AddWithValue("tid", quoteId);
+            await del.ExecuteNonQueryAsync();
+
+            // Fiziksel dosyalari sil
+            foreach (var p in paths)
+                if (File.Exists(p)) try { File.Delete(p); } catch { /* sessiz kal */ }
+        }
+
         private static string SanitizeFileName(string name)
         {
             var invalid = Path.GetInvalidFileNameChars();

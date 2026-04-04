@@ -6,6 +6,7 @@
 @inject NavigationManager Nav
 @inject DesktopWindowService WindowService
 @inject QuoteDocumentService DocSvc
+@inject QuoteAttachmentService AttachSvc
 
 <div class="qt-shell">
 
@@ -94,7 +95,7 @@
                                             <path d="M5 15 L1 10 M5 15 L9 10" stroke-linecap="round"/>
                                         </svg>
                                     </th>
-                                    <th style="width:68px;">Isl.</th>
+                                    <th style="width:90px;">Isl.</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -200,6 +201,18 @@
                                                             <polyline points="9 15 12 18 15 15"/>
                                                         </svg>
                                                     </button>
+                                                    @{
+                                                        var hazirVar = hazirTeklifInfo.TryGetValue(quote.Id, out var hti) && hti != null;
+                                                    }
+                                                    <button class="btn-expand"
+                                                            style="@(hazirVar ? "color:#D97706;border-color:#D97706;background:rgba(217,119,6,0.08);" : "color:#9CA3AF;border-color:#D1D5DB;")"
+                                                            title="@(hazirVar ? $"Hazir Teklif: {hti?.DosyaAdi}" : "Hazir Teklif Ekle")"
+                                                            @onclick="() => HazirTeklifClickAsync(quote.Id)"
+                                                            disabled="@isUploading">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                                                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                                        </svg>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -297,10 +310,11 @@
                                 }
                             }
 
-                            <!-- Belge Butonu -->
+                            <!-- Belge + Hazir Teklif Butonu -->
                             @if (sel != null)
                             {
-                                <div style="margin-bottom:8px;">
+                                var selHazir = hazirTeklifInfo.TryGetValue(sel.Id, out var selHti) && selHti != null;
+                                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center;">
                                     <button class="btn-transition" style="background:#f0f5ff;color:#185FA5;border-color:rgba(24,95,165,0.25);"
                                             @onclick="() => GenerateDocumentAsync(sel.Id)"
                                             disabled="@isGenerating">
@@ -313,7 +327,40 @@
                                         </svg>
                                         @(isGenerating ? "Hazirlaniyor..." : "Belge Indir")
                                     </button>
+                                    <button class="btn-transition"
+                                            style="@(selHazir ? "background:#FEF3C7;color:#D97706;border-color:rgba(217,119,6,0.3);" : "background:#F9FAFB;color:#6B7280;border-color:#D1D5DB;")"
+                                            @onclick="() => HazirTeklifClickAsync(sel.Id)"
+                                            disabled="@isUploading"
+                                            title="@(selHazir ? selHti!.DosyaAdi : "Word/PDF teklif yukle")">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                             style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom;">
+                                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                        </svg>
+                                        @(isUploading ? "Yukleniyor..." : (selHazir ? "Hazir Teklif" : "Hazir Teklif Ekle"))
+                                    </button>
+                                    @if (selHazir)
+                                    {
+                                        <button class="btn-transition" style="background:#FEF2F2;color:#B91C1C;border-color:rgba(185,28,28,0.2);padding:3px 7px;"
+                                                title="Hazir teklifi sil" @onclick="() => DeleteHazirTeklifAsync(sel.Id)">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                 style="width:11px;height:11px;vertical-align:text-bottom;">
+                                                <polyline points="3 6 5 6 21 6"/>
+                                                <path d="M19 6l-1 14H6L5 6"/>
+                                                <path d="M10 11v6M14 11v6"/>
+                                                <path d="M9 6V4h6v2"/>
+                                            </svg>
+                                        </button>
+                                    }
                                 </div>
+                                @if (selHazir)
+                                {
+                                    <div style="font-size:0.72rem;color:#D97706;margin-bottom:8px;display:flex;align-items:center;gap:4px;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;flex-shrink:0;">
+                                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                        </svg>
+                                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="@selHti!.DosyaAdi">@selHti!.DosyaAdi</span>
+                                    </div>
+                                }
                             }
 
                             <!-- Revizyon Tablosu -->
@@ -400,6 +447,7 @@
     private bool isDetailsLoading = false;
     private bool isTouchLoading = false;
     private bool isGenerating = false;
+    private bool isUploading = false;
     private string? errorMessage;
     private bool showToast, toastIsSuccess;
     private string toastMessage = "";
@@ -408,6 +456,7 @@
     private List<QuoteListItemModel>? quotes;
     private List<QuoteRevisionModel>? expandedRevisions;
     private Dictionary<int, QuoteTouchSummary> quoteTouchInfo = new();
+    private Dictionary<int, QuoteAttachmentModel?> hazirTeklifInfo = new();
     private bool isTransitioning = false;
 
     // Secim & tab
@@ -486,8 +535,8 @@
             isLoading = false;
             StateHasChanged();
 
-            // Touch ozetlerini arka planda yukle
-            await LoadTouchInfoAsync();
+            // Touch ve hazir teklif bilgilerini arka planda yukle
+            await Task.WhenAll(LoadTouchInfoAsync(), LoadHazirTeklifInfoAsync());
         }
         catch (Exception ex)
         {
@@ -635,6 +684,92 @@
         var p = new Dictionary<string, object> { { "CopyFromQuoteId", quoteId } };
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Kopyala", 860, 700, p))
             Nav.NavigateTo("/satis/teklif-olustur");
+    }
+
+    // ── Hazır Teklif ──────────────────────────────────────────────────
+
+    private async Task LoadHazirTeklifInfoAsync()
+    {
+        if (quotes == null || !quotes.Any()) return;
+        try
+        {
+            var ids = quotes.Select(q => q.Id);
+            hazirTeklifInfo = await AttachSvc.GetHazirTeklifBulkAsync(ids);
+        }
+        catch { /* sessiz kal */ }
+        StateHasChanged();
+    }
+
+    private async Task HazirTeklifClickAsync(int quoteId)
+    {
+        // Dosya varsa → ac
+        if (hazirTeklifInfo.TryGetValue(quoteId, out var info) && info != null
+            && !string.IsNullOrEmpty(info.DosyaYolu) && File.Exists(info.DosyaYolu))
+        {
+            try { await Launcher.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(info.DosyaYolu) }); }
+            catch { await ShowToastError("Dosya acilamadi."); }
+            return;
+        }
+
+        // Dosya yoksa → yukle
+        try
+        {
+            var pickOpts = new PickOptions
+            {
+                PickerTitle = "Hazir Teklif Sec (.pdf, .doc, .docx)",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.WinUI,   new[] { ".pdf", ".doc", ".docx" } },
+                    { DevicePlatform.iOS,     new[] { "com.adobe.pdf", "org.openxmlformats.wordprocessingml.document" } },
+                    { DevicePlatform.Android, new[] { "application/pdf", "application/msword",
+                                                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" } },
+                    { DevicePlatform.MacCatalyst, new[] { ".pdf", ".doc", ".docx" } }
+                })
+            };
+
+            var picked = await FilePicker.PickAsync(pickOpts);
+            if (picked == null) return;
+
+            isUploading = true;
+            StateHasChanged();
+
+            // Mevcut hazir_teklifi temizle
+            await AttachSvc.DeleteHazirTeklifAsync(quoteId);
+
+            // Yeni dosyayi kaydet
+            using var stream = await picked.OpenReadAsync();
+            await AttachSvc.SaveAttachmentAsync(quoteId, "hazir_teklif", stream, picked.FileName);
+
+            // Durumu guncelle
+            var updated = await AttachSvc.GetHazirTeklifBulkAsync(new[] { quoteId });
+            hazirTeklifInfo[quoteId] = updated.GetValueOrDefault(quoteId);
+
+            await ShowToastSuccess($"Hazir teklif eklendi: {picked.FileName}");
+        }
+        catch (Exception ex)
+        {
+            await ShowToastError($"Dosya yuklenemedi: {ex.Message}");
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteHazirTeklifAsync(int quoteId)
+    {
+        try
+        {
+            await AttachSvc.DeleteHazirTeklifAsync(quoteId);
+            hazirTeklifInfo[quoteId] = null;
+            StateHasChanged();
+            await ShowToastSuccess("Hazir teklif silindi.");
+        }
+        catch (Exception ex)
+        {
+            await ShowToastError($"Silme hatasi: {ex.Message}");
+        }
     }
 
     private async Task ChangeStatusAsync(int quoteId, string newStatus)
