@@ -10,6 +10,7 @@ namespace YALCINDORSE.Services
         public bool IsAuthenticated { get; private set; }
         public string? CurrentUser { get; private set; }
         public string? FullName { get; private set; }
+        public int? CurrentUserId { get; private set; }
 
         public event Action? OnAuthStateChanged;
 
@@ -36,6 +37,7 @@ namespace YALCINDORSE.Services
                 {
                     IsAuthenticated = true;
                     CurrentUser = username;
+                    CurrentUserId = reader.GetInt32(0);
                     FullName = reader.GetString(1);
                     OnAuthStateChanged?.Invoke();
                     return (true, "Giriş başarılı");
@@ -53,6 +55,7 @@ namespace YALCINDORSE.Services
         {
             IsAuthenticated = false;
             CurrentUser = null;
+            CurrentUserId = null;
             FullName = null;
             OnAuthStateChanged?.Invoke();
         }

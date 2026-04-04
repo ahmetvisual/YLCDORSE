@@ -28,14 +28,15 @@
                 {
                     seq++;
                     var typeName = entry.Tipi switch {
-                        "CALL" => "Arama",
-                        "MAIL" => "Mail",
-                        "VISIT" => "Ziyaret",
-                        "NOTE" => "Not",
+                        "CALL"    => "Arama",
+                        "MAIL"    => "Mail",
+                        "VISIT"   => "Ziyaret",
+                        "NOTE"    => "Not",
                         "MEETING" => "Toplanti",
-                        _ => entry.Tipi ?? ""
+                        _         => entry.Tipi ?? ""
                     };
                     var typeClass = "tl-type-" + (entry.Tipi?.ToLower() ?? "note");
+                    var entryId = entry.Id;   // capture for lambda
 
                     <div class="tl-entry">
                         <div class="tl-line"></div>
@@ -52,6 +53,15 @@
                                 {
                                     <span class="tl-mgmt-badge">Yonetim</span>
                                 }
+                                <!-- Duzenle butonu -->
+                                <button class="tl-edit-btn" title="Duzenle"
+                                        @onclick="() => OpenEditForm(entryId)"
+                                        @onclick:stopPropagation="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </button>
                             </div>
                             @if (!string.IsNullOrEmpty(entry.Aciklama))
                             {
@@ -68,7 +78,7 @@
         </div>
 
         <!-- Aksiyon Butonlari -->
-        @if (!showTouchForm && !showStatusModal)
+        @if (!showTouchForm && !showStatusModal && !showEditForm)
         {
             <div class="touch-actions">
                 <button class="touch-btn touch-btn-primary" @onclick="ShowTouchForm">+ Gorusme Ekle</button>
@@ -80,7 +90,7 @@
         @if (showTouchForm)
         {
             <div class="touch-form" style="margin-top:12px">
-                <div class="touch-form-title">Yeni Gorusme \u2014 @quote.TeklifNo</div>
+                <div class="touch-form-title">Yeni Gorusme &mdash; @quote.TeklifNo</div>
                 <div class="touch-form-grid3">
                     <div class="touch-form-row">
                         <label>Tarih</label>
@@ -104,7 +114,7 @@
                 <div class="touch-form-grid2">
                     <div class="touch-form-row">
                         <label>Puan Guncelle</label>
-                        <select @bind="newTouch.DurumGuncelleme">
+                        <select @bind="newTouch.PuanGuncelleme">
                             <option value="">Degistirme</option>
                             <option value="HOT">HOT</option>
                             <option value="WARM">WARM</option>
@@ -131,6 +141,66 @@
                     <button class="touch-btn" @onclick="CancelTouchForm">Iptal</button>
                     <button class="touch-btn touch-btn-primary" @onclick="SaveTouch" disabled="@isSaving">
                         @(isSaving ? "Kaydediliyor..." : "Kaydet")
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Gorusme Duzenleme Formu -->
+        @if (showEditForm && editingTouch != null)
+        {
+            <div class="touch-form" style="margin-top:12px">
+                <div class="touch-form-title">Gorusmeyi Duzenle</div>
+                <div class="touch-form-grid3">
+                    <div class="touch-form-row">
+                        <label>Tarih</label>
+                        <input type="date" @bind="editingTouch.TemasTarihi" @bind:format="yyyy-MM-dd" />
+                    </div>
+                    <div class="touch-form-row">
+                        <label>Tur</label>
+                        <select @bind="editingTouch.TemasTipi">
+                            <option value="CALL">Arama</option>
+                            <option value="MAIL">Mail</option>
+                            <option value="VISIT">Ziyaret</option>
+                            <option value="NOTE">Not</option>
+                            <option value="MEETING">Toplanti</option>
+                        </select>
+                    </div>
+                    <div class="touch-form-row">
+                        <label>Sonraki Temas</label>
+                        <input type="date" @bind="editingTouch.SonrakiTemasTarihi" @bind:format="yyyy-MM-dd" />
+                    </div>
+                </div>
+                <div class="touch-form-grid2">
+                    <div class="touch-form-row">
+                        <label>Puan Guncelle</label>
+                        <select @bind="editingTouch.PuanGuncelleme">
+                            <option value="">Degistirme</option>
+                            <option value="HOT">HOT</option>
+                            <option value="WARM">WARM</option>
+                            <option value="COLD">COLD</option>
+                        </select>
+                    </div>
+                    <div class="touch-form-row">
+                        <label>Yonetim Dahil?</label>
+                        <select @bind="editingTouch.YonetimDahilMi">
+                            <option value="false">Hayir</option>
+                            <option value="true">Evet</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="touch-form-row">
+                    <label>Gorusme Notu *</label>
+                    <textarea @bind="editingTouch.Not" placeholder="Gorusme detaylari, musteri geri bildirimi, kararlar..."></textarea>
+                </div>
+                @if (!string.IsNullOrEmpty(editError))
+                {
+                    <div style="color:#A32D2D;font-size:0.78rem;margin-bottom:8px">@editError</div>
+                }
+                <div class="touch-form-actions">
+                    <button class="touch-btn" @onclick="CancelEditForm">Iptal</button>
+                    <button class="touch-btn touch-btn-primary" @onclick="SaveEdit" disabled="@isSaving">
+                        @(isSaving ? "Kaydediliyor..." : "Guncelle")
                     </button>
                 </div>
             </div>
@@ -178,16 +248,22 @@
 
     private QuoteListItemModel? quote;
     private List<TimelineEntryModel> timeline = new();
+    private List<TouchModel> touches = new();
     private DateTime? nextTouchDate;
     private bool isLoading = true;
     private bool isSaving;
 
-    // Touch form
+    // Yeni gorusme formu
     private bool showTouchForm;
     private TouchModel newTouch = new();
     private string touchError = "";
 
-    // Status update
+    // Duzenle formu
+    private bool showEditForm;
+    private TouchModel? editingTouch;
+    private string editError = "";
+
+    // Durum guncelleme
     private bool showStatusModal;
     private string newStatus = "";
     private string newPuan = "";
@@ -210,7 +286,7 @@
 
             timeline = await TouchSvc.GetTimelineAsync(TeklifId);
 
-            var touches = await TouchSvc.GetTouchesForQuoteAsync(TeklifId);
+            touches = await TouchSvc.GetTouchesForQuoteAsync(TeklifId);
             var lastTouch = touches.LastOrDefault();
             nextTouchDate = lastTouch?.SonrakiTemasTarihi;
         }
@@ -222,16 +298,20 @@
         }
     }
 
+    // ── Yeni Gorusme ──────────────────────────────────────────────
+
     private void ShowTouchForm()
     {
         showTouchForm = true;
         showStatusModal = false;
+        showEditForm = false;
         newTouch = new TouchModel
         {
-            TeklifId = TeklifId,
+            TeklifId   = TeklifId,
             TemasTarihi = DateTime.Now,
-            TemasTipi = "CALL",
-            RevizyonNo = quote?.Rev ?? 0
+            TemasTipi  = "CALL",
+            RevizyonNo = quote?.Rev ?? 0,
+            TemasEden  = Auth.CurrentUserId   // FIX: kullanici adi timeline'a yazilsin
         };
         touchError = "";
     }
@@ -269,10 +349,77 @@
         }
     }
 
+    // ── Gorusme Duzenleme ─────────────────────────────────────────
+
+    private void OpenEditForm(int touchId)
+    {
+        var touch = touches.FirstOrDefault(t => t.Id == touchId);
+        if (touch == null) return;
+
+        editingTouch = new TouchModel
+        {
+            Id                  = touch.Id,
+            TeklifId            = touch.TeklifId,
+            RevizyonNo          = touch.RevizyonNo,
+            TemasTarihi         = touch.TemasTarihi,
+            TemasEden           = touch.TemasEden,
+            TemasTipi           = touch.TemasTipi,
+            Not                 = touch.Not,
+            SonrakiTemasTarihi  = touch.SonrakiTemasTarihi,
+            YonetimDahilMi      = touch.YonetimDahilMi,
+            DurumGuncelleme     = touch.DurumGuncelleme,
+            PuanGuncelleme      = touch.PuanGuncelleme
+        };
+
+        showEditForm    = true;
+        showTouchForm   = false;
+        showStatusModal = false;
+        editError       = "";
+    }
+
+    private void CancelEditForm()
+    {
+        showEditForm = false;
+        editingTouch = null;
+        editError = "";
+    }
+
+    private async Task SaveEdit()
+    {
+        if (editingTouch == null) return;
+        if (string.IsNullOrWhiteSpace(editingTouch.Not))
+        {
+            editError = "Gorusme notu zorunludur.";
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            await TouchSvc.UpdateTouchAsync(editingTouch);
+            showEditForm = false;
+            editingTouch = null;
+            editError = "";
+            await LoadDetail();
+            await OnDataChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            editError = "Hata: " + ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    // ── Durum Guncelleme ──────────────────────────────────────────
+
     private void ShowStatusUpdate()
     {
         showStatusModal = true;
-        showTouchForm = false;
+        showTouchForm   = false;
+        showEditForm    = false;
         newStatus = quote?.Durum ?? "Draft";
         newPuan = "";
     }
@@ -299,22 +446,22 @@
 
     private string GetDurumChipClass(string durum) => durum switch
     {
-        "Draft" => "chip-draft",
-        "Sent" => "chip-sent",
+        "Draft"           => "chip-draft",
+        "Sent"            => "chip-sent",
         "WaitingApproval" => "chip-waiting",
-        "Approved" => "chip-approved",
-        "Rejected" => "chip-rejected",
-        "ORDER" => "chip-order",
-        "CLOSED" => "chip-closed",
-        "OPEN" => "chip-open",
-        _ => "chip-draft"
+        "Approved"        => "chip-approved",
+        "Rejected"        => "chip-rejected",
+        "ORDER"           => "chip-order",
+        "CLOSED"          => "chip-closed",
+        "OPEN"            => "chip-open",
+        _                 => "chip-draft"
     };
 
     private string GetPuanChipClass(string puan) => puan switch
     {
-        "HOT" => "chip-hot",
+        "HOT"  => "chip-hot",
         "WARM" => "chip-warm",
         "COLD" => "chip-cold",
-        _ => "chip-draft"
+        _      => "chip-draft"
     };
 }

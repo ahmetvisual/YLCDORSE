@@ -17,7 +17,8 @@ namespace YALCINDORSE.Services
         public string? Not { get; set; }
         public DateTime? SonrakiTemasTarihi { get; set; }
         public bool YonetimDahilMi { get; set; }
-        public string? DurumGuncelleme { get; set; }
+        public string? DurumGuncelleme { get; set; }  // Durum degisikligi (ORDER, CLOSED, OPEN vs.)
+        public string? PuanGuncelleme { get; set; }   // Puan degisikligi (HOT, WARM, COLD)
         public DateTime OlusturmaTarihi { get; set; }
         public string Olusturan { get; set; } = "";
     }
@@ -147,6 +148,8 @@ namespace YALCINDORSE.Services
                 "IlgiliKisiId" INT NOT NULL REFERENCES "YLCustomerContacts"("Id")
             );
             CREATE INDEX IF NOT EXISTS "IX_YLTeklifIlgiliKisileri_TeklifId" ON "YLTeklifIlgiliKisileri"("TeklifId");
+
+            ALTER TABLE "YLTemaslar" ADD COLUMN IF NOT EXISTS "PuanGuncelleme" VARCHAR(20);
             """;
 
         public TouchService(DatabaseHelper db, AuthService auth)
@@ -227,10 +230,10 @@ namespace YALCINDORSE.Services
             const string sql = """
                 INSERT INTO "YLTemaslar"
                 ("TeklifId", "RevizyonNo", "TemasTarihi", "TemasEden", "TemasTipi",
-                 "Not", "SonrakiTemasTarihi", "YonetimDahilMi", "DurumGuncelleme", "Olusturan")
+                 "Not", "SonrakiTemasTarihi", "YonetimDahilMi", "DurumGuncelleme", "PuanGuncelleme", "Olusturan")
                 VALUES
                 (@TeklifId, @RevizyonNo, @TemasTarihi, @TemasEden, @TemasTipi,
-                 @Not, @SonrakiTemasTarihi, @YonetimDahilMi, @DurumGuncelleme, @Olusturan)
+                 @Not, @SonrakiTemasTarihi, @YonetimDahilMi, @DurumGuncelleme, @PuanGuncelleme, @Olusturan)
                 RETURNING "Id";
                 """;
 
@@ -244,25 +247,98 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("SonrakiTemasTarihi", (object?)touch.SonrakiTemasTarihi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("YonetimDahilMi", touch.YonetimDahilMi);
             cmd.Parameters.AddWithValue("DurumGuncelleme", (object?)touch.DurumGuncelleme ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("PuanGuncelleme", (object?)touch.PuanGuncelleme ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Olusturan", _auth.CurrentUser ?? "system");
 
-            // Eger durum guncelleme varsa teklif durumunu da guncelle
             var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
 
+            // Puan degisikligi varsa YLTeklifler.Puan guncelle
+            if (!string.IsNullOrEmpty(touch.PuanGuncelleme))
+            {
+                const string puanSql = """
+                    UPDATE "YLTeklifler" SET "Puan" = @puan, "DegistirmeTarihi" = CURRENT_TIMESTAMP,
+                    "Degistiren" = @degistiren WHERE "Id" = @teklifId;
+                    """;
+                using var cmdPuan = new NpgsqlCommand(puanSql, conn);
+                cmdPuan.Parameters.AddWithValue("puan", touch.PuanGuncelleme);
+                cmdPuan.Parameters.AddWithValue("degistiren", _auth.CurrentUser ?? "system");
+                cmdPuan.Parameters.AddWithValue("teklifId", touch.TeklifId);
+                await cmdPuan.ExecuteNonQueryAsync();
+            }
+
+            // Durum degisikligi varsa YLTeklifler.Durum guncelle
             if (!string.IsNullOrEmpty(touch.DurumGuncelleme))
             {
-                const string updateSql = """
+                const string durumSql = """
                     UPDATE "YLTeklifler" SET "Durum" = @durum, "DegistirmeTarihi" = CURRENT_TIMESTAMP,
                     "Degistiren" = @degistiren WHERE "Id" = @teklifId;
                     """;
-                using var cmd2 = new NpgsqlCommand(updateSql, conn);
-                cmd2.Parameters.AddWithValue("durum", touch.DurumGuncelleme);
-                cmd2.Parameters.AddWithValue("degistiren", _auth.CurrentUser ?? "system");
-                cmd2.Parameters.AddWithValue("teklifId", touch.TeklifId);
-                await cmd2.ExecuteNonQueryAsync();
+                using var cmdDurum = new NpgsqlCommand(durumSql, conn);
+                cmdDurum.Parameters.AddWithValue("durum", touch.DurumGuncelleme);
+                cmdDurum.Parameters.AddWithValue("degistiren", _auth.CurrentUser ?? "system");
+                cmdDurum.Parameters.AddWithValue("teklifId", touch.TeklifId);
+                await cmdDurum.ExecuteNonQueryAsync();
             }
 
             return id;
+        }
+
+        public async Task UpdateTouchAsync(TouchModel touch)
+        {
+            await EnsureSchemaAsync();
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            const string sql = """
+                UPDATE "YLTemaslar"
+                SET "TemasTarihi"        = @TemasTarihi,
+                    "TemasTipi"          = @TemasTipi,
+                    "Not"                = @Not,
+                    "SonrakiTemasTarihi" = @SonrakiTemasTarihi,
+                    "YonetimDahilMi"     = @YonetimDahilMi,
+                    "DurumGuncelleme"    = @DurumGuncelleme,
+                    "PuanGuncelleme"     = @PuanGuncelleme
+                WHERE "Id" = @Id;
+                """;
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("Id", touch.Id);
+            cmd.Parameters.AddWithValue("TemasTarihi", touch.TemasTarihi);
+            cmd.Parameters.AddWithValue("TemasTipi", touch.TemasTipi);
+            cmd.Parameters.AddWithValue("Not", (object?)touch.Not ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("SonrakiTemasTarihi", (object?)touch.SonrakiTemasTarihi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("YonetimDahilMi", touch.YonetimDahilMi);
+            cmd.Parameters.AddWithValue("DurumGuncelleme", (object?)touch.DurumGuncelleme ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("PuanGuncelleme", (object?)touch.PuanGuncelleme ?? DBNull.Value);
+            await cmd.ExecuteNonQueryAsync();
+
+            // Puan degisikligi guncelle
+            if (!string.IsNullOrEmpty(touch.PuanGuncelleme))
+            {
+                const string puanSql = """
+                    UPDATE "YLTeklifler" SET "Puan" = @puan, "DegistirmeTarihi" = CURRENT_TIMESTAMP,
+                    "Degistiren" = @degistiren WHERE "Id" = @teklifId;
+                    """;
+                using var cmdPuan = new NpgsqlCommand(puanSql, conn);
+                cmdPuan.Parameters.AddWithValue("puan", touch.PuanGuncelleme);
+                cmdPuan.Parameters.AddWithValue("degistiren", _auth.CurrentUser ?? "system");
+                cmdPuan.Parameters.AddWithValue("teklifId", touch.TeklifId);
+                await cmdPuan.ExecuteNonQueryAsync();
+            }
+
+            // Durum degisikligi guncelle
+            if (!string.IsNullOrEmpty(touch.DurumGuncelleme))
+            {
+                const string durumSql = """
+                    UPDATE "YLTeklifler" SET "Durum" = @durum, "DegistirmeTarihi" = CURRENT_TIMESTAMP,
+                    "Degistiren" = @degistiren WHERE "Id" = @teklifId;
+                    """;
+                using var cmdDurum = new NpgsqlCommand(durumSql, conn);
+                cmdDurum.Parameters.AddWithValue("durum", touch.DurumGuncelleme);
+                cmdDurum.Parameters.AddWithValue("degistiren", _auth.CurrentUser ?? "system");
+                cmdDurum.Parameters.AddWithValue("teklifId", touch.TeklifId);
+                await cmdDurum.ExecuteNonQueryAsync();
+            }
         }
 
         // ── REVISION CRUD ───────────────────────────────────────────
