@@ -202,11 +202,14 @@
                                                         </svg>
                                                     </button>
                                                     @{
-                                                        var hazirVar = hazirTeklifInfo.TryGetValue(quote.Id, out var hti) && hti != null;
+                                                        QuoteAttachmentModel? _rowHti = null;
+                                                        hazirTeklifInfo.TryGetValue(quote.Id, out _rowHti);
+                                                        bool hazirVar = _rowHti != null;
+                                                        string _rowDosya = _rowHti?.DosyaAdi ?? "";
                                                     }
                                                     <button class="btn-expand"
                                                             style="@(hazirVar ? "color:#D97706;border-color:#D97706;background:rgba(217,119,6,0.08);" : "color:#9CA3AF;border-color:#D1D5DB;")"
-                                                            title="@(hazirVar ? $"Hazir Teklif: {hti?.DosyaAdi}" : "Hazir Teklif Ekle")"
+                                                            title="@(hazirVar ? $"Hazir Teklif: {_rowDosya}" : "Hazir Teklif Ekle")"
                                                             @onclick="() => HazirTeklifClickAsync(quote.Id)"
                                                             disabled="@isUploading">
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
@@ -313,7 +316,11 @@
                             <!-- Belge + Hazir Teklif Butonu -->
                             @if (sel != null)
                             {
-                                var selHazir = hazirTeklifInfo.TryGetValue(sel.Id, out var selHti) && selHti != null;
+                                /* Hazir teklif modeli - out var yerine dogrudan al */
+                                QuoteAttachmentModel? selHazirModel = null;
+                                hazirTeklifInfo.TryGetValue(sel.Id, out selHazirModel);
+                                bool selHazir = selHazirModel != null;
+                                string selDosyaAdi = selHazirModel?.DosyaAdi ?? "";
                                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center;">
                                     <button class="btn-transition" style="background:#f0f5ff;color:#185FA5;border-color:rgba(24,95,165,0.25);"
                                             @onclick="() => GenerateDocumentAsync(sel.Id)"
@@ -331,19 +338,21 @@
                                             style="@(selHazir ? "background:#FEF3C7;color:#D97706;border-color:rgba(217,119,6,0.3);" : "background:#F9FAFB;color:#6B7280;border-color:#D1D5DB;")"
                                             @onclick="() => HazirTeklifClickAsync(sel.Id)"
                                             disabled="@isUploading"
-                                            title="@(selHazir ? selHti!.DosyaAdi : "Word/PDF teklif yukle")">
+                                            title="@(selHazir ? selDosyaAdi : "Word/PDF teklif yukle")">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                              style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom;">
                                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                                         </svg>
-                                        @(isUploading ? "Yukleniyor..." : (selHazir ? "Hazir Teklif" : "Hazir Teklif Ekle"))
+                                        @(isUploading ? "Yukleniyor..." : (selHazir ? "Hazir Teklif Ac" : "Hazir Teklif Ekle"))
                                     </button>
                                     @if (selHazir)
                                     {
-                                        <button class="btn-transition" style="background:#FEF2F2;color:#B91C1C;border-color:rgba(185,28,28,0.2);padding:3px 7px;"
-                                                title="Hazir teklifi sil" @onclick="() => DeleteHazirTeklifAsync(sel.Id)">
+                                        <button class="btn-transition"
+                                                style="background:#FEF2F2;color:#B91C1C;border-color:rgba(185,28,28,0.25);padding:3px 8px;min-width:0;"
+                                                title="Hazir teklifi sil"
+                                                @onclick="() => DeleteHazirTeklifAsync(sel.Id)">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                 style="width:11px;height:11px;vertical-align:text-bottom;">
+                                                 style="width:12px;height:12px;vertical-align:text-bottom;">
                                                 <polyline points="3 6 5 6 21 6"/>
                                                 <path d="M19 6l-1 14H6L5 6"/>
                                                 <path d="M10 11v6M14 11v6"/>
@@ -354,11 +363,11 @@
                                 </div>
                                 @if (selHazir)
                                 {
-                                    <div style="font-size:0.72rem;color:#D97706;margin-bottom:8px;display:flex;align-items:center;gap:4px;">
+                                    <div style="font-size:0.72rem;color:#D97706;margin-bottom:8px;display:flex;align-items:center;gap:4px;padding:4px 8px;background:#FFFBEB;border-radius:4px;border:1px solid rgba(217,119,6,0.2);">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;flex-shrink:0;">
                                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                                         </svg>
-                                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="@selHti!.DosyaAdi">@selHti!.DosyaAdi</span>
+                                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" title="@selDosyaAdi">@selDosyaAdi</span>
                                     </div>
                                 }
                             }
