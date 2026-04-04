@@ -57,15 +57,16 @@
             }
         </div>
 
-        <select class="quote-filter-select" @onchange="OnKanalChanged">
-            <option value="">Tum Kanallar</option>
-            <option value="BAYI">Bayi</option>
-            <option value="ZIYARET">Ziyaret</option>
-            <option value="ONLINE">Online</option>
-            <option value="WHATSAPP">WhatsApp</option>
-            <option value="EMAIL">E-Mail</option>
-            <option value="WEB_SITESI">Web Sitesi</option>
-            <option value="FUAR">Fuar</option>
+        <select class="quote-filter-select" @onchange="OnDurumChanged">
+            <option value="">Tum Durumlar</option>
+            <option value="Draft">Taslak</option>
+            <option value="Sent">Gonderildi</option>
+            <option value="WaitingApproval">Onay Bekliyor</option>
+            <option value="Approved">Onaylandi</option>
+            <option value="Rejected">Reddedildi</option>
+            <option value="OPEN">Acik</option>
+            <option value="ORDER">Siparis</option>
+            <option value="CLOSED">Kapali</option>
         </select>
     </div>
 
@@ -382,7 +383,7 @@
     // Filtreler
     private string searchQuery = "";
     private string selectedPuan = "ALL";
-    private string kanalFilter = "";
+    private string selectedDurum = "";
 
     private readonly Dictionary<string, string> puanFilters = new()
     {
@@ -421,19 +422,26 @@
 
         try
         {
-            // Puan / durum filtresi ayristir (ORDER, CLOSED, OPEN durum; diger puan)
-            var durumFilter = "";
+            // Durum ve puan filtrelerini ayristir
+            // Chip butonlarindaki OPEN/ORDER/CLOSED durum olarak, HOT/WARM/COLD puan olarak kullanilir
+            var durumFilter = selectedDurum; // dropdown secimi her zaman durum olarak kullanilir
             var puanParam = "";
-            if (selectedPuan is "ORDER" or "CLOSED" or "OPEN")
-                durumFilter = selectedPuan;
-            else if (selectedPuan != "ALL")
+
+            if (string.IsNullOrEmpty(durumFilter))
+            {
+                // Dropdown bos ise chip butonlarindan durum/puan belirle
+                if (selectedPuan is "ORDER" or "CLOSED" or "OPEN")
+                    durumFilter = selectedPuan;
+                else if (selectedPuan != "ALL")
+                    puanParam = selectedPuan;
+            }
+            else if (selectedPuan != "ALL" && selectedPuan is not ("ORDER" or "CLOSED" or "OPEN"))
+            {
+                // Hem durum dropdown hem puan chip secili
                 puanParam = selectedPuan;
+            }
 
             quotes = await QuoteService.GetQuotesAsync(searchQuery, durumFilter, null, puanParam);
-
-            // Kanal filtresi (client-side)
-            if (!string.IsNullOrEmpty(kanalFilter))
-                quotes = quotes.Where(q => q.TeklifKanali == kanalFilter).ToList();
 
             isLoading = false;
             StateHasChanged();
@@ -514,9 +522,9 @@
         _ = LoadQuotesAsync();
     }
 
-    private void OnKanalChanged(ChangeEventArgs e)
+    private void OnDurumChanged(ChangeEventArgs e)
     {
-        kanalFilter = e.Value?.ToString() ?? "";
+        selectedDurum = e.Value?.ToString() ?? "";
         _ = LoadQuotesAsync();
     }
 
