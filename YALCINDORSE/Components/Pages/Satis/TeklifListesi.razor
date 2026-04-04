@@ -9,25 +9,59 @@
 <div class="qt-shell">
 
     <!-- ===== HEADER ===== -->
-    <div class="crm-header">
-        <div class="crm-header-copy">
-            <div class="panel-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon">
+    <div class="qt-header">
+        <div class="qt-header-left">
+            <div class="qt-header-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                     <polyline points="14 2 14 8 20 8"/>
                     <line x1="16" y1="13" x2="8" y2="13"/>
                     <line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
-                <div>
-                    <h3>Teklif & Temas</h3>
-                    <p class="crm-header-subtitle">Teklif revizyonlari, durum gecisleri ve musteri temas gecmisi tek ekranda.</p>
-                </div>
             </div>
+            <div class="qt-header-title-block">
+                <span class="qt-header-title">Teklif &amp; Temas</span>
+                <span class="qt-header-sub">Revizyonlar, durum gecisleri ve temas gecmisi</span>
+            </div>
+
+            <!-- KPI Ozet Bantlari -->
+            @if (quotes != null)
+            {
+                var total  = quotes.Count;
+                var open   = quotes.Count(q => q.Durum == "OPEN");
+                var order  = quotes.Count(q => q.Durum == "ORDER");
+                var hot    = quotes.Count(q => q.Puan  == "HOT" && q.Durum != "CLOSED");
+                <div class="qt-kpi-row">
+                    <div class="qt-kpi-chip qt-kpi-total" @onclick='() => { selectedPuan="ALL"; selectedDurum=""; ApplyFilter(); }'>
+                        <span class="qt-kpi-num">@total</span>
+                        <span class="qt-kpi-lbl">Toplam</span>
+                    </div>
+                    <div class="qt-kpi-chip qt-kpi-open" @onclick='() => { selectedPuan="ALL"; selectedDurum="OPEN"; ApplyFilter(); }'>
+                        <span class="qt-kpi-num">@open</span>
+                        <span class="qt-kpi-lbl">Acik</span>
+                    </div>
+                    <div class="qt-kpi-chip qt-kpi-order" @onclick='() => { selectedPuan="ALL"; selectedDurum="ORDER"; ApplyFilter(); }'>
+                        <span class="qt-kpi-num">@order</span>
+                        <span class="qt-kpi-lbl">Siparis</span>
+                    </div>
+                    <div class="qt-kpi-chip qt-kpi-hot" @onclick='() => { selectedPuan="HOT"; selectedDurum=""; ApplyFilter(); }'>
+                        <span class="qt-kpi-num">@hot</span>
+                        <span class="qt-kpi-lbl">HOT</span>
+                    </div>
+                </div>
+            }
         </div>
-        <div class="crm-header-actions">
-            <button class="btn-secondary" @onclick="ReloadAsync" disabled="@isLoading">Yenile</button>
+
+        <div class="qt-header-actions">
+            <button class="btn-secondary" @onclick="ReloadAsync" disabled="@isLoading">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="@(isLoading ? "animation:spin 1s linear infinite" : "")">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                Yenile
+            </button>
             <button class="btn-add" @onclick="GoToNewQuote">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
                     <line x1="12" y1="5" x2="12" y2="19"/>
                     <line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
@@ -515,6 +549,8 @@
     {
         await LoadQuotesAsync();
     }
+
+    private void ApplyFilter() => _ = LoadQuotesAsync();
 
     private void SetPuanFilter(string puan)
     {
