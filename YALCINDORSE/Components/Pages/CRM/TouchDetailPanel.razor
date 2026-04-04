@@ -3,22 +3,6 @@
 @inject QuoteService QuoteSvc
 @inject AuthService Auth
 
-<div class="touch-panel-header">
-    <div class="touch-panel-title">
-        <span style="color:#185FA5;font-weight:700">@quote?.TeklifNo</span>
-        @if (quote != null)
-        {
-            <span class="yl-chip @GetPuanChipClass(quote.Puan)">@quote.Puan</span>
-            <span class="yl-chip @GetDurumChipClass(quote.Durum)">@quote.Durum</span>
-        }
-        <button class="touch-panel-close" @onclick="OnClose">&#10005;</button>
-    </div>
-    <div class="touch-panel-sub">
-        @quote?.Musteri
-        @if (!string.IsNullOrEmpty(quote?.Ilgili)) { <span> &middot; @quote.Ilgili</span> }
-    </div>
-</div>
-
 <div class="touch-panel-body">
     @if (isLoading)
     {
@@ -26,55 +10,6 @@
     }
     else if (quote != null)
     {
-        <!-- Teklif Bilgileri -->
-        <div style="margin-bottom:14px">
-            <div class="touch-section-title">Teklif Bilgileri</div>
-            <div class="touch-info-grid">
-                <div class="touch-info-item">
-                    <label>Talep Tarihi</label>
-                    <span>@quote.TalepTarihi.ToString("dd.MM.yyyy")</span>
-                </div>
-                <div class="touch-info-item">
-                    <label>Gecerlilik</label>
-                    <span>@quote.GecerlilikTarihi.ToString("dd.MM.yyyy")</span>
-                </div>
-                <div class="touch-info-item">
-                    <label>Net Tutar</label>
-                    <span style="font-weight:700;color:#0C447C">
-                        @(quote.NetTutar > 0 ? $"{quote.NetTutar:N0} {quote.Para}" : "\u2014")
-                    </span>
-                </div>
-                <div class="touch-info-item">
-                    <label>Satici</label>
-                    <span>@(quote.Satici ?? "\u2014")</span>
-                </div>
-                <div class="touch-info-item">
-                    <label>Kaynak</label>
-                    <span>@(quote.Kaynak)</span>
-                </div>
-                <div class="touch-info-item">
-                    <label>Satis Tipi</label>
-                    <span>@(quote.SatisTipi)</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sonraki Temas Banner -->
-        @if (nextTouchDate.HasValue && quote.Durum != "CLOSED" && quote.Durum != "ORDER")
-        {
-            var isOverdue = nextTouchDate < DateTime.Today;
-            var isToday = nextTouchDate?.Date == DateTime.Today;
-            var bannerClass = isOverdue ? "touch-next-overdue" : isToday ? "touch-next-today" : "touch-next-ok";
-            var bannerLabel = isOverdue ? "TEMAS TARIHI GECMIS!" : isToday ? "BUGUN TEMAS YAPILMALI" : "Sonraki Temas";
-
-            <div class="touch-next-banner @bannerClass">
-                <div>
-                    <div class="banner-label">@bannerLabel</div>
-                    <div class="banner-date">@nextTouchDate?.ToString("dd.MM.yyyy")</div>
-                </div>
-            </div>
-        }
-
         <!-- Gorusme Gecmisi -->
         <div style="margin-bottom:14px">
             <div class="touch-section-title">
