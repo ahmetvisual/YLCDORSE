@@ -408,8 +408,8 @@
 
     private void GoToQuote(int teklifId)
     {
-        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.TouchCRM>("Touch CRM", 1400, 900))
-            Nav.NavigateTo("/crm/touch-crm");
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.TeklifListesi>("Teklif Listesi", 1400, 900))
+            Nav.NavigateTo("/satis/teklif-listesi");
     }
 
     private string GetTimeLabel(TouchReminderModel r, string type) => type switch
