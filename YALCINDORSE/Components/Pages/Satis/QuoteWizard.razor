@@ -1,6 +1,9 @@
 @page "/satis/teklif-olustur"
 @using YALCINDORSE.Services
 @inject QuoteService QuoteSvc
+@inject QuoteSpecService SpecSvc
+@inject QuoteAttachmentService AttachSvc
+@inject QuoteDocumentService DocSvc
 @inject CustomerService CustomerSvc
 @inject NavigationManager Nav
 @inject AuthService Auth
@@ -29,8 +32,15 @@
             </div>
             <div class="wizard-step-line @(currentStep > 2 ? "completed" : "")"></div>
             <div class="wizard-step">
-                <div class="wizard-step-circle @(currentStep == 3 ? "active" : "")">3</div>
-                <span class="wizard-step-label @(currentStep == 3 ? "active" : "")">Teslimat & Fiyat</span>
+                <div class="wizard-step-circle @(currentStep == 3 ? "active" : currentStep > 3 ? "completed" : "")">
+                    @(currentStep > 3 ? "\u2713" : "3")
+                </div>
+                <span class="wizard-step-label @(currentStep == 3 ? "active" : currentStep > 3 ? "completed" : "")">Teslimat & Fiyat</span>
+            </div>
+            <div class="wizard-step-line @(currentStep > 3 ? "completed" : "")"></div>
+            <div class="wizard-step">
+                <div class="wizard-step-circle @(currentStep == 4 ? "active" : "")">4</div>
+                <span class="wizard-step-label @(currentStep == 4 ? "active" : "")">Teknik & Ekler</span>
             </div>
         </div>
 
@@ -388,6 +398,43 @@
             </div>
         }
 
+        <!-- ADIM 4: Teknik Ozellikler & Ekler -->
+        @if (currentStep == 4)
+        {
+            <div class="wizard-content">
+                <!-- Teknik Ozellikler -->
+                <div class="wizard-section-title tight">Teknik Ozellikler</div>
+                <TeknikOzelliklerEditor specs="@quoteSpecs" specsChanged="OnSpecsChanged" />
+
+                <!-- Fotograf & Teknik Cizim -->
+                @if (isEditMode && quote.Id > 0)
+                {
+                    <div class="wizard-section-title" style="margin-top:16px">Fotograf & Teknik Cizimler</div>
+                    <EklerEditor QuoteId="@quote.Id" AttachSvc="@AttachSvc" />
+                }
+                else
+                {
+                    <div style="margin-top:16px;padding:10px 14px;background:#fef9e7;border:1px solid #f9d71c;border-radius:6px;font-size:0.78rem;color:#856404;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;vertical-align:middle;">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        Fotograf ve teknik cizim yüklemek icin teklifi once kaydedin, ardindan duzenle modunda ekleyebilirsiniz.
+                    </div>
+                }
+
+                <!-- Sablon Dizini -->
+                <div style="margin-top:20px;padding:10px 14px;background:#f8f9fb;border:1px solid #e2e8f0;border-radius:6px;font-size:0.78rem;color:#6b7280;display:flex;align-items:center;gap:10px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <span>Word sablon dosyalari AppData/templates/ klasorunde. Ozellesturmek icin Word'de acin.</span>
+                    <button class="wizard-btn" style="font-size:0.72rem;padding:3px 10px;"
+                            @onclick="OpenTemplatesFolder">Sablon Klasoru</button>
+                </div>
+            </div>
+        }
+
         <!-- Footer Navigation -->
         <div class="wizard-footer">
             <div class="wizard-footer-left">
@@ -398,11 +445,11 @@
                 {
                     <button class="wizard-btn" @onclick="PrevStep">Geri</button>
                 }
-                @if (currentStep < 3)
+                @if (currentStep < 4)
                 {
                     <button class="wizard-btn wizard-btn-primary" @onclick="NextStep">Ileri</button>
                 }
-                @if (currentStep == 3)
+                @if (currentStep == 4)
                 {
                     <button class="wizard-btn" @onclick="SaveDraft" disabled="@isSaving">@(isEditMode ? "Guncelle" : "Taslak Kaydet")</button>
                     <button class="wizard-btn wizard-btn-success" @onclick="SaveAndSend" disabled="@isSaving">
@@ -469,6 +516,7 @@
     private int currentStep = 1;
     private QuoteModel quote = new();
     private List<QuoteItemModel> quoteItems = new();
+    private List<QuoteSpecModel> quoteSpecs = new();
     private List<CustomerListItemModel> customers = new();
     private List<CustomerContactModel> contacts = new();
     private List<SalesRepOption> salesReps = new();
@@ -519,6 +567,7 @@
                 {
                     quote = existing;
                     quoteItems = await QuoteSvc.GetQuoteItemsAsync(QuoteId);
+                    quoteSpecs = await SpecSvc.GetSpecsAsync(QuoteId);
 
                     // Musteri arama alanini doldur
                     var customer = customers.FirstOrDefault(c => c.Id == quote.MusteriId);
@@ -666,6 +715,10 @@
         quote.NetTutar = quote.ToplamTutar - quote.IndirimTutar;
     }
 
+    private void OnSpecsChanged(List<QuoteSpecModel> updated) => quoteSpecs = updated;
+
+    private void OpenTemplatesFolder() => QuoteDocumentService.OpenTemplatesFolder();
+
     private void NextStep()
     {
         errorMessage = null; successMessage = null;
@@ -677,7 +730,7 @@
                 return;
             }
         }
-        if (currentStep < 3)
+        if (currentStep < 4)
             currentStep++;
     }
 
@@ -753,6 +806,10 @@
                 await QuoteSvc.SaveQuoteItemAsync(item);
                 idMap[oldId] = item.Id;
             }
+
+            // Teknik ozellikleri kaydet
+            if (quoteSpecs.Any())
+                await SpecSvc.SaveSpecsAsync(quoteId, quoteSpecs);
 
             // Toast goster
             toastIsSuccess = true;

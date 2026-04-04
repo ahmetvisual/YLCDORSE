@@ -831,6 +831,418 @@
     color: #f87171;
 }
 
+/* ============================================================
+   TEKNIK OZELLIKLER EDITOR
+   ============================================================ */
+.spec-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.spec-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    border: 1.5px dashed var(--yl-border);
+    border-radius: 8px;
+    background: #fafbfc;
+}
+
+.spec-group {
+    border: 1px solid var(--yl-border);
+    border-radius: 7px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.spec-group-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #f0f4fb;
+    border-bottom: 1px solid var(--yl-border);
+}
+
+.spec-group-name {
+    flex: 1;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--yl-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.spec-group-del {
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--yl-text-light);
+    transition: all 0.12s;
+}
+
+.spec-group-del:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.spec-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-bottom: 1px solid #f0f2f5;
+}
+
+.spec-row:last-of-type {
+    border-bottom: none;
+}
+
+.spec-input {
+    padding: 4px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--yl-border);
+    background: #fff;
+    color: var(--yl-text);
+    font-size: 0.76rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.spec-input:focus {
+    outline: none;
+    border-color: #185FA5;
+    box-shadow: 0 0 0 2px rgba(24,95,165,0.09);
+}
+
+.spec-ozellik {
+    flex: 1.4;
+}
+
+.spec-deger {
+    flex: 1;
+}
+
+.spec-del-btn {
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--yl-text-light);
+    flex-shrink: 0;
+    transition: all 0.12s;
+}
+
+.spec-del-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.spec-add-row-btn {
+    display: block;
+    width: 100%;
+    padding: 5px 10px;
+    border: none;
+    border-top: 1px dashed #e0e5ef;
+    background: #fafbfc;
+    color: var(--yl-primary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s;
+}
+
+.spec-add-row-btn:hover {
+    background: #edf2fc;
+}
+
+/* Yeni grup ekleme bolumu */
+.spec-new-group {
+    border: 1.5px dashed #c9d4e8;
+    border-radius: 7px;
+    padding: 10px 12px;
+    background: #f8faff;
+}
+
+.spec-new-group-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.spec-group-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.spec-suggestion-btn {
+    padding: 3px 9px;
+    border: 1px solid #c2cfe0;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--yl-primary);
+    font-size: 0.69rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.12s;
+}
+
+.spec-suggestion-btn:hover {
+    background: #185FA5;
+    color: #fff;
+    border-color: #185FA5;
+}
+
+.spec-custom-group {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+
+.spec-custom-group .spec-input {
+    flex: 1;
+}
+
+.spec-add-group-btn {
+    padding: 4px 12px;
+    font-size: 0.73rem;
+    white-space: nowrap;
+}
+
+/* Dark mode */
+.app-root.dark .spec-group { background: var(--yl-bg); }
+.app-root.dark .spec-group-header { background: rgba(24,95,165,0.08); }
+.app-root.dark .spec-empty { background: rgba(255,255,255,0.02); }
+.app-root.dark .spec-add-row-btn { background: rgba(255,255,255,0.02); }
+.app-root.dark .spec-add-row-btn:hover { background: rgba(24,95,165,0.1); }
+.app-root.dark .spec-new-group { background: rgba(255,255,255,0.02); }
+.app-root.dark .spec-suggestion-btn { background: var(--yl-bg); border-color: rgba(255,255,255,0.12); }
+.app-root.dark .spec-input { background: var(--yl-bg); color: var(--yl-text); }
+
+/* ============================================================
+   EKLER EDITOR (Fotograflar & Teknik Cizimler)
+   ============================================================ */
+.ekler-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ekler-section {
+    border: 1px solid var(--yl-border);
+    border-radius: 7px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.ekler-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: #f0f4fb;
+    border-bottom: 1px solid var(--yl-border);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--yl-primary);
+}
+
+.ekler-count {
+    margin-left: auto;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--yl-text-light);
+    background: rgba(24,95,165,0.08);
+    padding: 1px 7px;
+    border-radius: 8px;
+}
+
+.ekler-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+}
+
+.ekler-card {
+    width: 100px;
+    border: 1px solid var(--yl-border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fafbfc;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.12s;
+}
+
+.ekler-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ekler-thumb-wrap {
+    width: 100%;
+    height: 70px;
+    background: #eef0f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.ekler-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ekler-thumb-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.ekler-info {
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ekler-name {
+    font-size: 0.66rem;
+    color: var(--yl-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.ekler-pdf-toggle {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.64rem;
+    color: var(--yl-text-light);
+    cursor: pointer;
+}
+
+.ekler-pdf-toggle input[type="checkbox"] {
+    width: 11px;
+    height: 11px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.ekler-del-btn {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.12s;
+}
+
+.ekler-card:hover .ekler-del-btn {
+    opacity: 1;
+}
+
+.ekler-del-btn:hover {
+    background: #dc2626;
+}
+
+.ekler-upload-btn {
+    width: 100px;
+    height: 110px;
+    border: 1.5px dashed #c9d4e8;
+    border-radius: 6px;
+    background: #fafbff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.ekler-upload-btn:hover:not(:disabled) {
+    background: #edf2fc;
+    border-color: #185FA5;
+}
+
+.ekler-upload-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ekler-error {
+    padding: 6px 10px;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 0.74rem;
+    border-radius: 5px;
+}
+
+.ekler-uploading {
+    padding: 6px 10px;
+    background: #eff6ff;
+    color: #185FA5;
+    font-size: 0.74rem;
+    border-radius: 5px;
+}
+
+/* Step 4 info message */
+.step4-save-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: #92400e;
+}
+
+/* Dark mode */
+.app-root.dark .ekler-section { background: var(--yl-bg); }
+.app-root.dark .ekler-section-header { background: rgba(24,95,165,0.08); }
+.app-root.dark .ekler-card { background: rgba(255,255,255,0.03); }
+.app-root.dark .ekler-thumb-wrap { background: rgba(255,255,255,0.05); }
+.app-root.dark .ekler-upload-btn { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.1); }
+
 /* Responsive */
 @media (max-width: 768px) {
     .wizard-grid2 { grid-template-columns: 1fr; }
@@ -840,4 +1252,6 @@
     .wizard-steps { flex-wrap: wrap; gap: 6px; }
     .wizard-step-line { width: 20px; }
     .item-qty, .item-unit, .item-price, .item-total { width: 55px; }
+    .ekler-card, .ekler-upload-btn { width: 85px; }
+    .ekler-thumb-wrap { height: 58px; }
 }
