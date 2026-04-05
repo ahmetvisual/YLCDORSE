@@ -26,6 +26,10 @@ namespace YALCINDORSE.Services
                     }
                     else
                     {
+                        // Pencere zaten acik: minimize edilmisse restore et, one getir
+#if WINDOWS
+                        ActivateExistingWindow(existingWindow);
+#endif
                         return;
                     }
                 }
@@ -128,15 +132,38 @@ namespace YALCINDORSE.Services
         }
 
 #if WINDOWS
+        /// <summary>
+        /// Mevcut pencereyi minimize edilmisse restore eder ve one getirir.
+        /// Kullanici menuden tekrar tiklayinca formu gorev cubugundan geri getirmek icin kullanilir.
+        /// </summary>
+        private static void ActivateExistingWindow(Window window)
+        {
+            var uiWindow = window.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+            if (uiWindow == null) return;
+
+            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(uiWindow);
+            // Minimize edilmisse normal hale getir, diger durumda oldugu gibi birak
+            ShowWindow(hWnd, SW_RESTORE);
+            // Pencereyi one getir ve aktif yap
+            SetForegroundWindow(hWnd);
+        }
+
         private const int GWL_EXSTYLE      = -20;
         private const int WS_EX_APPWINDOW  = 0x00040000;  // Gorev cubugunda goster
         private const int WS_EX_TOOLWINDOW = 0x00000080;  // Gorev cubugunden gizle (istemiyoruz)
+        private const int SW_RESTORE        = 9;           // Minimize edilmis pencereyi geri ac
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
 #endif
     }
 }
