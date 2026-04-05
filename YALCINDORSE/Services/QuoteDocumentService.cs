@@ -184,6 +184,28 @@ namespace YALCINDORSE.Services
 
             report.SetSpecData(specGroups, cizimImages);
 
+            // Numarali liste (HEADER + ITEM satirlari, PDF'de teknik resimden sonra)
+            var listItems = new List<TeklifReport.ListItem>();
+            int hNum = 0;
+            foreach (var header in headers)
+            {
+                hNum++;
+                listItems.Add(new TeklifReport.ListItem($"{hNum}.", header.Aciklama, true, true));
+
+                var listChildren = items
+                    .Where(i => i.UstKalemId == header.Id && i.KalemTipi == "ITEM")
+                    .OrderBy(i => i.SiraNo)
+                    .ToList();
+                int cNum = 0;
+                foreach (var child in listChildren)
+                {
+                    cNum++;
+                    listItems.Add(new TeklifReport.ListItem(
+                        $"{hNum}.{cNum}.", child.Aciklama, child.BaslikMi, false));
+                }
+            }
+            report.SetListData(listItems);
+
             return report.ExportToPdfBytes();
         }
 

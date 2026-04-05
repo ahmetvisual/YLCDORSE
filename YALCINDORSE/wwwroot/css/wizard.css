@@ -396,6 +396,8 @@
 
 .item-action-btn:hover { background: #f0f2f5; color: var(--yl-text); }
 .item-action-btn.delete:hover { background: #FCEBEB; color: #A32D2D; }
+.item-action-btn.item-bold-active { background: var(--yl-primary); color: #fff; border-color: var(--yl-primary); }
+.item-action-btn.item-bold-active:hover { background: #2563aa; border-color: #2563aa; }
 
 .items-empty {
     text-align: center;

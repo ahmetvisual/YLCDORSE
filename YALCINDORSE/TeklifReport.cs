@@ -332,6 +332,81 @@ namespace YALCINDORSE
             catch { /* Logo bulunamazsa bos kalir */ }
         }
 
+        /// <summary>PDF'de numarali liste satirini temsil eder.</summary>
+        public record ListItem(string Numara, string Metin, bool Bold, bool IsHeader);
+
+        /// <summary>
+        /// detailBand'in sonuna (teknik resimlerden sonra) numarali liste ekler.
+        /// IsHeader=true => HEADER (bold, buyuk harf, grup oncesi bosluk)
+        /// Bold=true => ITEM kalin, false => normal
+        /// </summary>
+        public void SetListData(List<ListItem>? items)
+        {
+            if (items == null || items.Count == 0) return;
+
+            const float W      = 727F;
+            const float ROW_H  = 16F;
+            const float NUM_W  = 50F;
+            var cyanClr = System.Drawing.Color.FromArgb(0, 160, 210);
+            var darkClr = System.Drawing.Color.FromArgb(30, 30, 30);
+
+            float y = detailBand.HeightF + 14F; // mevcut icerikten sonra boslukla basla
+            bool  firstHeader = true;
+
+            foreach (var item in items)
+            {
+                if (item.IsHeader)
+                {
+                    y += firstHeader ? 0F : 8F; // gruplar arasi bosluk
+                    firstHeader = false;
+                }
+
+                // Numara etiketi (cyan)
+                var numFont = item.IsHeader
+                    ? new DevExpress.Drawing.DXFont("Segoe UI", 8.5F, DevExpress.Drawing.DXFontStyle.Bold)
+                    : new DevExpress.Drawing.DXFont("Segoe UI", 8F);
+                var numLbl = new DevExpress.XtraReports.UI.XRLabel
+                {
+                    Text          = item.Numara,
+                    ForeColor     = cyanClr,
+                    Font          = numFont,
+                    LocationFloat = new DevExpress.Utils.PointFloat(0F, y),
+                    SizeF         = new System.Drawing.SizeF(NUM_W, ROW_H),
+                    TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft,
+                    Borders       = DevExpress.XtraPrinting.BorderSide.None
+                };
+                numLbl.StylePriority.UseForeColor = false;
+                numLbl.StylePriority.UseFont      = false;
+                numLbl.StylePriority.UseBorders   = true;
+                detailBand.Controls.Add(numLbl);
+
+                // Metin etiketi
+                var txtStyle = item.IsHeader
+                    ? DevExpress.Drawing.DXFontStyle.Bold
+                    : item.Bold
+                        ? DevExpress.Drawing.DXFontStyle.Bold
+                        : DevExpress.Drawing.DXFontStyle.Regular;
+                var txtLbl = new DevExpress.XtraReports.UI.XRLabel
+                {
+                    Text          = item.IsHeader ? item.Metin.ToUpperInvariant() : item.Metin,
+                    ForeColor     = darkClr,
+                    Font          = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F, txtStyle),
+                    LocationFloat = new DevExpress.Utils.PointFloat(NUM_W, y),
+                    SizeF         = new System.Drawing.SizeF(W - NUM_W, ROW_H),
+                    TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft,
+                    Borders       = DevExpress.XtraPrinting.BorderSide.None
+                };
+                txtLbl.StylePriority.UseForeColor = false;
+                txtLbl.StylePriority.UseFont      = false;
+                txtLbl.StylePriority.UseBorders   = true;
+                detailBand.Controls.Add(txtLbl);
+
+                y += ROW_H;
+            }
+
+            detailBand.HeightF = y + 10F;
+        }
+
         /// <summary>PDF'de iki-kolon tablo olarak gosterilecek ozellik grubu.</summary>
         public class SpecGroup
         {

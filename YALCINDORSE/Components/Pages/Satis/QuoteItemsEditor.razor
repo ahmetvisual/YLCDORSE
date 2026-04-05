@@ -168,6 +168,9 @@
                     }
                     @if (item.KalemTipi == "ITEM")
                     {
+                        <button class="item-action-btn @(item.BaslikMi ? "item-bold-active" : "")"
+                                title="@(item.BaslikMi ? "Kalin (PDF'de bold)" : "Normal (PDF'de thin)")"
+                                @onclick="() => ToggleBold(item)"><b>B</b></button>
                         <button class="item-action-btn" title="Alt kalem ekle" @onclick="() => AddSubItem(item)">&#8627;</button>
                         <button class="item-action-btn" title="Opsiyon ekle" @onclick="() => AddOption(item)">&#9733;</button>
                     }
@@ -338,6 +341,12 @@
             SiraNo = maxSira + 10,
             Aciklama = ""
         });
+        NotifyChanged();
+    }
+
+    private void ToggleBold(QuoteItemModel item)
+    {
+        item.BaslikMi = !item.BaslikMi;
         NotifyChanged();
     }
 
