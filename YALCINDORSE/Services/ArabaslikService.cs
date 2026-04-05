@@ -35,10 +35,17 @@ namespace YALCINDORSE.Services
         public decimal? Fiyat { get; set; }
         public string? ParaBirimi { get; set; }
         public int SortOrder { get; set; }
+
         /// <summary>
-        /// Iki kolon tablo (TablTipi=1) icin evrensel deger alani. Orn: "9.500 mm", "8 adet"
+        /// TablTipi=1 (iki kolon tablo) icin evrensel deger alani — "9.500 mm" gibi.
+        /// Yeni DB kolonu gerektirmez: ParaBirimi alani uzerinde calisir
+        /// (TablTipi=1 satirlarinda Fiyat/ParaBirimi zaten kullanilmaz).
         /// </summary>
-        public string Deger { get; set; } = "";
+        public string Deger
+        {
+            get => ParaBirimi ?? "";
+            set => ParaBirimi = string.IsNullOrWhiteSpace(value) ? null : value;
+        }
     }
 
     // === SERVICE ===
@@ -46,7 +53,6 @@ namespace YALCINDORSE.Services
     {
         private readonly DatabaseHelper _db;
         private readonly AuthService _auth;
-        private static bool _schemaMigrated = false;
 
         public ArabaslikService(DatabaseHelper db, AuthService auth)
         {
@@ -54,33 +60,10 @@ namespace YALCINDORSE.Services
             _auth = auth;
         }
 
-        /// <summary>
-        /// Yeni "Deger" kolonunu ekler (IF NOT EXISTS — idempotent, hata vermez).
-        /// Ilk GetGruplarAsync cagrisinda otomatik calisir.
-        /// </summary>
-        private async Task EnsureDetaySchemaAsync()
-        {
-            if (_schemaMigrated) return;
-            try
-            {
-                using var conn = _db.GetConnection();
-                await conn.OpenAsync();
-                const string sql = """
-                    ALTER TABLE "YLArabaslikDetaylar"
-                    ADD COLUMN IF NOT EXISTS "Deger" varchar(500) NOT NULL DEFAULT '';
-                    """;
-                await new NpgsqlCommand(sql, conn).ExecuteNonQueryAsync();
-            }
-            catch { /* sutun zaten varsa veya yetki yoksa sessiz devam */ }
-            finally { _schemaMigrated = true; }
-        }
-
         // ─── GRUP CRUD ───────────────────────────────────────
 
         public async Task<List<ArabaslikGrupModel>> GetGruplarAsync(string search = "")
         {
-            await EnsureDetaySchemaAsync();
-
             var items = new List<ArabaslikGrupModel>();
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
@@ -253,7 +236,7 @@ namespace YALCINDORSE.Services
             const string sql = """
                 SELECT "Id", "GrupId", "SatirMetni", "SatirMetni_EN", "SatirMetni_FR",
                        "SatirMetni_DE", "SatirMetni_RO", "SatirMetni_AR", "SatirMetni_RU",
-                       "Fiyat", "ParaBirimi", "SortOrder", "Deger"
+                       "Fiyat", "ParaBirimi", "SortOrder"
                 FROM "YLArabaslikDetaylar"
                 WHERE "GrupId" = @grupId
                 ORDER BY "SortOrder";
@@ -278,8 +261,8 @@ namespace YALCINDORSE.Services
                     SatirMetni_RU = reader.GetString(8),
                     Fiyat = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                     ParaBirimi = reader.IsDBNull(10) ? null : reader.GetString(10),
-                    SortOrder = reader.GetInt32(11),
-                    Deger = reader.IsDBNull(12) ? "" : reader.GetString(12)
+                    SortOrder = reader.GetInt32(11)
+                    // Deger: ParaBirimi uzerinden computed property — ek alan gerektirmez
                 });
             }
             return items;
@@ -359,9 +342,11 @@ namespace YALCINDORSE.Services
                         INSERT INTO "YLArabaslikDetaylar"
                             ("GrupId", "SatirMetni", "SatirMetni_EN", "SatirMetni_FR",
                              "SatirMetni_DE", "SatirMetni_RO", "SatirMetni_AR", "SatirMetni_RU",
-                             "Fiyat", "ParaBirimi", "SortOrder", "Deger")
-                        VALUES (@grupId, @tr, @en, @fr, @de, @ro, @ar, @ru, @fiyat, @para, @sort, @deger);
+                             "Fiyat", "ParaBirimi", "SortOrder")
+                        VALUES (@grupId, @tr, @en, @fr, @de, @ro, @ar, @ru, @fiyat, @para, @sort);
                         """;
+                    // Not: TablTipi=1 satirlarinda d.Deger setter'i d.ParaBirimi'yi doldurur,
+                    // @para parametresi hem Deger hem de klasik para birimi degerini tasir.
                     using var detayCmd = new NpgsqlCommand(detaySql, conn, tx);
                     detayCmd.Parameters.AddWithValue("grupId", grup.Id);
                     detayCmd.Parameters.AddWithValue("tr", d.SatirMetni);
@@ -374,7 +359,6 @@ namespace YALCINDORSE.Services
                     detayCmd.Parameters.AddWithValue("fiyat", (object?)d.Fiyat ?? DBNull.Value);
                     detayCmd.Parameters.AddWithValue("para", (object?)d.ParaBirimi ?? DBNull.Value);
                     detayCmd.Parameters.AddWithValue("sort", i);
-                    detayCmd.Parameters.AddWithValue("deger", d.Deger ?? "");
                     await detayCmd.ExecuteNonQueryAsync();
                 }
 
