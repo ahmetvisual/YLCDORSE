@@ -55,7 +55,7 @@
         <!-- ADIM 1: Ana Basliklar -->
         @if (currentStep == 1)
         {
-            <div class="wizard-content">
+            <div class="wizard-content fill">
                 <div class="wizard-section-title tight">Teklif Bilgileri</div>
                 @{
                     var satisTipiOpts = new[] { ("NewProduction","Yeni Uretim"), ("SecondHand","Ikinci El"), ("SparePart","Yedek Parca") };
@@ -345,29 +345,6 @@
                         <label>Indirim Tutar</label>
                         <input type="number" @bind="quote.IndirimTutar" disabled style="background:#f4f6fa" />
                     </div>
-                </div>
-
-                <div class="wizard-summary">
-                    <div class="summary-row">
-                        <span>Toplam Tutar</span>
-                        <span>@quote.ToplamTutar.ToString("N2") @quote.ParaBirimi</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Indirim (@quote.IndirimYuzde%)</span>
-                        <span>-@quote.IndirimTutar.ToString("N2") @quote.ParaBirimi</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Net Tutar</span>
-                        <span>@quote.NetTutar.ToString("N2") @quote.ParaBirimi</span>
-                    </div>
-                    <div class="summary-row" style="font-size:0.75rem;color:var(--yl-text-light)">
-                        <span>Kalem Toplami</span>
-                        <span>@(quoteItems.Where(i => i.KalemTipi != "HEADER").Sum(i => i.Tutar ?? 0).ToString("N2")) @quote.ParaBirimi</span>
-                    </div>
-                </div>
-
-                <div class="wizard-section-title" style="margin-top:10px">Odeme Bilgileri</div>
-                <div class="wizard-grid2">
                     <div class="wizard-field">
                         <label>Odeme Sistemi</label>
                         <div class="custom-select" @onfocusout='() => CloseDropdown("odemeSistemi")'>
@@ -398,6 +375,25 @@
                             <label class="wizard-checkbox"><input type="checkbox" @bind="quote.IhracatMi" /> Ihracat</label>
                             <label class="wizard-checkbox"><input type="checkbox" @bind="quote.IhracKayitliMi" /> Ihrac Kayitli</label>
                         </div>
+                    </div>
+                </div>
+
+                <div class="wizard-summary">
+                    <div class="summary-row">
+                        <span>Toplam Tutar</span>
+                        <span>@quote.ToplamTutar.ToString("N2") @quote.ParaBirimi</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Indirim (@quote.IndirimYuzde%)</span>
+                        <span>-@quote.IndirimTutar.ToString("N2") @quote.ParaBirimi</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Net Tutar</span>
+                        <span>@quote.NetTutar.ToString("N2") @quote.ParaBirimi</span>
+                    </div>
+                    <div class="summary-row" style="font-size:0.75rem;color:var(--yl-text-light)">
+                        <span>Kalem Toplami</span>
+                        <span>@(quoteItems.Where(i => i.KalemTipi != "HEADER").Sum(i => i.Tutar ?? 0).ToString("N2")) @quote.ParaBirimi</span>
                     </div>
                 </div>
             </div>
