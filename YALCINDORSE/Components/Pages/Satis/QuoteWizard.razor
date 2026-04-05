@@ -6,6 +6,7 @@
 @inject CustomerService CustomerSvc
 @inject NavigationManager Nav
 @inject AuthService Auth
+@inject DesktopWindowService WindowSvc
 
 <div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;">
     <div class="wizard-container">
@@ -16,28 +17,28 @@
 
         <!-- Adim Gostergesi -->
         <div class="wizard-steps">
-            <div class="wizard-step">
+            <div class="wizard-step" @onclick="() => GoToStep(1)" style="cursor:pointer;user-select:none" title="Ana Basliklar">
                 <div class="wizard-step-circle @(currentStep == 1 ? "active" : currentStep > 1 ? "completed" : "")">
                     @(currentStep > 1 ? "\u2713" : "1")
                 </div>
                 <span class="wizard-step-label @(currentStep == 1 ? "active" : currentStep > 1 ? "completed" : "")">Ana Basliklar</span>
             </div>
             <div class="wizard-step-line @(currentStep > 1 ? "completed" : "")"></div>
-            <div class="wizard-step">
+            <div class="wizard-step" @onclick="() => GoToStep(2)" style="cursor:pointer;user-select:none" title="Detay Kalemler">
                 <div class="wizard-step-circle @(currentStep == 2 ? "active" : currentStep > 2 ? "completed" : "")">
                     @(currentStep > 2 ? "\u2713" : "2")
                 </div>
                 <span class="wizard-step-label @(currentStep == 2 ? "active" : currentStep > 2 ? "completed" : "")">Detay Kalemler</span>
             </div>
             <div class="wizard-step-line @(currentStep > 2 ? "completed" : "")"></div>
-            <div class="wizard-step">
+            <div class="wizard-step" @onclick="() => GoToStep(3)" style="cursor:pointer;user-select:none" title="Teslimat & Fiyat">
                 <div class="wizard-step-circle @(currentStep == 3 ? "active" : currentStep > 3 ? "completed" : "")">
                     @(currentStep > 3 ? "\u2713" : "3")
                 </div>
                 <span class="wizard-step-label @(currentStep == 3 ? "active" : currentStep > 3 ? "completed" : "")">Teslimat & Fiyat</span>
             </div>
             <div class="wizard-step-line @(currentStep > 3 ? "completed" : "")"></div>
-            <div class="wizard-step">
+            <div class="wizard-step" @onclick="() => GoToStep(4)" style="cursor:pointer;user-select:none" title="Ekler & Belgeler">
                 <div class="wizard-step-circle @(currentStep == 4 ? "active" : "")">4</div>
                 <span class="wizard-step-label @(currentStep == 4 ? "active" : "")">Ekler & Belgeler</span>
             </div>
@@ -63,7 +64,6 @@
                     var puanOpts = new[] { ("WARM","WARM"), ("HOT","HOT"), ("COLD","COLD"), ("ORDER","ORDER"), ("CLOSED","CLOSED") };
                     var dilOpts = new[] { ("TR","Turkce"), ("EN","English"), ("DE","Deutsch"), ("FR","Francais"), ("RU","Russian") };
                     var paraBirimiOpts = new[] { ("EUR","EUR"), ("USD","USD"), ("TRY","TRY"), ("GBP","GBP") };
-                    var odemeSistemiOpts = new[] { ("","— Seciniz —"), ("PESIN","Pesin"), ("VADELI","Vadeli"), ("KARTI","Karti") };
                 }
                 <div class="wizard-grid2">
                     <div class="wizard-field compact">
@@ -287,46 +287,6 @@
                     </div>
                 </div>
 
-                <div class="wizard-section-title tight" style="margin-top:8px">Odeme Bilgileri</div>
-                <div class="wizard-grid2">
-                    <div class="wizard-field compact">
-                        <label>Odeme Sistemi</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("odemeSistemi")'>
-                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("odemeSistemi")'>
-                                <span>@(odemeSistemiOpts.FirstOrDefault(o => o.Item1 == quote.OdemeSistemi).Item2 ?? "— Seciniz —")</span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                            </button>
-                            @if (openDropdown == "odemeSistemi")
-                            {
-                                <div class="custom-select-dropdown">
-                                    @foreach (var (val, label) in odemeSistemiOpts)
-                                    {
-                                        <button class="custom-select-option @(quote.OdemeSistemi == val ? "selected" : "")"
-                                                @onmousedown="() => { quote.OdemeSistemi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    </div>
-                    <div class="wizard-field compact">
-                        <label>Iskonto Aciklama</label>
-                        <input type="text" @bind="quote.IskontoAciklama" placeholder="Iskonto detaylari" />
-                    </div>
-                    <div class="wizard-field compact">
-                        <label>Secenekler</label>
-                        <div class="wizard-checkbox-row">
-                            <label class="wizard-checkbox">
-                                <input type="checkbox" @bind="quote.KdvDahilMi" /> KDV Dahil
-                            </label>
-                            <label class="wizard-checkbox">
-                                <input type="checkbox" @bind="quote.IhracatMi" /> Ihracat
-                            </label>
-                            <label class="wizard-checkbox">
-                                <input type="checkbox" @bind="quote.IhracKayitliMi" /> Ihrac Kayitli
-                            </label>
-                        </div>
-                    </div>
-                </div>
             </div>
         }
 
@@ -405,6 +365,41 @@
                         <span>@(quoteItems.Where(i => i.KalemTipi != "HEADER").Sum(i => i.Tutar ?? 0).ToString("N2")) @quote.ParaBirimi</span>
                     </div>
                 </div>
+
+                <div class="wizard-section-title" style="margin-top:10px">Odeme Bilgileri</div>
+                <div class="wizard-grid2">
+                    <div class="wizard-field">
+                        <label>Odeme Sistemi</label>
+                        <div class="custom-select" @onfocusout='() => CloseDropdown("odemeSistemi")'>
+                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("odemeSistemi")'>
+                                <span>@(odemeSistemiOpts.FirstOrDefault(o => o.Item1 == quote.OdemeSistemi).Item2 ?? "— Seciniz —")</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            @if (openDropdown == "odemeSistemi")
+                            {
+                                <div class="custom-select-dropdown">
+                                    @foreach (var (val, label) in odemeSistemiOpts)
+                                    {
+                                        <button class="custom-select-option @(quote.OdemeSistemi == val ? "selected" : "")"
+                                                @onmousedown="() => { quote.OdemeSistemi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="wizard-field">
+                        <label>Iskonto Aciklama</label>
+                        <input type="text" @bind="quote.IskontoAciklama" placeholder="Iskonto detaylari" />
+                    </div>
+                    <div class="wizard-field">
+                        <label>Secenekler</label>
+                        <div class="wizard-checkbox-row">
+                            <label class="wizard-checkbox"><input type="checkbox" @bind="quote.KdvDahilMi" /> KDV Dahil</label>
+                            <label class="wizard-checkbox"><input type="checkbox" @bind="quote.IhracatMi" /> Ihracat</label>
+                            <label class="wizard-checkbox"><input type="checkbox" @bind="quote.IhracKayitliMi" /> Ihrac Kayitli</label>
+                        </div>
+                    </div>
+                </div>
             </div>
         }
 
@@ -447,14 +442,41 @@
                 }
                 @if (currentStep == 4)
                 {
-                    <button class="wizard-btn" @onclick="SaveDraft" disabled="@isSaving">@(isEditMode ? "Guncelle" : "Taslak Kaydet")</button>
-                    <button class="wizard-btn wizard-btn-success" @onclick="SaveAndSend" disabled="@isSaving">
+                    <button class="wizard-btn" @onclick="SaveDraftConfirm" disabled="@isSaving">@(isEditMode ? "Guncelle" : "Taslak Kaydet")</button>
+                    <button class="wizard-btn wizard-btn-success" @onclick="SaveAndSendConfirm" disabled="@isSaving">
                         @(isSaving ? "Kaydediliyor..." : isEditMode ? "Guncelle ve Gonder" : "Kaydet ve Gonder")
                     </button>
                 }
             </div>
         </div>
     </div>
+
+    <!-- Onay Dialogu -->
+    @if (showConfirmDialog)
+    {
+        <div class="modal-overlay" @onclick="() => showConfirmDialog = false">
+            <div class="quick-modal-content" style="max-width:400px" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h4>@(pendingDurum == "Sent" ? (isEditMode ? "Guncelle ve Gonder" : "Kaydet ve Gonder") : (isEditMode ? "Guncelle" : "Taslak Kaydet"))</h4>
+                    <button class="btn-close" @onclick="() => showConfirmDialog = false">&#10005;</button>
+                </div>
+                <div class="modal-body" style="padding:16px">
+                    <p style="margin:0 0 6px;font-size:0.88rem">
+                        @(pendingDurum == "Sent"
+                            ? "Teklif kaydedilip gonderildi olarak isaretlenecek."
+                            : "Teklif taslak olarak kaydedilecek.")
+                    </p>
+                    <p style="margin:0;font-size:0.8rem;color:var(--yl-text-light)">Onayliyor musunuz?</p>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--yl-border)">
+                    <button class="wizard-btn" @onclick="() => showConfirmDialog = false">Vazgec</button>
+                    <button class="wizard-btn wizard-btn-success" @onclick="ConfirmSaveAsync" disabled="@isSaving">
+                        @(isSaving ? "Kaydediliyor..." : "Evet, Kaydet")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Quick Add Modal -->
     @if (showQuickAdd)
@@ -532,6 +554,14 @@
     [Parameter] public int CopyFromQuoteId { get; set; }
     private bool isEditMode => QuoteId > 0;
     private bool isCopyMode => CopyFromQuoteId > 0 && QuoteId == 0;
+
+    // Sabit secim listesi (birden fazla adimda kullanilir)
+    private static readonly (string, string)[] odemeSistemiOpts =
+        { ("", "— Seciniz —"), ("PESIN", "Pesin"), ("VADELI", "Vadeli"), ("KARTI", "Karti") };
+
+    // Onay dialogu
+    private bool showConfirmDialog = false;
+    private string pendingDurum = "";
 
     // Custom dropdown state
     private string? openDropdown;
@@ -709,6 +739,12 @@
         quote.NetTutar = quote.ToplamTutar - quote.IndirimTutar;
     }
 
+    private void GoToStep(int step)
+    {
+        errorMessage = null;
+        currentStep = step;
+    }
+
     private void NextStep()
     {
         errorMessage = null; successMessage = null;
@@ -732,17 +768,17 @@
 
     private void Cancel()
     {
+        WindowSvc.CloseWindow<QuoteWizard>();
         Nav.NavigateTo("/satis/teklif-listesi");
     }
 
-    private async Task SaveDraft()
-    {
-        await SaveQuote("Draft");
-    }
+    private void SaveDraftConfirm()  { pendingDurum = "Draft"; showConfirmDialog = true; }
+    private void SaveAndSendConfirm() { pendingDurum = "Sent";  showConfirmDialog = true; }
 
-    private async Task SaveAndSend()
+    private async Task ConfirmSaveAsync()
     {
-        await SaveQuote("Sent");
+        showConfirmDialog = false;
+        await SaveQuote(pendingDurum);
     }
 
     private async Task SaveQuote(string durum)
@@ -803,8 +839,10 @@
             showToast = true;
             errorMessage = null;
             StateHasChanged();
-            await Task.Delay(1800);
+            await Task.Delay(1200);
             showToast = false;
+            // Pencereyi kapat (ayri penceredeyse) ve listeye don
+            WindowSvc.CloseWindow<QuoteWizard>();
             Nav.NavigateTo("/satis/teklif-listesi");
         }
         catch (Exception ex)

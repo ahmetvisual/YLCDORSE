@@ -107,6 +107,26 @@ namespace YALCINDORSE.Services
             return OpenWindow<YALCINDORSE.Components.Pages.CRM.CariKartlari>("Cari Kartlar", 1440, 920);
         }
 
+        /// <summary>
+        /// Belirtilen component tipindeki pencereyi kapatir.
+        /// Kaydet/iptal sonrasi formu otomatik kapatmak icin kullanilir.
+        /// </summary>
+        public void CloseWindow<TComponent>()
+            where TComponent : Microsoft.AspNetCore.Components.IComponent
+        {
+#if WINDOWS || MACCATALYST
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                var componentType = typeof(TComponent);
+                if (_openWindows.TryGetValue(componentType, out var window))
+                {
+                    Application.Current?.CloseWindow(window);
+                    _openWindows.TryRemove(componentType, out _);
+                }
+            });
+#endif
+        }
+
         public void MaximizeMainWindow()
         {
 #if WINDOWS
