@@ -126,10 +126,10 @@ namespace YALCINDORSE
                 return;
             }
 
-            float y            = 14F;
+            float y            = 6F;
             const float W      = 727F;
-            const float ROW_H  = 18F;
-            const float HDR_H  = 22F;
+            const float ROW_H  = 17F;
+            const float HDR_H  = 20F;
             const float LEFT_W = 350F;
             const float COL_W  = 27F;
             const float RIGHT_W = W - LEFT_W - COL_W;  // 350F
@@ -219,14 +219,31 @@ namespace YALCINDORSE
                         alt = !alt;
                     }
 
-                    y += 10F; // gruplar arasi bosluk
+                    y += 5F; // gruplar arasi bosluk
                 }
+
+                // Dipnot: TC Karayollari notu (spec tablolarin hemen altina)
+                y += 3F;
+                var noteLbl = new DevExpress.XtraReports.UI.XRLabel
+                {
+                    Text          = "**  TC. Karayolları' nın müsaade ettiği ağırlıklardır, çalışacağı ülke kurallarına göre farklılık gösterebilir.",
+                    Font          = new DevExpress.Drawing.DXFont("Segoe UI", 7.5F,
+                                        DevExpress.Drawing.DXFontStyle.Bold | DevExpress.Drawing.DXFontStyle.Italic),
+                    ForeColor     = System.Drawing.Color.FromArgb(60, 60, 60),
+                    LocationFloat = new DevExpress.Utils.PointFloat(0F, y),
+                    SizeF         = new System.Drawing.SizeF(W, 15F),
+                    Padding       = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 1, 1, 100F),
+                    TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft
+                };
+                noteLbl.StylePriority.UseForeColor = true;
+                detailBand.Controls.Add(noteLbl);
+                y += 15F;
             }
 
             // ── TEKNIK RESIMLER ───────────────────────────────────────────
             if (hasCizim)
             {
-                y += 10F;
+                y += 8F;
                 foreach (var imgBytes in cizimImages!)
                 {
                     if (imgBytes == null || imgBytes.Length == 0) continue;
@@ -250,11 +267,11 @@ namespace YALCINDORSE
                     pic.Image = System.Drawing.Image.FromStream(ms);
                     detailBand.Controls.Add(pic);
 
-                    y += picH + 14F;
+                    y += picH + 8F;
                 }
             }
 
-            detailBand.HeightF = y + 16F;
+            detailBand.HeightF = y + 8F;
         }
 
         private void LoadLogo()
