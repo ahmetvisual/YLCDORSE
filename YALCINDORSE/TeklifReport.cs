@@ -52,33 +52,58 @@ namespace YALCINDORSE
         }
 
         /// <summary>
-        /// Urun fotografini ve baslik/alt yazi metinlerini rapora yukler.
-        /// imageBytes null ise resim bolumu gizlenir.
-        /// baslik: buyuk harf, bold, lacivert arka plan (ornek: "YALÇIN DORSE\n5 AKS LOWBED\n2. EL ÜRÜN")
-        /// altYazi: kucuk italic alt aciklama (ornek: "(Fotograflar urune aittir.)")
+        /// Urun fotograflarini ve baslik/alt yazi metinlerini rapora yukler.
+        /// Tek resim: tam genislikte gosterilir (727px).
+        /// Iki resim: yan yana gosterilir (her biri ~360px).
+        /// imageBytes null/bos ise resim bolumu tamamen gizlenir.
         /// </summary>
-        public void SetUrunImage(byte[]? imageBytes, string baslik, string altYazi = "")
+        public void SetUrunImage(byte[]? imageBytes, string baslik, string altYazi = "",
+                                 byte[]? imageBytes2 = null)
         {
-            bool hasImage = imageBytes != null && imageBytes.Length > 0
-                            && !string.IsNullOrWhiteSpace(baslik);
+            bool hasImage  = imageBytes  != null && imageBytes.Length  > 0
+                             && !string.IsNullOrWhiteSpace(baslik);
+            bool hasImage2 = imageBytes2 != null && imageBytes2.Length > 0;
 
             Parameters["pUrunBaslik"].Value  = baslik;
             Parameters["pUrunAltYazi"].Value = altYazi;
 
             lblUrunBaslik.Visible  = hasImage;
             picUrun.Visible        = hasImage;
+            picUrun2.Visible       = hasImage && hasImage2;
             lblUrunAltYazi.Visible = hasImage && !string.IsNullOrWhiteSpace(altYazi);
 
             if (hasImage)
             {
-                using var ms = new MemoryStream(imageBytes!);
-                picUrun.Image = System.Drawing.Image.FromStream(ms);
-                // Band yuksekligini resim bolumu dahil yap
-                reportHeaderBand.HeightF = 615F;
+                if (hasImage2)
+                {
+                    // Yan yana: her resim ~360px genislik, aralarinda 7px bosluk
+                    picUrun.LocationFloat  = new DevExpress.Utils.PointFloat(0F,    379F);
+                    picUrun.SizeF          = new System.Drawing.SizeF(360F, 218F);
+                    picUrun2.LocationFloat = new DevExpress.Utils.PointFloat(367F,  379F);
+                    picUrun2.SizeF         = new System.Drawing.SizeF(360F, 218F);
+
+                    using var ms1 = new MemoryStream(imageBytes!);
+                    picUrun.Image = System.Drawing.Image.FromStream(ms1);
+                    using var ms2 = new MemoryStream(imageBytes2!);
+                    picUrun2.Image = System.Drawing.Image.FromStream(ms2);
+                }
+                else
+                {
+                    // Tek resim: tam genislik
+                    picUrun.LocationFloat = new DevExpress.Utils.PointFloat(0F, 379F);
+                    picUrun.SizeF         = new System.Drawing.SizeF(727F, 218F);
+                    picUrun2.Image        = null;
+
+                    using var ms = new MemoryStream(imageBytes!);
+                    picUrun.Image = System.Drawing.Image.FromStream(ms);
+                }
+
+                reportHeaderBand.HeightF = 625F;
             }
             else
             {
-                picUrun.Image = null;
+                picUrun.Image  = null;
+                picUrun2.Image = null;
                 // Resim yoksa header daha kisa olsun
                 reportHeaderBand.HeightF = 337F;
             }

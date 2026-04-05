@@ -55,6 +55,7 @@ namespace YALCINDORSE
             this.lineContent = new DevExpress.XtraReports.UI.XRLine();
             this.lblUrunBaslik = new DevExpress.XtraReports.UI.XRLabel();
             this.picUrun = new DevExpress.XtraReports.UI.XRPictureBox();
+            this.picUrun2 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.lblUrunAltYazi = new DevExpress.XtraReports.UI.XRLabel();
             this.pUrunBaslik = new DevExpress.XtraReports.Parameters.Parameter();
             this.pUrunAltYazi = new DevExpress.XtraReports.Parameters.Parameter();
@@ -176,8 +177,9 @@ namespace YALCINDORSE
             this.lineContent,
             this.lblUrunBaslik,
             this.picUrun,
+            this.picUrun2,
             this.lblUrunAltYazi});
-            this.reportHeaderBand.HeightF = 615F;
+            this.reportHeaderBand.HeightF = 625F;
             this.reportHeaderBand.Name = "reportHeaderBand";
             // 
             // picLogo
@@ -390,8 +392,8 @@ namespace YALCINDORSE
             this.lblUrunBaslik.LocationFloat = new DevExpress.Utils.PointFloat(0F, 337F);
             this.lblUrunBaslik.Multiline = false;
             this.lblUrunBaslik.Name = "lblUrunBaslik";
-            this.lblUrunBaslik.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 6, 6, 100F);
-            this.lblUrunBaslik.SizeF = new System.Drawing.SizeF(727F, 32F);
+            this.lblUrunBaslik.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 8, 8, 100F);
+            this.lblUrunBaslik.SizeF = new System.Drawing.SizeF(727F, 42F);
             this.lblUrunBaslik.StylePriority.UseBackColor = true;
             this.lblUrunBaslik.StylePriority.UseForeColor = true;
             this.lblUrunBaslik.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
@@ -399,11 +401,19 @@ namespace YALCINDORSE
             //
             // picUrun — urun fotografı
             //
-            this.picUrun.LocationFloat = new DevExpress.Utils.PointFloat(0F, 369F);
+            this.picUrun.LocationFloat = new DevExpress.Utils.PointFloat(0F, 379F);
             this.picUrun.Name = "picUrun";
             this.picUrun.SizeF = new System.Drawing.SizeF(727F, 218F);
             this.picUrun.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.picUrun.Visible = false;
+            //
+            // picUrun2 — ikinci urun fotografı (yan yana duzen icin)
+            //
+            this.picUrun2.LocationFloat = new DevExpress.Utils.PointFloat(367F, 379F);
+            this.picUrun2.Name = "picUrun2";
+            this.picUrun2.SizeF = new System.Drawing.SizeF(360F, 218F);
+            this.picUrun2.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.picUrun2.Visible = false;
             //
             // lblUrunAltYazi — alt yazi (lacivert bg, beyaz italic kucuk)
             //
@@ -412,7 +422,7 @@ namespace YALCINDORSE
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pUrunAltYazi")});
             this.lblUrunAltYazi.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8F, DevExpress.Drawing.DXFontStyle.Italic);
             this.lblUrunAltYazi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(220)))), ((int)(((byte)(240)))));
-            this.lblUrunAltYazi.LocationFloat = new DevExpress.Utils.PointFloat(0F, 587F);
+            this.lblUrunAltYazi.LocationFloat = new DevExpress.Utils.PointFloat(0F, 597F);
             this.lblUrunAltYazi.Name = "lblUrunAltYazi";
             this.lblUrunAltYazi.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 4, 4, 100F);
             this.lblUrunAltYazi.SizeF = new System.Drawing.SizeF(727F, 22F);
@@ -545,6 +555,7 @@ namespace YALCINDORSE
         private DevExpress.XtraReports.UI.XRLine lineContent;
         internal DevExpress.XtraReports.UI.XRLabel lblUrunBaslik;
         internal DevExpress.XtraReports.UI.XRPictureBox picUrun;
+        internal DevExpress.XtraReports.UI.XRPictureBox picUrun2;
         internal DevExpress.XtraReports.UI.XRLabel lblUrunAltYazi;
         private DevExpress.XtraReports.UI.XRLine lineFooter;
         private DevExpress.XtraReports.UI.XRLabel lblFooter;

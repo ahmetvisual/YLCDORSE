@@ -239,14 +239,21 @@ namespace YALCINDORSE.Services
             }
             catch { }
 
-            // Urun fotografini yukle (ilk "foto" eki — disk'ten)
-            byte[]? urunFotoBytes = null;
+            // Urun fotograflarini yukle (ilk 2 "foto" eki — disk'ten)
+            byte[]? urunFotoBytes  = null;
+            byte[]? urunFotoBytes2 = null;
             try
             {
                 var attachments = await _attachSvc.GetAttachmentsAsync(quoteId);
-                var ilkFoto = attachments.FirstOrDefault(a => a.Tip == "foto" && File.Exists(a.DosyaYolu));
-                if (ilkFoto != null)
-                    urunFotoBytes = await File.ReadAllBytesAsync(ilkFoto.DosyaYolu);
+                var fotograflar = attachments
+                    .Where(a => a.Tip == "foto" && File.Exists(a.DosyaYolu))
+                    .OrderBy(a => a.SiraNo)
+                    .Take(2)
+                    .ToList();
+                if (fotograflar.Count >= 1)
+                    urunFotoBytes  = await File.ReadAllBytesAsync(fotograflar[0].DosyaYolu);
+                if (fotograflar.Count >= 2)
+                    urunFotoBytes2 = await File.ReadAllBytesAsync(fotograflar[1].DosyaYolu);
             }
             catch { /* foto yoksa sessiz devam */ }
 
@@ -280,7 +287,7 @@ namespace YALCINDORSE.Services
                 sasiNo: quote.SasiNo ?? "",
                 modelYili: quote.ModelYili?.ToString() ?? ""
             );
-            report.SetUrunImage(urunFotoBytes, urunBaslik, urunAltYazi);
+            report.SetUrunImage(urunFotoBytes, urunBaslik, urunAltYazi, urunFotoBytes2);
 
             return report.ExportToPdfBytes();
         }
