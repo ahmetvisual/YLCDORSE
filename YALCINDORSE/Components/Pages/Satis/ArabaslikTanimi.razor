@@ -142,58 +142,108 @@
                     </div>
 
                     <div class="ab-detail-table-wrap">
-                        <table class="ab-detail-table">
-                            <thead>
-                                <tr>
-                                    <th style="width:36px;">#</th>
-                                    <th style="min-width:180px;">TR</th>
-                                    <th style="min-width:180px;">EN</th>
-                                    <th style="min-width:150px;">DE</th>
-                                    <th style="min-width:150px;">FR</th>
-                                    <th style="min-width:150px;">RU</th>
-                                    <th style="min-width:90px;">Fiyat</th>
-                                    <th style="min-width:70px;">Para</th>
-                                    <th style="width:40px;"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (editDetaylar.Count == 0)
-                                {
-                                    <tr><td colspan="9" class="ab-empty-row">Henuz satir eklenmemis. "Satir Ekle" ile baslayabilirsiniz.</td></tr>
-                                }
-                                else
-                                {
-                                    @for (int idx = 0; idx < editDetaylar.Count; idx++)
+                        @* TablTipi=1: Iki Kolon Tablo — Ozellik Adi + Deger (Fiyat/Para yok) *@
+                        @if (editGrup.TablTipi == 1)
+                        {
+                            <table class="ab-detail-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:36px;">#</th>
+                                        <th style="min-width:200px;">TR — Özellik Adı</th>
+                                        <th style="min-width:160px;">EN</th>
+                                        <th style="min-width:130px;">DE</th>
+                                        <th style="min-width:130px;">FR</th>
+                                        <th style="min-width:130px;">RU</th>
+                                        <th style="min-width:130px;">Değer (Evrensel)</th>
+                                        <th style="width:40px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (editDetaylar.Count == 0)
                                     {
-                                        var i = idx;
-                                        var row = editDetaylar[i];
-                                        <tr>
-                                            <td class="ab-row-num">@(i + 1)</td>
-                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni" @bind:event="oninput" /></td>
-                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_EN" @bind:event="oninput" /></td>
-                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_DE" @bind:event="oninput" /></td>
-                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_FR" @bind:event="oninput" /></td>
-                                            <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_RU" @bind:event="oninput" /></td>
-                                            <td><input type="number" class="ab-cell-input" step="0.01" @bind="row.Fiyat" /></td>
-                                            <td>
-                                                <select class="ab-cell-input" @bind="row.ParaBirimi">
-                                                    <option value="">-</option>
-                                                    <option value="EUR">EUR</option>
-                                                    <option value="USD">USD</option>
-                                                    <option value="TRY">TRY</option>
-                                                    <option value="GBP">GBP</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <button class="ab-btn-icon ab-btn-icon-danger" @onclick="() => RemoveDetayRow(i)" title="Satiri Sil">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                                </button>
-                                            </td>
-                                        </tr>
+                                        <tr><td colspan="8" class="ab-empty-row">Henuz satir eklenmemis. "Satir Ekle" ile baslayabilirsiniz.</td></tr>
                                     }
-                                }
-                            </tbody>
-                        </table>
+                                    else
+                                    {
+                                        @for (int idx = 0; idx < editDetaylar.Count; idx++)
+                                        {
+                                            var i = idx;
+                                            var row = editDetaylar[i];
+                                            <tr>
+                                                <td class="ab-row-num">@(i + 1)</td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni" @bind:event="oninput" placeholder="Turkce ozellik adi" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_EN" @bind:event="oninput" placeholder="English" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_DE" @bind:event="oninput" placeholder="Deutsch" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_FR" @bind:event="oninput" placeholder="Francais" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_RU" @bind:event="oninput" placeholder="Russian" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.Deger" @bind:event="oninput" placeholder="9.500 mm" style="font-weight:600;" /></td>
+                                                <td>
+                                                    <button class="ab-btn-icon ab-btn-icon-danger" @onclick="() => RemoveDetayRow(i)" title="Satiri Sil">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            @* TablTipi=2: Numarali Liste — klasik Fiyat/Para yapisi *@
+                            <table class="ab-detail-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:36px;">#</th>
+                                        <th style="min-width:180px;">TR</th>
+                                        <th style="min-width:180px;">EN</th>
+                                        <th style="min-width:150px;">DE</th>
+                                        <th style="min-width:150px;">FR</th>
+                                        <th style="min-width:150px;">RU</th>
+                                        <th style="min-width:90px;">Fiyat</th>
+                                        <th style="min-width:70px;">Para</th>
+                                        <th style="width:40px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (editDetaylar.Count == 0)
+                                    {
+                                        <tr><td colspan="9" class="ab-empty-row">Henuz satir eklenmemis. "Satir Ekle" ile baslayabilirsiniz.</td></tr>
+                                    }
+                                    else
+                                    {
+                                        @for (int idx = 0; idx < editDetaylar.Count; idx++)
+                                        {
+                                            var i = idx;
+                                            var row = editDetaylar[i];
+                                            <tr>
+                                                <td class="ab-row-num">@(i + 1)</td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni" @bind:event="oninput" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_EN" @bind:event="oninput" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_DE" @bind:event="oninput" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_FR" @bind:event="oninput" /></td>
+                                                <td><input type="text" class="ab-cell-input" @bind="row.SatirMetni_RU" @bind:event="oninput" /></td>
+                                                <td><input type="number" class="ab-cell-input" step="0.01" @bind="row.Fiyat" /></td>
+                                                <td>
+                                                    <select class="ab-cell-input" @bind="row.ParaBirimi">
+                                                        <option value="">-</option>
+                                                        <option value="EUR">EUR</option>
+                                                        <option value="USD">USD</option>
+                                                        <option value="TRY">TRY</option>
+                                                        <option value="GBP">GBP</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button class="ab-btn-icon ab-btn-icon-danger" @onclick="() => RemoveDetayRow(i)" title="Satiri Sil">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        }
                     </div>
                 </div>
             }

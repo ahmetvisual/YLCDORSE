@@ -296,6 +296,38 @@
 .item-row-option { padding-left: 30px; font-style: italic; font-weight: 700; }
 .item-row-option .item-desc { font-style: italic; font-weight: 700; }
 
+/* SPEC: iki kolon tablo satiri — Ozellik : Deger */
+.item-row-spec { background: rgba(59,130,246,0.04); border-left: 2px solid rgba(59,130,246,0.25); }
+.item-spec-val {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 180px;
+    max-width: 240px;
+    padding: 0 6px;
+}
+.item-spec-val .spec-colon {
+    color: var(--yl-text-light);
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+.item-spec-val input {
+    flex: 1;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: transparent;
+    color: var(--yl-primary);
+}
+.item-spec-val input:focus {
+    border-color: var(--yl-border);
+    background: #fff;
+    outline: none;
+}
+
 .item-sira {
     min-width: 40px;
     font-size: 0.68rem;

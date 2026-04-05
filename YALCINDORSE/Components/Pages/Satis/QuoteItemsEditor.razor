@@ -100,10 +100,11 @@
         {
             var rowClass = item.KalemTipi switch
             {
-                "HEADER" => "item-row item-row-header",
+                "HEADER"   => "item-row item-row-header",
                 "SUB_ITEM" => "item-row item-row-subitem",
-                "OPTION" => "item-row item-row-option",
-                _ => "item-row"
+                "OPTION"   => "item-row item-row-option",
+                "SPEC"     => "item-row item-row-spec",
+                _          => "item-row"
             };
 
             <div class="@rowClass">
@@ -112,10 +113,22 @@
                 <div class="item-desc">
                     <input type="text" value="@item.Aciklama"
                            @onchange="(e) => UpdateField(item, nameof(item.Aciklama), e.Value?.ToString())"
-                           placeholder="@(item.KalemTipi == "HEADER" ? "Urun adi (orn: Deveboynu)" : item.KalemTipi == "OPTION" ? "Opsiyon aciklamasi" : "Kalem aciklamasi")" />
+                           placeholder="@(item.KalemTipi == "HEADER" ? "Urun adi (orn: Deveboynu)" : item.KalemTipi == "SPEC" ? "Ozellik adi (orn: Yukleme platformu uzunlugu)" : item.KalemTipi == "OPTION" ? "Opsiyon aciklamasi" : "Kalem aciklamasi")" />
                 </div>
 
-                @if (item.KalemTipi != "HEADER")
+                @if (item.KalemTipi == "SPEC")
+                {
+                    @* Iki kolon tablo satirlari: Ozellik Adi : Deger — Mkt/Brm/Fiyat yok *@
+                    <div class="item-spec-val">
+                        <span class="spec-colon">:</span>
+                        <input type="text" value="@item.Birim"
+                               @onchange="(e) => UpdateField(item, nameof(item.Birim), e.Value?.ToString())"
+                               placeholder="9.500 mm" />
+                    </div>
+                    <div class="item-price"></div>
+                    <div class="item-total"></div>
+                }
+                else if (item.KalemTipi != "HEADER")
                 {
                     <div class="item-qty">
                         <input type="number" value="@item.Miktar"
@@ -187,16 +200,22 @@
         foreach (var header in headers)
         {
             result.Add(header);
-            var children = Items.Where(i => i.UstKalemId == header.Id && i.KalemTipi == "ITEM")
+            // SPEC (iki kolon tablo) ve ITEM tipindeki satirlari dahil et
+            var children = Items.Where(i => i.UstKalemId == header.Id &&
+                                            (i.KalemTipi == "ITEM" || i.KalemTipi == "SPEC"))
                                .OrderBy(i => i.SiraNo).ToList();
             foreach (var child in children)
             {
                 result.Add(child);
-                var subs = Items.Where(i => i.UstKalemId == child.Id)
-                               .OrderBy(i => i.SiraNo).ToList();
-                foreach (var sub in subs)
+                // Alt satirlar ve opsiyonlar yalnizca ITEM icin gosterilir
+                if (child.KalemTipi == "ITEM")
                 {
-                    result.Add(sub);
+                    var subs = Items.Where(i => i.UstKalemId == child.Id)
+                                   .OrderBy(i => i.SiraNo).ToList();
+                    foreach (var sub in subs)
+                    {
+                        result.Add(sub);
+                    }
                 }
             }
         }
@@ -216,14 +235,16 @@
             var idx = headers.IndexOf(item) + 1;
             return $"{idx}.0";
         }
-        else if (item.KalemTipi == "ITEM" && item.UstKalemId.HasValue)
+        else if ((item.KalemTipi == "ITEM" || item.KalemTipi == "SPEC") && item.UstKalemId.HasValue)
         {
             var parent = Items.FirstOrDefault(i => i.Id == item.UstKalemId);
             if (parent != null)
             {
                 var headers = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
                 var hIdx = headers.IndexOf(parent) + 1;
-                var siblings = Items.Where(i => i.UstKalemId == parent.Id && i.KalemTipi == "ITEM").OrderBy(i => i.SiraNo).ToList();
+                var siblings = Items.Where(i => i.UstKalemId == parent.Id &&
+                                                (i.KalemTipi == "ITEM" || i.KalemTipi == "SPEC"))
+                                   .OrderBy(i => i.SiraNo).ToList();
                 var cIdx = siblings.IndexOf(item) + 1;
                 return $"{hIdx}.{cIdx}";
             }
@@ -447,28 +468,50 @@
                 UrunKodu = $"AB-{grup.Id}"
             });
 
-            // Detaylari yukle ve ITEM olarak ekle
+            // Detaylari yukle ve kalem olarak ekle
             try
             {
                 var detaylar = await ArabaslikSvc.GetDetaylarAsync(grupId);
                 int childSira = 0;
-                foreach (var d in detaylar)
-                {
-                    childSira += 10;
-                    var itemText = GetDetayLocalizedText(d);
 
-                    Items.Add(new QuoteItemModel
+                if (grup.TablTipi == 1)
+                {
+                    // Iki kolon tablo: her satir bir "Ozellik : Deger" cifti — fiyat yok
+                    foreach (var d in detaylar)
                     {
-                        Id = nextTempId--,
-                        KalemTipi = "ITEM",
-                        UstKalemId = headerId,
-                        SiraNo = childSira,
-                        Aciklama = itemText,
-                        BirimFiyat = d.Fiyat,
-                        Miktar = d.Fiyat.HasValue ? 1 : null,
-                        Tutar = d.Fiyat,
-                        Birim = d.Fiyat.HasValue ? "AD" : null
-                    });
+                        childSira += 10;
+                        var itemText = GetDetayLocalizedText(d);
+                        Items.Add(new QuoteItemModel
+                        {
+                            Id = nextTempId--,
+                            KalemTipi = "SPEC",
+                            UstKalemId = headerId,
+                            SiraNo = childSira,
+                            Aciklama = itemText,   // ozellik adi (lokalize)
+                            Birim = d.Deger        // evrensel deger ("9.500 mm" gibi)
+                        });
+                    }
+                }
+                else
+                {
+                    // Numarali liste (TablTipi=2): klasik fiyatli satirlar
+                    foreach (var d in detaylar)
+                    {
+                        childSira += 10;
+                        var itemText = GetDetayLocalizedText(d);
+                        Items.Add(new QuoteItemModel
+                        {
+                            Id = nextTempId--,
+                            KalemTipi = "ITEM",
+                            UstKalemId = headerId,
+                            SiraNo = childSira,
+                            Aciklama = itemText,
+                            BirimFiyat = d.Fiyat,
+                            Miktar = d.Fiyat.HasValue ? 1 : null,
+                            Tutar = d.Fiyat,
+                            Birim = d.Fiyat.HasValue ? "AD" : null
+                        });
+                    }
                 }
             }
             catch { /* detaylar yuklenemezse sadece baslik kalir */ }
