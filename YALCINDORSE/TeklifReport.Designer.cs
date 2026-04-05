@@ -205,8 +205,7 @@ namespace YALCINDORSE
             this.lblCompanyInfo.Multiline = true;
             this.lblCompanyInfo.Name = "lblCompanyInfo";
             this.lblCompanyInfo.SizeF = new System.Drawing.SizeF(327F, 38F);
-            this.lblCompanyInfo.Text = "Org. San. Böl. 3.Cad. No:7 Honaz / DENİZLİ\r\nTel: +90 (258) 812 18 88 | info@yalci" +
-    "ndorse.com";
+            this.lblCompanyInfo.Text = "Fevzipaşa Mah. Erdoğan Sk. N:14 Silivri / İSTANBUL\r\nTel: +90 212 735 39 49 | www.yalcintrailer.com";
             this.lblCompanyInfo.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
             // 
             // lineHeader
@@ -465,7 +464,7 @@ namespace YALCINDORSE
             this.lblFooter.LocationFloat = new DevExpress.Utils.PointFloat(0F, 6F);
             this.lblFooter.Name = "lblFooter";
             this.lblFooter.SizeF = new System.Drawing.SizeF(580F, 15F);
-            this.lblFooter.Text = "YALÇIN DORSE San. ve Tic. A.Ş. | www.yalcindorse.com | Tel: +90 (258) 812 18 88";
+            this.lblFooter.Text = "Yalçın Dorse Damper San. ve Tic. Ltd. Şti. | www.yalcintrailer.com | Tel: +90 212 735 39 49";
             // 
             // lblPageInfo
             // 
