@@ -321,7 +321,7 @@
                                 hazirTeklifInfo.TryGetValue(sel.Id, out selHazirModel);
                                 bool selHazir = selHazirModel != null;
                                 string selDosyaAdi = selHazirModel?.DosyaAdi ?? "";
-                                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center;">
+                                <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 6px 14px;align-items:center;justify-content:flex-start;">
                                     <button class="btn-transition" style="background:#f0f5ff;color:#185FA5;border-color:rgba(24,95,165,0.25);"
                                             @onclick="() => GenerateDocumentAsync(sel.Id)"
                                             disabled="@isGenerating">
@@ -363,7 +363,7 @@
                                 </div>
                                 @if (selHazir)
                                 {
-                                    <div style="font-size:0.72rem;color:#D97706;margin-bottom:8px;display:flex;align-items:center;gap:4px;padding:4px 8px;background:#FFFBEB;border-radius:4px;border:1px solid rgba(217,119,6,0.2);">
+                                    <div style="font-size:0.72rem;color:#D97706;margin:0 14px 8px 14px;display:flex;align-items:center;gap:5px;padding:4px 8px;background:#FFFBEB;border-radius:4px;border:1px solid rgba(217,119,6,0.2);">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;flex-shrink:0;">
                                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                                         </svg>
