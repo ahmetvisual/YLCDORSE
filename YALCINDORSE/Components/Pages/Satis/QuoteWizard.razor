@@ -195,7 +195,7 @@
                         </div>
                     </div>
                     <div class="wizard-field compact">
-                        <label>Satici</label>
+                        <label>Temsilci</label>
                         <div class="custom-select" @onfocusout='() => CloseDropdown("satici")'>
                             <button class="custom-select-trigger" @onclick='() => ToggleDropdown("satici")'>
                                 <span>@(salesReps.FirstOrDefault(s => s.Id == quote.SaticiId)?.FullName ?? "— Seciniz —")</span>
