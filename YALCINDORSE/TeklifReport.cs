@@ -126,13 +126,17 @@ namespace YALCINDORSE
                 return;
             }
 
-            float y            = 6F;
+            float y            = 4F;
             const float W      = 727F;
             const float ROW_H  = 17F;
             const float HDR_H  = 20F;
             const float LEFT_W = 350F;
             const float COL_W  = 27F;
             const float RIGHT_W = W - LEFT_W - COL_W;  // 350F
+            const float NOTE_H = 18F;
+
+            // A4 sayfa: ~1169F yukseklik, ust/alt margin ~50F, footer ~25F
+            const float PAGE_USABLE_H = 1040F;
 
             var navyBg  = System.Drawing.Color.FromArgb(16, 42, 85);
             var altBg   = System.Drawing.Color.FromArgb(248, 249, 251);
@@ -155,7 +159,7 @@ namespace YALCINDORSE
                         Text          = grp.GrupAdi.ToUpperInvariant(),
                         LocationFloat = new DevExpress.Utils.PointFloat(0F, y),
                         SizeF         = new System.Drawing.SizeF(W, HDR_H),
-                        Padding       = new DevExpress.XtraPrinting.PaddingInfo(8, 8, 4, 4, 100F),
+                        Padding       = new DevExpress.XtraPrinting.PaddingInfo(8, 8, 3, 3, 100F),
                         TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft
                     };
                     hdrLbl.StylePriority.UseBackColor = true;
@@ -219,43 +223,53 @@ namespace YALCINDORSE
                         alt = !alt;
                     }
 
-                    y += 5F; // gruplar arasi bosluk
+                    y += 4F; // gruplar arasi bosluk
                 }
 
-                // Dipnot: TC Karayollari notu (spec tablolarin hemen altina)
-                y += 3F;
+                // ── DIPNOT: TC Karayollari notu ──────────────────────────
+                y += 2F;
                 var noteLbl = new DevExpress.XtraReports.UI.XRLabel
                 {
-                    Text          = "**  TC. Karayolları' nın müsaade ettiği ağırlıklardır, çalışacağı ülke kurallarına göre farklılık gösterebilir.",
+                    Text          = "** TC. Karayolları' nın müsaade ettiği ağırlıklardır, çalışacağı ülke kurallarına göre farklılık gösterebilir.",
                     Font          = new DevExpress.Drawing.DXFont("Segoe UI", 7.5F,
                                         DevExpress.Drawing.DXFontStyle.Bold | DevExpress.Drawing.DXFontStyle.Italic),
-                    ForeColor     = System.Drawing.Color.FromArgb(60, 60, 60),
-                    LocationFloat = new DevExpress.Utils.PointFloat(0F, y),
-                    SizeF         = new System.Drawing.SizeF(W, 15F),
-                    Padding       = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 1, 1, 100F),
+                    ForeColor     = System.Drawing.Color.FromArgb(80, 80, 80),
+                    LocationFloat = new DevExpress.Utils.PointFloat(4F, y),
+                    SizeF         = new System.Drawing.SizeF(W - 4F, NOTE_H),
+                    Padding       = new DevExpress.XtraPrinting.PaddingInfo(0, 2, 2, 2, 100F),
                     TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft
                 };
-                noteLbl.StylePriority.UseForeColor = true;
+                noteLbl.StylePriority.UseForeColor = false;
+                noteLbl.StylePriority.UseFont      = false;
                 detailBand.Controls.Add(noteLbl);
-                y += 15F;
+                y += NOTE_H;
             }
 
             // ── TEKNIK RESIMLER ───────────────────────────────────────────
+            // Kalan sayfa alanini hesapla — tum icerik tek sayfada kalmali
             if (hasCizim)
             {
-                y += 8F;
+                float headerH    = reportHeaderBand.HeightF;
+                float remaining  = PAGE_USABLE_H - headerH - y - 10F;
+                int   imgCount   = cizimImages!.Count(b => b?.Length > 0);
+
+                y += 6F;
                 foreach (var imgBytes in cizimImages!)
                 {
                     if (imgBytes == null || imgBytes.Length == 0) continue;
 
-                    // Orijinal en/boy oranina gore yukseklik hesapla (max 480F)
-                    float picH = 360F;
+                    // Orijinal en/boy oranina gore yukseklik hesapla
+                    float picH = 300F;
                     try
                     {
                         using var tmp = System.Drawing.Image.FromStream(new MemoryStream(imgBytes));
-                        picH = Math.Min(W * ((float)tmp.Height / tmp.Width), 480F);
+                        picH = W * ((float)tmp.Height / tmp.Width);
                     }
                     catch { }
+
+                    // Kalan alana sigdir — her resim icin esit pay
+                    float maxH = Math.Max((remaining - (imgCount - 1) * 6F) / imgCount, 120F);
+                    picH = Math.Min(picH, maxH);
 
                     var pic = new DevExpress.XtraReports.UI.XRPictureBox
                     {
@@ -267,11 +281,11 @@ namespace YALCINDORSE
                     pic.Image = System.Drawing.Image.FromStream(ms);
                     detailBand.Controls.Add(pic);
 
-                    y += picH + 8F;
+                    y += picH + 6F;
                 }
             }
 
-            detailBand.HeightF = y + 8F;
+            detailBand.HeightF = y + 6F;
         }
 
         private void LoadLogo()
