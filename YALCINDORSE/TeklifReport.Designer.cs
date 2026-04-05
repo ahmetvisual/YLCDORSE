@@ -177,7 +177,7 @@ namespace YALCINDORSE
             this.lblUrunBaslik,
             this.picUrun,
             this.lblUrunAltYazi});
-            this.reportHeaderBand.HeightF = 645F;
+            this.reportHeaderBand.HeightF = 615F;
             this.reportHeaderBand.Name = "reportHeaderBand";
             // 
             // picLogo
@@ -389,10 +389,10 @@ namespace YALCINDORSE
             this.lblUrunBaslik.Font = new DevExpress.Drawing.DXFont("Segoe UI", 13F, DevExpress.Drawing.DXFontStyle.Bold);
             this.lblUrunBaslik.ForeColor = System.Drawing.Color.White;
             this.lblUrunBaslik.LocationFloat = new DevExpress.Utils.PointFloat(0F, 337F);
-            this.lblUrunBaslik.Multiline = true;
+            this.lblUrunBaslik.Multiline = false;
             this.lblUrunBaslik.Name = "lblUrunBaslik";
-            this.lblUrunBaslik.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 10, 10, 100F);
-            this.lblUrunBaslik.SizeF = new System.Drawing.SizeF(727F, 62F);
+            this.lblUrunBaslik.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 6, 6, 100F);
+            this.lblUrunBaslik.SizeF = new System.Drawing.SizeF(727F, 32F);
             this.lblUrunBaslik.StylePriority.UseBackColor = true;
             this.lblUrunBaslik.StylePriority.UseForeColor = true;
             this.lblUrunBaslik.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
@@ -400,7 +400,7 @@ namespace YALCINDORSE
             //
             // picUrun — urun fotografı
             //
-            this.picUrun.LocationFloat = new DevExpress.Utils.PointFloat(0F, 399F);
+            this.picUrun.LocationFloat = new DevExpress.Utils.PointFloat(0F, 369F);
             this.picUrun.Name = "picUrun";
             this.picUrun.SizeF = new System.Drawing.SizeF(727F, 218F);
             this.picUrun.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
@@ -413,7 +413,7 @@ namespace YALCINDORSE
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pUrunAltYazi")});
             this.lblUrunAltYazi.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8F, DevExpress.Drawing.DXFontStyle.Italic);
             this.lblUrunAltYazi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(220)))), ((int)(((byte)(240)))));
-            this.lblUrunAltYazi.LocationFloat = new DevExpress.Utils.PointFloat(0F, 617F);
+            this.lblUrunAltYazi.LocationFloat = new DevExpress.Utils.PointFloat(0F, 587F);
             this.lblUrunAltYazi.Name = "lblUrunAltYazi";
             this.lblUrunAltYazi.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 4, 4, 100F);
             this.lblUrunAltYazi.SizeF = new System.Drawing.SizeF(727F, 22F);

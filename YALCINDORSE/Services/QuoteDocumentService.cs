@@ -254,8 +254,8 @@ namespace YALCINDORSE.Services
             var urunAdi    = items.FirstOrDefault(i => i.KalemTipi == "HEADER")?.Aciklama ?? "";
             var urunBaslik = string.IsNullOrWhiteSpace(urunAdi)
                 ? ""
-                : "YALÇIN DORSE\n" + urunAdi.ToUpperInvariant()
-                  + (quote.SatisTipi == "SecondHand" ? "\n2. EL ÜRÜN" : "");
+                : "YALÇIN DORSE  ·  " + urunAdi.ToUpperInvariant()
+                  + (quote.SatisTipi == "SecondHand" ? "  ·  2. EL ÜRÜN" : "");
             var urunAltYazi = string.IsNullOrWhiteSpace(urunAdi)
                 ? ""
                 : $"(Fotoğraflar, {urunAdi.ToLowerInvariant()} ürününe aittir.)";

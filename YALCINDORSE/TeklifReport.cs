@@ -74,7 +74,7 @@ namespace YALCINDORSE
                 using var ms = new MemoryStream(imageBytes!);
                 picUrun.Image = System.Drawing.Image.FromStream(ms);
                 // Band yuksekligini resim bolumu dahil yap
-                reportHeaderBand.HeightF = 645F;
+                reportHeaderBand.HeightF = 615F;
             }
             else
             {
