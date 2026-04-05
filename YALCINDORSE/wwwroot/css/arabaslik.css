@@ -216,9 +216,18 @@
 
 .ab-detail-table {
     width: 100%;
+    table-layout: fixed;   /* sutunlar orantili dagilir, tasma olmaz */
     border-collapse: collapse;
     font-size: 0.78rem;
     font-variant-numeric: tabular-nums;
+}
+
+/* Hucre ici inputlar tam genisligi kullanansin */
+.ab-detail-table td {
+    overflow: hidden;
+}
+.ab-detail-table tbody td {
+    padding: 0;
 }
 
 .ab-detail-table thead th {
