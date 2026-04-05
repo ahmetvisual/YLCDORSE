@@ -15,7 +15,6 @@ namespace YALCINDORSE
 
         private void InitializeComponent()
         {
-            // ── Parameters ──
             this.pTeklifNo = new DevExpress.XtraReports.Parameters.Parameter();
             this.pTarih = new DevExpress.XtraReports.Parameters.Parameter();
             this.pGecerlilikTarihi = new DevExpress.XtraReports.Parameters.Parameter();
@@ -32,15 +31,8 @@ namespace YALCINDORSE
             this.pUrunAdi = new DevExpress.XtraReports.Parameters.Parameter();
             this.pSasiNo = new DevExpress.XtraReports.Parameters.Parameter();
             this.pModelYili = new DevExpress.XtraReports.Parameters.Parameter();
-
-            // ── Bands ──
             this.topMarginBand = new DevExpress.XtraReports.UI.TopMarginBand();
             this.reportHeaderBand = new DevExpress.XtraReports.UI.ReportHeaderBand();
-            this.detailBand = new DevExpress.XtraReports.UI.DetailBand();
-            this.bottomMarginBand = new DevExpress.XtraReports.UI.BottomMarginBand();
-            this.pageFooterBand = new DevExpress.XtraReports.UI.PageFooterBand();
-
-            // ── Controls ──
             this.picLogo = new DevExpress.XtraReports.UI.XRPictureBox();
             this.lblCompanyName = new DevExpress.XtraReports.UI.XRLabel();
             this.lblCompanyInfo = new DevExpress.XtraReports.UI.XRLabel();
@@ -61,409 +53,472 @@ namespace YALCINDORSE
             this.lineSection = new DevExpress.XtraReports.UI.XRLine();
             this.lblKarsilama = new DevExpress.XtraReports.UI.XRLabel();
             this.lineContent = new DevExpress.XtraReports.UI.XRLine();
+            this.lblUrunBaslik = new DevExpress.XtraReports.UI.XRLabel();
+            this.picUrun = new DevExpress.XtraReports.UI.XRPictureBox();
+            this.lblUrunAltYazi = new DevExpress.XtraReports.UI.XRLabel();
+            this.pUrunBaslik = new DevExpress.XtraReports.Parameters.Parameter();
+            this.pUrunAltYazi = new DevExpress.XtraReports.Parameters.Parameter();
+            this.detailBand = new DevExpress.XtraReports.UI.DetailBand();
+            this.bottomMarginBand = new DevExpress.XtraReports.UI.BottomMarginBand();
+            this.pageFooterBand = new DevExpress.XtraReports.UI.PageFooterBand();
             this.lineFooter = new DevExpress.XtraReports.UI.XRLine();
             this.lblFooter = new DevExpress.XtraReports.UI.XRLabel();
             this.lblPageInfo = new DevExpress.XtraReports.UI.XRPageInfo();
-
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
-
-            // ═══════════════════════════════════════════
-            //  PARAMETERS
-            // ═══════════════════════════════════════════
+            // 
+            // pTeklifNo
+            // 
             this.pTeklifNo.Name = "pTeklifNo";
-            this.pTeklifNo.Type = typeof(string);
-            this.pTeklifNo.ValueInfo = "";
             this.pTeklifNo.Visible = false;
-
+            // 
+            // pTarih
+            // 
             this.pTarih.Name = "pTarih";
-            this.pTarih.Type = typeof(string);
-            this.pTarih.ValueInfo = "";
             this.pTarih.Visible = false;
-
+            // 
+            // pGecerlilikTarihi
+            // 
             this.pGecerlilikTarihi.Name = "pGecerlilikTarihi";
-            this.pGecerlilikTarihi.Type = typeof(string);
-            this.pGecerlilikTarihi.ValueInfo = "";
             this.pGecerlilikTarihi.Visible = false;
-
+            // 
+            // pMusteriAdi
+            // 
             this.pMusteriAdi.Name = "pMusteriAdi";
-            this.pMusteriAdi.Type = typeof(string);
-            this.pMusteriAdi.ValueInfo = "";
             this.pMusteriAdi.Visible = false;
-
+            // 
+            // pMusteriKodu
+            // 
             this.pMusteriKodu.Name = "pMusteriKodu";
-            this.pMusteriKodu.Type = typeof(string);
-            this.pMusteriKodu.ValueInfo = "";
             this.pMusteriKodu.Visible = false;
-
+            // 
+            // pIlgiliKisi
+            // 
             this.pIlgiliKisi.Name = "pIlgiliKisi";
-            this.pIlgiliKisi.Type = typeof(string);
-            this.pIlgiliKisi.ValueInfo = "";
             this.pIlgiliKisi.Visible = false;
-
+            // 
+            // pIlgiliEmail
+            // 
             this.pIlgiliEmail.Name = "pIlgiliEmail";
-            this.pIlgiliEmail.Type = typeof(string);
-            this.pIlgiliEmail.ValueInfo = "";
             this.pIlgiliEmail.Visible = false;
-
+            // 
+            // pIlgiliMobil
+            // 
             this.pIlgiliMobil.Name = "pIlgiliMobil";
-            this.pIlgiliMobil.Type = typeof(string);
-            this.pIlgiliMobil.ValueInfo = "";
             this.pIlgiliMobil.Visible = false;
-
+            // 
+            // pSaticiAdi
+            // 
             this.pSaticiAdi.Name = "pSaticiAdi";
-            this.pSaticiAdi.Type = typeof(string);
-            this.pSaticiAdi.ValueInfo = "";
             this.pSaticiAdi.Visible = false;
-
+            // 
+            // pSaticiEmail
+            // 
             this.pSaticiEmail.Name = "pSaticiEmail";
-            this.pSaticiEmail.Type = typeof(string);
-            this.pSaticiEmail.ValueInfo = "";
             this.pSaticiEmail.Visible = false;
-
+            // 
+            // pSaticiTelefon
+            // 
             this.pSaticiTelefon.Name = "pSaticiTelefon";
-            this.pSaticiTelefon.Type = typeof(string);
-            this.pSaticiTelefon.ValueInfo = "";
             this.pSaticiTelefon.Visible = false;
-
+            // 
+            // pNetTutar
+            // 
             this.pNetTutar.Name = "pNetTutar";
-            this.pNetTutar.Type = typeof(string);
-            this.pNetTutar.ValueInfo = "";
             this.pNetTutar.Visible = false;
-
+            // 
+            // pParaBirimi
+            // 
             this.pParaBirimi.Name = "pParaBirimi";
-            this.pParaBirimi.Type = typeof(string);
-            this.pParaBirimi.ValueInfo = "";
             this.pParaBirimi.Visible = false;
-
+            // 
+            // pUrunAdi
+            // 
             this.pUrunAdi.Name = "pUrunAdi";
-            this.pUrunAdi.Type = typeof(string);
-            this.pUrunAdi.ValueInfo = "";
             this.pUrunAdi.Visible = false;
-
+            // 
+            // pSasiNo
+            // 
             this.pSasiNo.Name = "pSasiNo";
-            this.pSasiNo.Type = typeof(string);
-            this.pSasiNo.ValueInfo = "";
             this.pSasiNo.Visible = false;
-
+            // 
+            // pModelYili
+            // 
             this.pModelYili.Name = "pModelYili";
-            this.pModelYili.Type = typeof(string);
-            this.pModelYili.ValueInfo = "";
             this.pModelYili.Visible = false;
-
-            // ═══════════════════════════════════════════
-            //  REPORT HEADER BAND — Logo, Company, Contact, SDU, Greeting
-            // ═══════════════════════════════════════════
-
-            // ── Logo (sol ust) ──
-            this.picLogo.LocationFloat = new DevExpress.Utils.PointFloat(0F, 5F);
-            this.picLogo.SizeF = new System.Drawing.SizeF(170F, 60F);
-            this.picLogo.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            // 
+            // topMarginBand
+            // 
+            this.topMarginBand.HeightF = 40F;
+            this.topMarginBand.Name = "topMarginBand";
+            // 
+            // reportHeaderBand
+            // 
+            this.reportHeaderBand.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.picLogo,
+            this.lblCompanyName,
+            this.lblCompanyInfo,
+            this.lineHeader,
+            this.lblTeklifTitle,
+            this.lblTeklifNo,
+            this.lblTarih,
+            this.lblGecerlilik,
+            this.lblSDU,
+            this.lblSDUBilgi,
+            this.lblSayin,
+            this.lblIlgiliEmail,
+            this.lblIlgiliMobil,
+            this.lblMusteriAdi,
+            this.lblMusteriKodu,
+            this.lblSasiNo,
+            this.lblModelYili,
+            this.lineSection,
+            this.lblKarsilama,
+            this.lineContent,
+            this.lblUrunBaslik,
+            this.picUrun,
+            this.lblUrunAltYazi});
+            this.reportHeaderBand.HeightF = 645F;
+            this.reportHeaderBand.Name = "reportHeaderBand";
+            // 
+            // picLogo
+            // 
+            this.picLogo.LocationFloat = new DevExpress.Utils.PointFloat(9.999974F, 0F);
             this.picLogo.Name = "picLogo";
-
-            // ── Firma Adi (sag ust) ──
-            this.lblCompanyName.LocationFloat = new DevExpress.Utils.PointFloat(470F, 5F);
-            this.lblCompanyName.SizeF = new System.Drawing.SizeF(257F, 22F);
+            this.picLogo.SizeF = new System.Drawing.SizeF(146.4583F, 64.99999F);
+            this.picLogo.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            // 
+            // lblCompanyName
+            // 
             this.lblCompanyName.Font = new DevExpress.Drawing.DXFont("Segoe UI", 12F, DevExpress.Drawing.DXFontStyle.Bold);
             this.lblCompanyName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(95)))), ((int)(((byte)(165)))));
-            this.lblCompanyName.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
-            this.lblCompanyName.Text = "YAL\u00C7IN DORSE";
+            this.lblCompanyName.LocationFloat = new DevExpress.Utils.PointFloat(400F, 5.000019F);
             this.lblCompanyName.Name = "lblCompanyName";
-
-            // ── Firma Detay (sag ust, adresin altinda) ──
-            this.lblCompanyInfo.LocationFloat = new DevExpress.Utils.PointFloat(400F, 27F);
-            this.lblCompanyInfo.SizeF = new System.Drawing.SizeF(327F, 38F);
+            this.lblCompanyName.SizeF = new System.Drawing.SizeF(327F, 22F);
+            this.lblCompanyName.Text = "YALÇIN DORSE";
+            this.lblCompanyName.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lblCompanyInfo
+            // 
             this.lblCompanyInfo.Font = new DevExpress.Drawing.DXFont("Segoe UI", 7F);
             this.lblCompanyInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(107)))), ((int)(((byte)(114)))), ((int)(((byte)(128)))));
-            this.lblCompanyInfo.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
-            this.lblCompanyInfo.Text = "Org. San. B\u00F6l. 3.Cad. No:7 Honaz / DEN\u0130ZL\u0130\r\nTel: +90 (258) 812 18 88 | info@yalcindorse.com";
+            this.lblCompanyInfo.LocationFloat = new DevExpress.Utils.PointFloat(400F, 27F);
             this.lblCompanyInfo.Multiline = true;
             this.lblCompanyInfo.Name = "lblCompanyInfo";
-
-            // ── Ust cizgi ──
-            this.lineHeader.LocationFloat = new DevExpress.Utils.PointFloat(0F, 70F);
-            this.lineHeader.SizeF = new System.Drawing.SizeF(727F, 2F);
+            this.lblCompanyInfo.SizeF = new System.Drawing.SizeF(327F, 38F);
+            this.lblCompanyInfo.Text = "Org. San. Böl. 3.Cad. No:7 Honaz / DENİZLİ\r\nTel: +90 (258) 812 18 88 | info@yalci" +
+    "ndorse.com";
+            this.lblCompanyInfo.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lineHeader
+            // 
             this.lineHeader.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(95)))), ((int)(((byte)(165)))));
-            this.lineHeader.LineWidth = 2;
+            this.lineHeader.LineWidth = 2F;
+            this.lineHeader.LocationFloat = new DevExpress.Utils.PointFloat(0F, 73.91666F);
             this.lineHeader.Name = "lineHeader";
-
-            // ── TEKLIF Basligi ──
-            this.lblTeklifTitle.LocationFloat = new DevExpress.Utils.PointFloat(0F, 82F);
-            this.lblTeklifTitle.SizeF = new System.Drawing.SizeF(200F, 28F);
+            this.lineHeader.SizeF = new System.Drawing.SizeF(727F, 2.083333F);
+            // 
+            // lblTeklifTitle
+            // 
             this.lblTeklifTitle.Font = new DevExpress.Drawing.DXFont("Segoe UI", 16F, DevExpress.Drawing.DXFontStyle.Bold);
             this.lblTeklifTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(95)))), ((int)(((byte)(165)))));
-            this.lblTeklifTitle.Text = "TEKL\u0130F";
+            this.lblTeklifTitle.LocationFloat = new DevExpress.Utils.PointFloat(0F, 82F);
             this.lblTeklifTitle.Name = "lblTeklifTitle";
-
-            // ── Teklif No (sag taraf) ──
-            this.lblTeklifNo.LocationFloat = new DevExpress.Utils.PointFloat(450F, 82F);
-            this.lblTeklifNo.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblTeklifTitle.SizeF = new System.Drawing.SizeF(200F, 28F);
+            this.lblTeklifTitle.Text = "TEKLİF";
+            // 
+            // lblTeklifNo
+            // 
+            this.lblTeklifNo.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Teklif No : \' + ?pTeklifNo")});
             this.lblTeklifNo.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F);
             this.lblTeklifNo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
-            this.lblTeklifNo.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.lblTeklifNo.LocationFloat = new DevExpress.Utils.PointFloat(450F, 82F);
             this.lblTeklifNo.Name = "lblTeklifNo";
-            this.lblTeklifNo.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'Teklif No : ' + ?pTeklifNo")
-            });
-
-            // ── Tarih ──
-            this.lblTarih.LocationFloat = new DevExpress.Utils.PointFloat(450F, 98F);
-            this.lblTarih.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblTeklifNo.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblTeklifNo.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lblTarih
+            // 
+            this.lblTarih.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Tarih : \' + ?pTarih")});
             this.lblTarih.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F);
             this.lblTarih.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
-            this.lblTarih.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.lblTarih.LocationFloat = new DevExpress.Utils.PointFloat(450F, 98F);
             this.lblTarih.Name = "lblTarih";
-            this.lblTarih.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'Tarih : ' + ?pTarih")
-            });
-
-            // ── Gecerlilik ──
-            this.lblGecerlilik.LocationFloat = new DevExpress.Utils.PointFloat(450F, 114F);
-            this.lblGecerlilik.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblTarih.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblTarih.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lblGecerlilik
+            // 
+            this.lblGecerlilik.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Geçerlilik : \' + ?pGecerlilikTarihi")});
             this.lblGecerlilik.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F);
             this.lblGecerlilik.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
-            this.lblGecerlilik.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.lblGecerlilik.LocationFloat = new DevExpress.Utils.PointFloat(450F, 114F);
             this.lblGecerlilik.Name = "lblGecerlilik";
-            this.lblGecerlilik.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'Ge\u00E7erlilik : ' + ?pGecerlilikTarihi")
-            });
-
-            // ── Satis Destek Uzmani (sag, gecerlilik altinda) ──
-            this.lblSDU.LocationFloat = new DevExpress.Utils.PointFloat(450F, 132F);
-            this.lblSDU.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblGecerlilik.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblGecerlilik.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lblSDU
+            // 
+            this.lblSDU.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Satış Destek Uzmanı : \' + ?pSaticiAdi")});
             this.lblSDU.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F, DevExpress.Drawing.DXFontStyle.Bold);
             this.lblSDU.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
-            this.lblSDU.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.lblSDU.LocationFloat = new DevExpress.Utils.PointFloat(450F, 132F);
             this.lblSDU.Name = "lblSDU";
-            this.lblSDU.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'Sat\u0131\u015F Destek Uzman\u0131 : ' + ?pSaticiAdi")
-            });
-
-            // ── SDU Email / Telefon (sag, SDU altinda) ──
-            this.lblSDUBilgi.LocationFloat = new DevExpress.Utils.PointFloat(450F, 148F);
-            this.lblSDUBilgi.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblSDU.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblSDU.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lblSDUBilgi
+            // 
+            this.lblSDUBilgi.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pSaticiEmail + \' | \' + ?pSaticiTelefon")});
             this.lblSDUBilgi.Font = new DevExpress.Drawing.DXFont("Segoe UI", 7.5F);
             this.lblSDUBilgi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(107)))), ((int)(((byte)(114)))), ((int)(((byte)(128)))));
-            this.lblSDUBilgi.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.lblSDUBilgi.LocationFloat = new DevExpress.Utils.PointFloat(450F, 148F);
             this.lblSDUBilgi.Name = "lblSDUBilgi";
-            this.lblSDUBilgi.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pSaticiEmail + ' | ' + ?pSaticiTelefon")
-            });
-
-            // ── Sayin (ilgili kisi) ──
-            this.lblSayin.LocationFloat = new DevExpress.Utils.PointFloat(0F, 175F);
-            this.lblSayin.SizeF = new System.Drawing.SizeF(420F, 20F);
+            this.lblSDUBilgi.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblSDUBilgi.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lblSayin
+            // 
+            this.lblSayin.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Sayın \' + ?pIlgiliKisi + \',\'")});
             this.lblSayin.Font = new DevExpress.Drawing.DXFont("Segoe UI", 9.5F, DevExpress.Drawing.DXFontStyle.Bold);
             this.lblSayin.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.lblSayin.LocationFloat = new DevExpress.Utils.PointFloat(0F, 175F);
             this.lblSayin.Name = "lblSayin";
-            this.lblSayin.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'Say\u0131n ' + ?pIlgiliKisi + ','")
-            });
-
-            // ── E-mail ──
-            this.lblIlgiliEmail.LocationFloat = new DevExpress.Utils.PointFloat(0F, 195F);
-            this.lblIlgiliEmail.SizeF = new System.Drawing.SizeF(380F, 16F);
+            this.lblSayin.SizeF = new System.Drawing.SizeF(420F, 20F);
+            // 
+            // lblIlgiliEmail
+            // 
+            this.lblIlgiliEmail.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'E-mail : \' + ?pIlgiliEmail")});
             this.lblIlgiliEmail.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F);
             this.lblIlgiliEmail.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
+            this.lblIlgiliEmail.LocationFloat = new DevExpress.Utils.PointFloat(0F, 195F);
             this.lblIlgiliEmail.Name = "lblIlgiliEmail";
-            this.lblIlgiliEmail.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'E-mail : ' + ?pIlgiliEmail")
-            });
-
-            // ── Mobil ──
-            this.lblIlgiliMobil.LocationFloat = new DevExpress.Utils.PointFloat(0F, 211F);
-            this.lblIlgiliMobil.SizeF = new System.Drawing.SizeF(380F, 16F);
+            this.lblIlgiliEmail.SizeF = new System.Drawing.SizeF(380F, 16F);
+            // 
+            // lblIlgiliMobil
+            // 
+            this.lblIlgiliMobil.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Mobil : \' + ?pIlgiliMobil")});
             this.lblIlgiliMobil.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F);
             this.lblIlgiliMobil.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
+            this.lblIlgiliMobil.LocationFloat = new DevExpress.Utils.PointFloat(0F, 211F);
             this.lblIlgiliMobil.Name = "lblIlgiliMobil";
-            this.lblIlgiliMobil.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'Mobil : ' + ?pIlgiliMobil")
-            });
-
-            // ── Musteri Adi (sag) ──
-            this.lblMusteriAdi.LocationFloat = new DevExpress.Utils.PointFloat(450F, 175F);
-            this.lblMusteriAdi.SizeF = new System.Drawing.SizeF(277F, 20F);
+            this.lblIlgiliMobil.SizeF = new System.Drawing.SizeF(380F, 16F);
+            // 
+            // lblMusteriAdi
+            // 
+            this.lblMusteriAdi.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pMusteriAdi")});
             this.lblMusteriAdi.Font = new DevExpress.Drawing.DXFont("Segoe UI", 9.5F, DevExpress.Drawing.DXFontStyle.Bold);
             this.lblMusteriAdi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.lblMusteriAdi.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.lblMusteriAdi.LocationFloat = new DevExpress.Utils.PointFloat(450F, 175F);
             this.lblMusteriAdi.Name = "lblMusteriAdi";
-            this.lblMusteriAdi.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pMusteriAdi")
-            });
-
-            // ── Musteri Kodu (sag) ──
-            this.lblMusteriKodu.LocationFloat = new DevExpress.Utils.PointFloat(450F, 195F);
-            this.lblMusteriKodu.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblMusteriAdi.SizeF = new System.Drawing.SizeF(277F, 20F);
+            this.lblMusteriAdi.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lblMusteriKodu
+            // 
+            this.lblMusteriKodu.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Müşteri Kodu : \' + ?pMusteriKodu")});
             this.lblMusteriKodu.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F);
             this.lblMusteriKodu.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(107)))), ((int)(((byte)(114)))), ((int)(((byte)(128)))));
-            this.lblMusteriKodu.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.lblMusteriKodu.LocationFloat = new DevExpress.Utils.PointFloat(450F, 195F);
             this.lblMusteriKodu.Name = "lblMusteriKodu";
-            this.lblMusteriKodu.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'M\u00FC\u015Fteri Kodu : ' + ?pMusteriKodu")
-            });
-
-            // ── Sasi No (sol, kosullu — sadece ikinci el icin) ──
-            this.lblSasiNo.LocationFloat = new DevExpress.Utils.PointFloat(0F, 230F);
-            this.lblSasiNo.SizeF = new System.Drawing.SizeF(380F, 16F);
+            this.lblMusteriKodu.SizeF = new System.Drawing.SizeF(277F, 16F);
+            this.lblMusteriKodu.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // lblSasiNo
+            // 
+            this.lblSasiNo.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Şasi No : \' + ?pSasiNo"),
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Visible", "Len(Trim(?pSasiNo)) > 0")});
             this.lblSasiNo.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F);
             this.lblSasiNo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
+            this.lblSasiNo.LocationFloat = new DevExpress.Utils.PointFloat(0F, 230F);
             this.lblSasiNo.Name = "lblSasiNo";
-            this.lblSasiNo.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'\u015Easi No : ' + ?pSasiNo"),
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Visible", "Len(Trim(?pSasiNo)) > 0")
-            });
-
-            // ── Model Yili (sol, kosullu — sadece ikinci el icin) ──
-            this.lblModelYili.LocationFloat = new DevExpress.Utils.PointFloat(0F, 246F);
-            this.lblModelYili.SizeF = new System.Drawing.SizeF(380F, 16F);
+            this.lblSasiNo.SizeF = new System.Drawing.SizeF(380F, 16F);
+            // 
+            // lblModelYili
+            // 
+            this.lblModelYili.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Model Yılı : \' + ?pModelYili"),
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Visible", "Len(Trim(?pModelYili)) > 0")});
             this.lblModelYili.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F);
             this.lblModelYili.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
+            this.lblModelYili.LocationFloat = new DevExpress.Utils.PointFloat(0F, 246F);
             this.lblModelYili.Name = "lblModelYili";
-            this.lblModelYili.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "'Model Y\u0131l\u0131 : ' + ?pModelYili"),
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Visible", "Len(Trim(?pModelYili)) > 0")
-            });
-
-            // ── Bolum cizgisi ──
-            this.lineSection.LocationFloat = new DevExpress.Utils.PointFloat(0F, 268F);
-            this.lineSection.SizeF = new System.Drawing.SizeF(727F, 2F);
+            this.lblModelYili.SizeF = new System.Drawing.SizeF(380F, 16F);
+            // 
+            // lineSection
+            // 
             this.lineSection.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(215)))), ((int)(((byte)(220)))));
+            this.lineSection.LocationFloat = new DevExpress.Utils.PointFloat(0F, 268F);
             this.lineSection.Name = "lineSection";
-
-            // ── Karsilama Yazisi ──
-            this.lblKarsilama.LocationFloat = new DevExpress.Utils.PointFloat(0F, 278F);
-            this.lblKarsilama.SizeF = new System.Drawing.SizeF(727F, 42F);
+            this.lineSection.SizeF = new System.Drawing.SizeF(727F, 2F);
+            // 
+            // lblKarsilama
+            // 
+            this.lblKarsilama.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "\'Sayın \' + ?pIlgiliKisi + \',\' + \'\r\n\' + \'Firmamıza göstermiş olduğunuz ilgi için t" +
+                    "eşekkür ederiz. Aşağıdaki ürün/hizmet için teklifimizi bilgilerinize sunarız.\'")});
             this.lblKarsilama.Font = new DevExpress.Drawing.DXFont("Segoe UI", 9F);
             this.lblKarsilama.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
+            this.lblKarsilama.LocationFloat = new DevExpress.Utils.PointFloat(0F, 278F);
             this.lblKarsilama.Multiline = true;
             this.lblKarsilama.Name = "lblKarsilama";
-            this.lblKarsilama.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-                new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text",
-                    "'Say\u0131n ' + ?pIlgiliKisi + ',' + '\r\n' + 'Firmam\u0131za g\u00F6stermi\u015F oldu\u011Funuz ilgi i\u00E7in te\u015Fekk\u00FCr ederiz. A\u015Fa\u011F\u0131daki \u00FCr\u00FCn/hizmet i\u00E7in teklifimizi bilgilerinize sunar\u0131z.'")
-            });
-
-            // ── Icerik oncesi cizgi ──
-            this.lineContent.LocationFloat = new DevExpress.Utils.PointFloat(0F, 325F);
-            this.lineContent.SizeF = new System.Drawing.SizeF(727F, 2F);
+            this.lblKarsilama.SizeF = new System.Drawing.SizeF(727F, 42F);
+            // 
+            // lineContent
+            // 
             this.lineContent.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(95)))), ((int)(((byte)(165)))));
-            this.lineContent.LineWidth = 1;
+            this.lineContent.LocationFloat = new DevExpress.Utils.PointFloat(0F, 325F);
             this.lineContent.Name = "lineContent";
-
-            // ── ReportHeader Band ──
-            this.reportHeaderBand.HeightF = 335F;
-            this.reportHeaderBand.Name = "ReportHeader";
-            this.reportHeaderBand.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-                this.picLogo,
-                this.lblCompanyName,
-                this.lblCompanyInfo,
-                this.lineHeader,
-                this.lblTeklifTitle,
-                this.lblTeklifNo,
-                this.lblTarih,
-                this.lblGecerlilik,
-                this.lblSDU,
-                this.lblSDUBilgi,
-                this.lblSayin,
-                this.lblIlgiliEmail,
-                this.lblIlgiliMobil,
-                this.lblMusteriAdi,
-                this.lblMusteriKodu,
-                this.lblSasiNo,
-                this.lblModelYili,
-                this.lineSection,
-                this.lblKarsilama,
-                this.lineContent
-            });
-
-            // ═══════════════════════════════════════════
-            //  DETAIL BAND — ileride urun/fiyat icerigi eklenecek
-            // ═══════════════════════════════════════════
+            this.lineContent.SizeF = new System.Drawing.SizeF(727F, 2F);
+            //
+            // lblUrunBaslik — urun baslik (lacivert bg, beyaz bold buyuk metin)
+            //
+            this.lblUrunBaslik.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(42)))), ((int)(((byte)(85)))));
+            this.lblUrunBaslik.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pUrunBaslik")});
+            this.lblUrunBaslik.Font = new DevExpress.Drawing.DXFont("Segoe UI", 13F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.lblUrunBaslik.ForeColor = System.Drawing.Color.White;
+            this.lblUrunBaslik.LocationFloat = new DevExpress.Utils.PointFloat(0F, 337F);
+            this.lblUrunBaslik.Multiline = true;
+            this.lblUrunBaslik.Name = "lblUrunBaslik";
+            this.lblUrunBaslik.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 10, 10, 100F);
+            this.lblUrunBaslik.SizeF = new System.Drawing.SizeF(727F, 62F);
+            this.lblUrunBaslik.StylePriority.UseBackColor = true;
+            this.lblUrunBaslik.StylePriority.UseForeColor = true;
+            this.lblUrunBaslik.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.lblUrunBaslik.Visible = false;
+            //
+            // picUrun — urun fotografı
+            //
+            this.picUrun.LocationFloat = new DevExpress.Utils.PointFloat(0F, 399F);
+            this.picUrun.Name = "picUrun";
+            this.picUrun.SizeF = new System.Drawing.SizeF(727F, 218F);
+            this.picUrun.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.picUrun.Visible = false;
+            //
+            // lblUrunAltYazi — alt yazi (lacivert bg, beyaz italic kucuk)
+            //
+            this.lblUrunAltYazi.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(42)))), ((int)(((byte)(85)))));
+            this.lblUrunAltYazi.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pUrunAltYazi")});
+            this.lblUrunAltYazi.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8F, DevExpress.Drawing.DXFontStyle.Italic);
+            this.lblUrunAltYazi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(220)))), ((int)(((byte)(240)))));
+            this.lblUrunAltYazi.LocationFloat = new DevExpress.Utils.PointFloat(0F, 617F);
+            this.lblUrunAltYazi.Name = "lblUrunAltYazi";
+            this.lblUrunAltYazi.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 4, 4, 100F);
+            this.lblUrunAltYazi.SizeF = new System.Drawing.SizeF(727F, 22F);
+            this.lblUrunAltYazi.StylePriority.UseBackColor = true;
+            this.lblUrunAltYazi.StylePriority.UseForeColor = true;
+            this.lblUrunAltYazi.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.lblUrunAltYazi.Visible = false;
+            //
+            // pUrunBaslik
+            //
+            this.pUrunBaslik.Name = "pUrunBaslik";
+            this.pUrunBaslik.Visible = false;
+            //
+            // pUrunAltYazi
+            //
+            this.pUrunAltYazi.Name = "pUrunAltYazi";
+            this.pUrunAltYazi.Visible = false;
+            //
+            // detailBand
+            // 
             this.detailBand.HeightF = 0F;
-            this.detailBand.Name = "Detail";
-
-            // ═══════════════════════════════════════════
-            //  PAGE FOOTER — firma bilgisi + sayfa no
-            // ═══════════════════════════════════════════
-
-            this.lineFooter.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.lineFooter.SizeF = new System.Drawing.SizeF(727F, 2F);
+            this.detailBand.Name = "detailBand";
+            // 
+            // bottomMarginBand
+            // 
+            this.bottomMarginBand.HeightF = 40F;
+            this.bottomMarginBand.Name = "bottomMarginBand";
+            // 
+            // pageFooterBand
+            // 
+            this.pageFooterBand.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.lineFooter,
+            this.lblFooter,
+            this.lblPageInfo});
+            this.pageFooterBand.HeightF = 25F;
+            this.pageFooterBand.Name = "pageFooterBand";
+            // 
+            // lineFooter
+            // 
             this.lineFooter.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(215)))), ((int)(((byte)(220)))));
+            this.lineFooter.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
             this.lineFooter.Name = "lineFooter";
-
-            this.lblFooter.LocationFloat = new DevExpress.Utils.PointFloat(0F, 6F);
-            this.lblFooter.SizeF = new System.Drawing.SizeF(580F, 15F);
+            this.lineFooter.SizeF = new System.Drawing.SizeF(727F, 2F);
+            // 
+            // lblFooter
+            // 
             this.lblFooter.Font = new DevExpress.Drawing.DXFont("Segoe UI", 7F);
             this.lblFooter.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(150)))));
-            this.lblFooter.Text = "YAL\u00C7IN DORSE San. ve Tic. A.\u015E. | www.yalcindorse.com | Tel: +90 (258) 812 18 88";
+            this.lblFooter.LocationFloat = new DevExpress.Utils.PointFloat(0F, 6F);
             this.lblFooter.Name = "lblFooter";
-
-            this.lblPageInfo.LocationFloat = new DevExpress.Utils.PointFloat(630F, 6F);
-            this.lblPageInfo.SizeF = new System.Drawing.SizeF(97F, 15F);
+            this.lblFooter.SizeF = new System.Drawing.SizeF(580F, 15F);
+            this.lblFooter.Text = "YALÇIN DORSE San. ve Tic. A.Ş. | www.yalcindorse.com | Tel: +90 (258) 812 18 88";
+            // 
+            // lblPageInfo
+            // 
             this.lblPageInfo.Font = new DevExpress.Drawing.DXFont("Segoe UI", 7F);
             this.lblPageInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(150)))));
+            this.lblPageInfo.LocationFloat = new DevExpress.Utils.PointFloat(630F, 6F);
+            this.lblPageInfo.Name = "lblPageInfo";
+            this.lblPageInfo.SizeF = new System.Drawing.SizeF(97F, 15F);
             this.lblPageInfo.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
             this.lblPageInfo.TextFormatString = "Sayfa {0} / {1}";
-            this.lblPageInfo.Name = "lblPageInfo";
-
-            this.pageFooterBand.HeightF = 25F;
-            this.pageFooterBand.Name = "PageFooter";
-            this.pageFooterBand.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-                this.lineFooter,
-                this.lblFooter,
-                this.lblPageInfo
-            });
-
-            // ═══════════════════════════════════════════
-            //  TOP / BOTTOM MARGINS
-            // ═══════════════════════════════════════════
-            this.topMarginBand.HeightF = 40F;
-            this.topMarginBand.Name = "TopMargin";
-
-            this.bottomMarginBand.HeightF = 40F;
-            this.bottomMarginBand.Name = "BottomMargin";
-
-            // ═══════════════════════════════════════════
-            //  REPORT
-            // ═══════════════════════════════════════════
+            // 
+            // TeklifReport
+            // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
-                this.topMarginBand,
-                this.reportHeaderBand,
-                this.detailBand,
-                this.pageFooterBand,
-                this.bottomMarginBand
-            });
-
+            this.topMarginBand,
+            this.reportHeaderBand,
+            this.detailBand,
+            this.pageFooterBand,
+            this.bottomMarginBand});
             this.Font = new DevExpress.Drawing.DXFont("Segoe UI", 9F);
-            this.Margins = new DevExpress.Drawing.DXMargins(50, 50, 40, 40);
+            this.Margins = new DevExpress.Drawing.DXMargins(50F, 50F, 40F, 40F);
+            this.PageHeight = 1169;
+            this.PageWidth = 827;
             this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
-            this.Version = "24.1";
-
             this.Parameters.AddRange(new DevExpress.XtraReports.Parameters.Parameter[] {
-                this.pTeklifNo,
-                this.pTarih,
-                this.pGecerlilikTarihi,
-                this.pMusteriAdi,
-                this.pMusteriKodu,
-                this.pIlgiliKisi,
-                this.pIlgiliEmail,
-                this.pIlgiliMobil,
-                this.pSaticiAdi,
-                this.pSaticiEmail,
-                this.pSaticiTelefon,
-                this.pNetTutar,
-                this.pParaBirimi,
-                this.pUrunAdi,
-                this.pSasiNo,
-                this.pModelYili
-            });
-
+            this.pTeklifNo,
+            this.pTarih,
+            this.pGecerlilikTarihi,
+            this.pMusteriAdi,
+            this.pMusteriKodu,
+            this.pIlgiliKisi,
+            this.pIlgiliEmail,
+            this.pIlgiliMobil,
+            this.pSaticiAdi,
+            this.pSaticiEmail,
+            this.pSaticiTelefon,
+            this.pNetTutar,
+            this.pParaBirimi,
+            this.pUrunAdi,
+            this.pSasiNo,
+            this.pModelYili,
+            this.pUrunBaslik,
+            this.pUrunAltYazi});
+            this.Version = "24.1";
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
+
         }
 
         #endregion
 
         // ── Bands ──
         private DevExpress.XtraReports.UI.TopMarginBand topMarginBand;
-        private DevExpress.XtraReports.UI.ReportHeaderBand reportHeaderBand;
+        internal DevExpress.XtraReports.UI.ReportHeaderBand reportHeaderBand;
         private DevExpress.XtraReports.UI.DetailBand detailBand;
         private DevExpress.XtraReports.UI.BottomMarginBand bottomMarginBand;
         private DevExpress.XtraReports.UI.PageFooterBand pageFooterBand;
@@ -489,6 +544,9 @@ namespace YALCINDORSE
         private DevExpress.XtraReports.UI.XRLine lineSection;
         private DevExpress.XtraReports.UI.XRLabel lblKarsilama;
         private DevExpress.XtraReports.UI.XRLine lineContent;
+        internal DevExpress.XtraReports.UI.XRLabel lblUrunBaslik;
+        internal DevExpress.XtraReports.UI.XRPictureBox picUrun;
+        internal DevExpress.XtraReports.UI.XRLabel lblUrunAltYazi;
         private DevExpress.XtraReports.UI.XRLine lineFooter;
         private DevExpress.XtraReports.UI.XRLabel lblFooter;
         private DevExpress.XtraReports.UI.XRPageInfo lblPageInfo;
@@ -510,5 +568,7 @@ namespace YALCINDORSE
         private DevExpress.XtraReports.Parameters.Parameter pUrunAdi;
         private DevExpress.XtraReports.Parameters.Parameter pSasiNo;
         private DevExpress.XtraReports.Parameters.Parameter pModelYili;
+        private DevExpress.XtraReports.Parameters.Parameter pUrunBaslik;
+        private DevExpress.XtraReports.Parameters.Parameter pUrunAltYazi;
     }
 }

@@ -51,6 +51,39 @@ namespace YALCINDORSE
             return ms.ToArray();
         }
 
+        /// <summary>
+        /// Urun fotografini ve baslik/alt yazi metinlerini rapora yukler.
+        /// imageBytes null ise resim bolumu gizlenir.
+        /// baslik: buyuk harf, bold, lacivert arka plan (ornek: "YALÇIN DORSE\n5 AKS LOWBED\n2. EL ÜRÜN")
+        /// altYazi: kucuk italic alt aciklama (ornek: "(Fotograflar urune aittir.)")
+        /// </summary>
+        public void SetUrunImage(byte[]? imageBytes, string baslik, string altYazi = "")
+        {
+            bool hasImage = imageBytes != null && imageBytes.Length > 0
+                            && !string.IsNullOrWhiteSpace(baslik);
+
+            Parameters["pUrunBaslik"].Value  = baslik;
+            Parameters["pUrunAltYazi"].Value = altYazi;
+
+            lblUrunBaslik.Visible  = hasImage;
+            picUrun.Visible        = hasImage;
+            lblUrunAltYazi.Visible = hasImage && !string.IsNullOrWhiteSpace(altYazi);
+
+            if (hasImage)
+            {
+                using var ms = new MemoryStream(imageBytes!);
+                picUrun.Image = System.Drawing.Image.FromStream(ms);
+                // Band yuksekligini resim bolumu dahil yap
+                reportHeaderBand.HeightF = 645F;
+            }
+            else
+            {
+                picUrun.Image = null;
+                // Resim yoksa header daha kisa olsun
+                reportHeaderBand.HeightF = 337F;
+            }
+        }
+
         private void LoadLogo()
         {
             try

@@ -239,6 +239,27 @@ namespace YALCINDORSE.Services
             }
             catch { }
 
+            // Urun fotografini yukle (ilk "foto" eki — disk'ten)
+            byte[]? urunFotoBytes = null;
+            try
+            {
+                var attachments = await _attachSvc.GetAttachmentsAsync(quoteId);
+                var ilkFoto = attachments.FirstOrDefault(a => a.Tip == "foto" && File.Exists(a.DosyaYolu));
+                if (ilkFoto != null)
+                    urunFotoBytes = await File.ReadAllBytesAsync(ilkFoto.DosyaYolu);
+            }
+            catch { /* foto yoksa sessiz devam */ }
+
+            // Urun baslik metnini olustur (buyuk harf, firma + urun adi + 2.el etiketi)
+            var urunAdi    = items.FirstOrDefault(i => i.KalemTipi == "HEADER")?.Aciklama ?? "";
+            var urunBaslik = string.IsNullOrWhiteSpace(urunAdi)
+                ? ""
+                : "YALÇIN DORSE\n" + urunAdi.ToUpperInvariant()
+                  + (quote.SatisTipi == "SecondHand" ? "\n2. EL ÜRÜN" : "");
+            var urunAltYazi = string.IsNullOrWhiteSpace(urunAdi)
+                ? ""
+                : $"(Fotoğraflar, {urunAdi.ToLowerInvariant()} ürününe aittir.)";
+
             // Raporu olustur ve doldur
             var report = new TeklifReport();
             report.SetQuoteData(
@@ -255,10 +276,11 @@ namespace YALCINDORSE.Services
                 saticiTelefon: saticiTelefon,
                 netTutar: quote.NetTutar.ToString("N2"),
                 paraBirimi: quote.ParaBirimi,
-                urunAdi: items.FirstOrDefault(i => i.KalemTipi == "HEADER")?.Aciklama ?? "",
+                urunAdi: urunAdi,
                 sasiNo: quote.SasiNo ?? "",
                 modelYili: quote.ModelYili?.ToString() ?? ""
             );
+            report.SetUrunImage(urunFotoBytes, urunBaslik, urunAltYazi);
 
             return report.ExportToPdfBytes();
         }
