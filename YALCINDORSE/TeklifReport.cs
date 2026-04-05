@@ -109,6 +109,154 @@ namespace YALCINDORSE
             }
         }
 
+        /// <summary>
+        /// Urun fotograflarinin altina iki-kolon SPEC tablolarini ve teknik resimleri ekler.
+        /// specGroups bos / null ise ve cizimImages bos ise detailBand height=0 olur.
+        /// </summary>
+        public void SetSpecData(List<SpecGroup>? specGroups, List<byte[]>? cizimImages)
+        {
+            detailBand.Controls.Clear();
+
+            bool hasSpec  = specGroups?.Any(g => g.Rows.Count > 0) == true;
+            bool hasCizim = cizimImages?.Any(b => b?.Length > 0) == true;
+
+            if (!hasSpec && !hasCizim)
+            {
+                detailBand.HeightF = 0F;
+                return;
+            }
+
+            float y            = 14F;
+            const float W      = 727F;
+            const float ROW_H  = 18F;
+            const float HDR_H  = 22F;
+            const float LEFT_W = 350F;
+            const float COL_W  = 27F;
+            const float RIGHT_W = W - LEFT_W - COL_W;  // 350F
+
+            var navyBg  = System.Drawing.Color.FromArgb(16, 42, 85);
+            var altBg   = System.Drawing.Color.FromArgb(248, 249, 251);
+            var whiteBg = System.Drawing.Color.White;
+            var bordClr = System.Drawing.Color.FromArgb(210, 215, 220);
+
+            // ── SPEC TABLOLARI ────────────────────────────────────────────
+            if (hasSpec)
+            {
+                foreach (var grp in specGroups!)
+                {
+                    if (grp.Rows.Count == 0) continue;
+
+                    // Grup baslik satiri (lacivert arka plan, beyaz bold)
+                    var hdrLbl = new DevExpress.XtraReports.UI.XRLabel
+                    {
+                        BackColor     = navyBg,
+                        ForeColor     = System.Drawing.Color.White,
+                        Font          = new DevExpress.Drawing.DXFont("Segoe UI", 9F, DevExpress.Drawing.DXFontStyle.Bold),
+                        Text          = grp.GrupAdi.ToUpperInvariant(),
+                        LocationFloat = new DevExpress.Utils.PointFloat(0F, y),
+                        SizeF         = new System.Drawing.SizeF(W, HDR_H),
+                        Padding       = new DevExpress.XtraPrinting.PaddingInfo(8, 8, 4, 4, 100F),
+                        TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft
+                    };
+                    hdrLbl.StylePriority.UseBackColor = true;
+                    hdrLbl.StylePriority.UseForeColor = true;
+                    detailBand.Controls.Add(hdrLbl);
+                    y += HDR_H;
+
+                    bool alt = false;
+                    foreach (var (ozellik, deger) in grp.Rows)
+                    {
+                        var bg = alt ? altBg : whiteBg;
+
+                        // Sol sutun: ozellik adi
+                        var lblLeft = new DevExpress.XtraReports.UI.XRLabel
+                        {
+                            BackColor     = bg,
+                            Text          = ozellik,
+                            Font          = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F),
+                            LocationFloat = new DevExpress.Utils.PointFloat(0F, y),
+                            SizeF         = new System.Drawing.SizeF(LEFT_W, ROW_H),
+                            Padding       = new DevExpress.XtraPrinting.PaddingInfo(8, 4, 2, 2, 100F),
+                            TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft,
+                            Borders       = DevExpress.XtraPrinting.BorderSide.Bottom | DevExpress.XtraPrinting.BorderSide.Right,
+                            BorderColor   = bordClr
+                        };
+                        lblLeft.StylePriority.UseBackColor = lblLeft.StylePriority.UseBorders = lblLeft.StylePriority.UseBorderColor = true;
+                        detailBand.Controls.Add(lblLeft);
+
+                        // Iki nokta sutunu
+                        var lblColon = new DevExpress.XtraReports.UI.XRLabel
+                        {
+                            BackColor     = bg,
+                            Text          = ":",
+                            Font          = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F),
+                            LocationFloat = new DevExpress.Utils.PointFloat(LEFT_W, y),
+                            SizeF         = new System.Drawing.SizeF(COL_W, ROW_H),
+                            TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
+                            Borders       = DevExpress.XtraPrinting.BorderSide.Bottom,
+                            BorderColor   = bordClr
+                        };
+                        lblColon.StylePriority.UseBackColor = lblColon.StylePriority.UseBorders = lblColon.StylePriority.UseBorderColor = true;
+                        detailBand.Controls.Add(lblColon);
+
+                        // Sag sutun: deger
+                        var lblVal = new DevExpress.XtraReports.UI.XRLabel
+                        {
+                            BackColor     = bg,
+                            Text          = deger,
+                            Font          = new DevExpress.Drawing.DXFont("Segoe UI", 8.5F),
+                            LocationFloat = new DevExpress.Utils.PointFloat(LEFT_W + COL_W, y),
+                            SizeF         = new System.Drawing.SizeF(RIGHT_W, ROW_H),
+                            Padding       = new DevExpress.XtraPrinting.PaddingInfo(8, 4, 2, 2, 100F),
+                            TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft,
+                            Borders       = DevExpress.XtraPrinting.BorderSide.Bottom,
+                            BorderColor   = bordClr
+                        };
+                        lblVal.StylePriority.UseBackColor = lblVal.StylePriority.UseBorders = lblVal.StylePriority.UseBorderColor = true;
+                        detailBand.Controls.Add(lblVal);
+
+                        y += ROW_H;
+                        alt = !alt;
+                    }
+
+                    y += 10F; // gruplar arasi bosluk
+                }
+            }
+
+            // ── TEKNIK RESIMLER ───────────────────────────────────────────
+            if (hasCizim)
+            {
+                y += 10F;
+                foreach (var imgBytes in cizimImages!)
+                {
+                    if (imgBytes == null || imgBytes.Length == 0) continue;
+
+                    // Orijinal en/boy oranina gore yukseklik hesapla (max 480F)
+                    float picH = 360F;
+                    try
+                    {
+                        using var tmp = System.Drawing.Image.FromStream(new MemoryStream(imgBytes));
+                        picH = Math.Min(W * ((float)tmp.Height / tmp.Width), 480F);
+                    }
+                    catch { }
+
+                    var pic = new DevExpress.XtraReports.UI.XRPictureBox
+                    {
+                        LocationFloat = new DevExpress.Utils.PointFloat(0F, y),
+                        SizeF         = new System.Drawing.SizeF(W, picH),
+                        Sizing        = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage
+                    };
+                    using var ms = new MemoryStream(imgBytes);
+                    pic.Image = System.Drawing.Image.FromStream(ms);
+                    detailBand.Controls.Add(pic);
+
+                    y += picH + 14F;
+                }
+            }
+
+            detailBand.HeightF = y + 16F;
+        }
+
         private void LoadLogo()
         {
             try
@@ -122,6 +270,13 @@ namespace YALCINDORSE
                 }
             }
             catch { /* Logo bulunamazsa bos kalir */ }
+        }
+
+        /// <summary>PDF'de iki-kolon tablo olarak gosterilecek ozellik grubu.</summary>
+        public class SpecGroup
+        {
+            public string GrupAdi { get; set; } = "";
+            public List<(string Ozellik, string Deger)> Rows { get; set; } = new();
         }
     }
 }

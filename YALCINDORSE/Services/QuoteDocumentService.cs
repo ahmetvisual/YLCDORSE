@@ -96,12 +96,16 @@ namespace YALCINDORSE.Services
             }
             catch { }
 
-            // Urun fotograflarini yukle (ilk 2 "foto" eki — disk'ten)
+            // Tum ekleri tek seferde yukle
+            var attachments = new List<QuoteAttachmentModel>();
+            try { attachments = await _attachSvc.GetAttachmentsAsync(quoteId); }
+            catch { }
+
+            // Urun fotograflari (ilk 2 "foto" eki — disk'ten)
             byte[]? urunFotoBytes  = null;
             byte[]? urunFotoBytes2 = null;
             try
             {
-                var attachments = await _attachSvc.GetAttachmentsAsync(quoteId);
                 var fotograflar = attachments
                     .Where(a => a.Tip == "foto" && File.Exists(a.DosyaYolu))
                     .OrderBy(a => a.SiraNo)
@@ -113,6 +117,19 @@ namespace YALCINDORSE.Services
                     urunFotoBytes2 = await File.ReadAllBytesAsync(fotograflar[1].DosyaYolu);
             }
             catch { /* foto yoksa sessiz devam */ }
+
+            // Teknik resimler ("teknikresim" eki — disk'ten)
+            var cizimImages = new List<byte[]>();
+            try
+            {
+                foreach (var c in attachments
+                    .Where(a => a.Tip == "teknikresim" && File.Exists(a.DosyaYolu))
+                    .OrderBy(a => a.SiraNo))
+                {
+                    cizimImages.Add(await File.ReadAllBytesAsync(c.DosyaYolu));
+                }
+            }
+            catch { }
 
             // Urun baslik metnini olustur (buyuk harf, firma + urun adi + 2.el etiketi)
             var urunAdi    = items.FirstOrDefault(i => i.KalemTipi == "HEADER")?.Aciklama ?? "";
@@ -145,6 +162,27 @@ namespace YALCINDORSE.Services
                 modelYili: quote.ModelYili?.ToString() ?? ""
             );
             report.SetUrunImage(urunFotoBytes, urunBaslik, urunAltYazi, urunFotoBytes2);
+
+            // SPEC tablolari (KalemTipi="SPEC" olan iki-kolon tablo satirlari)
+            var specGroups = new List<TeklifReport.SpecGroup>();
+            var headers = items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
+            foreach (var header in headers)
+            {
+                var specRows = items
+                    .Where(i => i.UstKalemId == header.Id && i.KalemTipi == "SPEC")
+                    .OrderBy(i => i.SiraNo)
+                    .ToList();
+                if (specRows.Count > 0)
+                {
+                    specGroups.Add(new TeklifReport.SpecGroup
+                    {
+                        GrupAdi = header.Aciklama,
+                        Rows    = specRows.Select(r => (r.Aciklama, r.Birim ?? "")).ToList()
+                    });
+                }
+            }
+
+            report.SetSpecData(specGroups, cizimImages);
 
             return report.ExportToPdfBytes();
         }
