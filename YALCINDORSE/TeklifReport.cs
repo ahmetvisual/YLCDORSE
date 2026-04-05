@@ -167,12 +167,14 @@ namespace YALCINDORSE
                     detailBand.Controls.Add(hdrLbl);
                     y += HDR_H;
 
-                    bool alt = false;
+                    bool alt      = false;
+                    float grpBodyY = y; // grup satirlarinin baslangic noktasi
+
                     foreach (var (ozellik, deger) in grp.Rows)
                     {
                         var bg = alt ? altBg : whiteBg;
 
-                        // Sol sutun: ozellik adi
+                        // Sol sutun: ozellik adi (border YOK — cizgiler XRLine ile cizilir)
                         var lblLeft = new DevExpress.XtraReports.UI.XRLabel
                         {
                             BackColor     = bg,
@@ -182,10 +184,10 @@ namespace YALCINDORSE
                             SizeF         = new System.Drawing.SizeF(LEFT_W, ROW_H),
                             Padding       = new DevExpress.XtraPrinting.PaddingInfo(8, 4, 2, 2, 100F),
                             TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft,
-                            Borders       = DevExpress.XtraPrinting.BorderSide.Bottom | DevExpress.XtraPrinting.BorderSide.Right,
-                            BorderColor   = bordClr
+                            Borders       = DevExpress.XtraPrinting.BorderSide.None
                         };
-                        lblLeft.StylePriority.UseBackColor = lblLeft.StylePriority.UseBorders = lblLeft.StylePriority.UseBorderColor = true;
+                        lblLeft.StylePriority.UseBackColor = true;
+                        lblLeft.StylePriority.UseBorders   = true;
                         detailBand.Controls.Add(lblLeft);
 
                         // Iki nokta sutunu
@@ -197,10 +199,10 @@ namespace YALCINDORSE
                             LocationFloat = new DevExpress.Utils.PointFloat(LEFT_W, y),
                             SizeF         = new System.Drawing.SizeF(COL_W, ROW_H),
                             TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
-                            Borders       = DevExpress.XtraPrinting.BorderSide.Bottom,
-                            BorderColor   = bordClr
+                            Borders       = DevExpress.XtraPrinting.BorderSide.None
                         };
-                        lblColon.StylePriority.UseBackColor = lblColon.StylePriority.UseBorders = lblColon.StylePriority.UseBorderColor = true;
+                        lblColon.StylePriority.UseBackColor = true;
+                        lblColon.StylePriority.UseBorders   = true;
                         detailBand.Controls.Add(lblColon);
 
                         // Sag sutun: deger
@@ -213,14 +215,41 @@ namespace YALCINDORSE
                             SizeF         = new System.Drawing.SizeF(RIGHT_W, ROW_H),
                             Padding       = new DevExpress.XtraPrinting.PaddingInfo(8, 4, 2, 2, 100F),
                             TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft,
-                            Borders       = DevExpress.XtraPrinting.BorderSide.Bottom,
-                            BorderColor   = bordClr
+                            Borders       = DevExpress.XtraPrinting.BorderSide.None
                         };
-                        lblVal.StylePriority.UseBackColor = lblVal.StylePriority.UseBorders = lblVal.StylePriority.UseBorderColor = true;
+                        lblVal.StylePriority.UseBackColor = true;
+                        lblVal.StylePriority.UseBorders   = true;
                         detailBand.Controls.Add(lblVal);
+
+                        // Tam genislikte yatay cizgi (her satirin altinda, kesintisiz)
+                        var hLine = new DevExpress.XtraReports.UI.XRLine
+                        {
+                            LocationFloat = new DevExpress.Utils.PointFloat(0F, y + ROW_H - 1F),
+                            SizeF         = new System.Drawing.SizeF(W, 1F),
+                            ForeColor     = bordClr,
+                            LineWidth     = 1
+                        };
+                        hLine.StylePriority.UseForeColor = true;
+                        detailBand.Controls.Add(hLine);
 
                         y += ROW_H;
                         alt = !alt;
+                    }
+
+                    // Dikey cizgi: ozellik adi / deger sutunlarini ayirir (grup boyunca tek seferde)
+                    float totalGrpH = y - grpBodyY;
+                    if (totalGrpH > 0)
+                    {
+                        var vLine = new DevExpress.XtraReports.UI.XRLine
+                        {
+                            LocationFloat = new DevExpress.Utils.PointFloat(LEFT_W, grpBodyY),
+                            SizeF         = new System.Drawing.SizeF(1F, totalGrpH),
+                            ForeColor     = bordClr,
+                            LineDirection = DevExpress.XtraReports.UI.LineDirection.Vertical,
+                            LineWidth     = 1
+                        };
+                        vLine.StylePriority.UseForeColor = true;
+                        detailBand.Controls.Add(vLine);
                     }
 
                     y += 4F; // gruplar arasi bosluk
