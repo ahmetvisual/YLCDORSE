@@ -179,7 +179,7 @@ namespace YALCINDORSE
             this.picUrun,
             this.picUrun2,
             this.lblUrunAltYazi});
-            this.reportHeaderBand.HeightF = 625F;
+            this.reportHeaderBand.HeightF = 667F;
             this.reportHeaderBand.Name = "reportHeaderBand";
             // 
             // picLogo
@@ -403,7 +403,7 @@ namespace YALCINDORSE
             //
             this.picUrun.LocationFloat = new DevExpress.Utils.PointFloat(0F, 379F);
             this.picUrun.Name = "picUrun";
-            this.picUrun.SizeF = new System.Drawing.SizeF(727F, 218F);
+            this.picUrun.SizeF = new System.Drawing.SizeF(727F, 260F);
             this.picUrun.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.picUrun.Visible = false;
             //
@@ -411,7 +411,7 @@ namespace YALCINDORSE
             //
             this.picUrun2.LocationFloat = new DevExpress.Utils.PointFloat(367F, 379F);
             this.picUrun2.Name = "picUrun2";
-            this.picUrun2.SizeF = new System.Drawing.SizeF(360F, 218F);
+            this.picUrun2.SizeF = new System.Drawing.SizeF(360F, 260F);
             this.picUrun2.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
             this.picUrun2.Visible = false;
             //
@@ -422,7 +422,7 @@ namespace YALCINDORSE
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?pUrunAltYazi")});
             this.lblUrunAltYazi.Font = new DevExpress.Drawing.DXFont("Segoe UI", 8F, DevExpress.Drawing.DXFontStyle.Italic);
             this.lblUrunAltYazi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(220)))), ((int)(((byte)(240)))));
-            this.lblUrunAltYazi.LocationFloat = new DevExpress.Utils.PointFloat(0F, 597F);
+            this.lblUrunAltYazi.LocationFloat = new DevExpress.Utils.PointFloat(0F, 639F);
             this.lblUrunAltYazi.Name = "lblUrunAltYazi";
             this.lblUrunAltYazi.Padding = new DevExpress.XtraPrinting.PaddingInfo(12, 12, 4, 4, 100F);
             this.lblUrunAltYazi.SizeF = new System.Drawing.SizeF(727F, 22F);

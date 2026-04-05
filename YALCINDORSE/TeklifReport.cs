@@ -78,9 +78,9 @@ namespace YALCINDORSE
                 {
                     // Yan yana: her resim ~360px genislik, aralarinda 7px bosluk
                     picUrun.LocationFloat  = new DevExpress.Utils.PointFloat(0F,    379F);
-                    picUrun.SizeF          = new System.Drawing.SizeF(360F, 218F);
+                    picUrun.SizeF          = new System.Drawing.SizeF(360F, 260F);
                     picUrun2.LocationFloat = new DevExpress.Utils.PointFloat(367F,  379F);
-                    picUrun2.SizeF         = new System.Drawing.SizeF(360F, 218F);
+                    picUrun2.SizeF         = new System.Drawing.SizeF(360F, 260F);
 
                     using var ms1 = new MemoryStream(imageBytes!);
                     picUrun.Image = System.Drawing.Image.FromStream(ms1);
@@ -91,14 +91,14 @@ namespace YALCINDORSE
                 {
                     // Tek resim: tam genislik
                     picUrun.LocationFloat = new DevExpress.Utils.PointFloat(0F, 379F);
-                    picUrun.SizeF         = new System.Drawing.SizeF(727F, 218F);
+                    picUrun.SizeF         = new System.Drawing.SizeF(727F, 260F);
                     picUrun2.Image        = null;
 
                     using var ms = new MemoryStream(imageBytes!);
                     picUrun.Image = System.Drawing.Image.FromStream(ms);
                 }
 
-                reportHeaderBand.HeightF = 625F;
+                reportHeaderBand.HeightF = 667F;
             }
             else
             {
