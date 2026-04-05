@@ -227,10 +227,17 @@
         return result;
     }
 
+    /// <summary>TablTipi=1 grubuna ait bir HEADER mi? (tum cocuklari SPEC ise evet)</summary>
+    private bool IsSpecHeader(QuoteItemModel header) =>
+        Items.Any(i => i.UstKalemId == header.Id && i.KalemTipi == "SPEC");
+
     private string GetSiraLabel(QuoteItemModel item)
     {
+        if (item.KalemTipi == "SPEC") return "";  // TablTipi=1: satir numarasi yok
+
         if (item.KalemTipi == "HEADER")
         {
+            if (IsSpecHeader(item)) return "";  // TablTipi=1 grubunun basliginda numara yok
             var headers = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
             var idx = headers.IndexOf(item) + 1;
             return $"{idx}.0";
