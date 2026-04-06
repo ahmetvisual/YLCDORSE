@@ -1269,9 +1269,13 @@
    ============================================================ */
 .quote-date-rel {
     font-size: 0.68rem;
+    font-weight: 700;
     color: #9ca3af;
     margin-top: 2px;
     white-space: nowrap;
+}
+.quote-date-rel--late {
+    color: #dc2626;
 }
 
 /* ============================================================

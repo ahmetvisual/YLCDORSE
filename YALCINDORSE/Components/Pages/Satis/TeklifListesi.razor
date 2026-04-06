@@ -139,7 +139,7 @@
                                             <!-- 3. Duzenleme Tarihi -->
                                             <td class="quote-date-cell">
                                                 <div>@quote.TalepTarihi.ToString("dd.MM.yyyy")</div>
-                                                <div class="quote-date-rel">@GetRelativeTime(quote.TalepTarihi)</div>
+                                                <div class="quote-date-rel @(IsLateDate(quote.TalepTarihi) ? "quote-date-rel--late" : "")">@GetRelativeTime(quote.TalepTarihi)</div>
                                             </td>
                                             <!-- 4. Durum -->
                                             <td class="qt-hide-sm">
@@ -638,6 +638,9 @@
         if (days < 365) return $"{days / 30} ay once";
         return $"{days / 365} yil once";
     }
+
+    private static bool IsLateDate(DateTime date) =>
+        (DateTime.Today - date.Date).TotalDays > 7;
 
     // Arama: her tuşta debounce ile 350ms sonra arar (Enter beklemiyor)
     private CancellationTokenSource? _searchCts;
