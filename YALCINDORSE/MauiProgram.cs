@@ -31,6 +31,7 @@ namespace YALCINDORSE
             builder.Services.AddTransient<QuoteDocumentService>();
             builder.Services.AddTransient<TouchService>();
             builder.Services.AddTransient<ArabaslikService>();
+            builder.Services.AddTransient<QuoteLookupService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

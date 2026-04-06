@@ -53,11 +53,55 @@ namespace YALCINDORSE.Services
     {
         private readonly DatabaseHelper _db;
         private readonly AuthService _auth;
+        private bool _schemaEnsured = false;
 
         public ArabaslikService(DatabaseHelper db, AuthService auth)
         {
             _db = db;
             _auth = auth;
+        }
+
+        /// <summary>
+        /// YLArabaslikDetaylar tablosunun ParaBirimi kolonunu TEXT'e genisletir.
+        /// VARCHAR(10) olarak yaratilmis olabilir; Deger alani icin yeterli degil.
+        /// </summary>
+        private async Task EnsureSchemaAsync(NpgsqlConnection conn)
+        {
+            if (_schemaEnsured) return;
+            _schemaEnsured = true;
+            try
+            {
+                const string sql = """
+                    DO $$
+                    BEGIN
+                        -- ParaBirimi kolonunu TEXT'e genislet (eger VARCHAR(n) ise)
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.columns
+                            WHERE table_name = 'YLArabaslikDetaylar'
+                              AND column_name = 'ParaBirimi'
+                              AND data_type = 'character varying'
+                        ) THEN
+                            ALTER TABLE "YLArabaslikDetaylar"
+                                ALTER COLUMN "ParaBirimi" TYPE TEXT;
+                        END IF;
+
+                        -- YLTeklifKalemleri.Birim kolonunu TEXT'e genislet
+                        -- SPEC satirlarda "12 ton x 6 aks = 96 ton**" gibi degerler VARCHAR(20) ye sigmayabiliyor
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.columns
+                            WHERE table_name = 'YLTeklifKalemleri'
+                              AND column_name = 'Birim'
+                              AND data_type = 'character varying'
+                        ) THEN
+                            ALTER TABLE "YLTeklifKalemleri"
+                                ALTER COLUMN "Birim" TYPE TEXT;
+                        END IF;
+                    END$$;
+                    """;
+                using var cmd = new NpgsqlCommand(sql, conn);
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch { /* tablo yoksa veya yetki yoksa sessiz devam */ }
         }
 
         // ─── GRUP CRUD ───────────────────────────────────────
@@ -232,6 +276,7 @@ namespace YALCINDORSE.Services
             var items = new List<ArabaslikDetayModel>();
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
 
             const string sql = """
                 SELECT "Id", "GrupId", "SatirMetni", "SatirMetni_EN", "SatirMetni_FR",
@@ -275,6 +320,7 @@ namespace YALCINDORSE.Services
         {
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
             using var tx = await conn.BeginTransactionAsync();
 
             try

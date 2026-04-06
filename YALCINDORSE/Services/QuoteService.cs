@@ -67,6 +67,13 @@ namespace YALCINDORSE.Services
         // Ikinci el alanları
         public string? SasiNo { get; set; }
         public int? ModelYili { get; set; }
+
+        // Urun detay alanlari
+        public string? TipAdi        { get; set; }
+        public string? Lastik        { get; set; }
+        public string? Suspansiyon   { get; set; }
+        public string? Extension     { get; set; }
+        public string? Gooseneck     { get; set; }
     }
 
     public class QuoteItemModel
@@ -253,7 +260,8 @@ namespace YALCINDORSE.Services
                     "TeklifKanali", "TeklifTipi", "AksSayisi", "OdemeSistemi",
                     "IskontoAciklama", "KdvDahilMi", "IhracatMi", "IhracKayitliMi",
                     "TeslimatHaftasi", "TeslimatTipiKodu", "TeslimatYeri",
-                    "SasiNo", "ModelYili"
+                    "SasiNo", "ModelYili",
+                    "TipAdi", "Lastik", "Suspansiyon", "Extension", "Gooseneck"
                 )
                 VALUES
                 (
@@ -265,7 +273,8 @@ namespace YALCINDORSE.Services
                     @TeklifKanali, @TeklifTipi, @AksSayisi, @OdemeSistemi,
                     @IskontoAciklama, @KdvDahilMi, @IhracatMi, @IhracKayitliMi,
                     @TeslimatHaftasi, @TeslimatTipiKodu, @TeslimatYeri,
-                    @SasiNo, @ModelYili
+                    @SasiNo, @ModelYili,
+                    @TipAdi, @Lastik, @Suspansiyon, @Extension, @Gooseneck
                 )
                 RETURNING "Id";
                 """;
@@ -302,6 +311,11 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
             cmd.Parameters.AddWithValue("SasiNo", (object?)quote.SasiNo ?? DBNull.Value);
             cmd.Parameters.AddWithValue("ModelYili", (object?)quote.ModelYili ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TipAdi", (object?)quote.TipAdi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Lastik", (object?)quote.Lastik ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Suspansiyon", (object?)quote.Suspansiyon ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Extension", (object?)quote.Extension ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Gooseneck", (object?)quote.Gooseneck ?? DBNull.Value);
 
             var idResult = await cmd.ExecuteScalarAsync();
             var newId = Convert.ToInt32(idResult);
@@ -362,7 +376,8 @@ namespace YALCINDORSE.Services
                     "OdemeSistemi" = @OdemeSistemi, "IskontoAciklama" = @IskontoAciklama,
                     "KdvDahilMi" = @KdvDahilMi, "IhracatMi" = @IhracatMi, "IhracKayitliMi" = @IhracKayitliMi,
                     "TeslimatHaftasi" = @TeslimatHaftasi, "TeslimatTipiKodu" = @TeslimatTipiKodu, "TeslimatYeri" = @TeslimatYeri,
-                    "SasiNo" = @SasiNo, "ModelYili" = @ModelYili
+                    "SasiNo" = @SasiNo, "ModelYili" = @ModelYili,
+                    "TipAdi" = @TipAdi, "Lastik" = @Lastik, "Suspansiyon" = @Suspansiyon, "Extension" = @Extension, "Gooseneck" = @Gooseneck
                 WHERE "Id" = @Id;
                 """;
 
@@ -397,6 +412,11 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
             cmd.Parameters.AddWithValue("SasiNo", (object?)quote.SasiNo ?? DBNull.Value);
             cmd.Parameters.AddWithValue("ModelYili", (object?)quote.ModelYili ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TipAdi", (object?)quote.TipAdi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Lastik", (object?)quote.Lastik ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Suspansiyon", (object?)quote.Suspansiyon ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Extension", (object?)quote.Extension ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Gooseneck", (object?)quote.Gooseneck ?? DBNull.Value);
 
             await cmd.ExecuteNonQueryAsync();
         }
@@ -424,7 +444,8 @@ namespace YALCINDORSE.Services
                        "TeklifKanali", "TeklifTipi", "AksSayisi", "OdemeSistemi", "IskontoAciklama",
                        "KdvDahilMi", "IhracatMi", "IhracKayitliMi", "TeslimatHaftasi",
                        "TeslimatTipiKodu", "TeslimatYeri", "SiparisNo",
-                       "SasiNo", "ModelYili"
+                       "SasiNo", "ModelYili",
+                       "TipAdi", "Lastik", "Suspansiyon", "Extension", "Gooseneck"
                 FROM "YLTeklifler"
                 WHERE "Id" = @id;
                 """;
@@ -472,7 +493,12 @@ namespace YALCINDORSE.Services
                 TeslimatYeri = r.IsDBNull(32) ? null : r.GetString(32),
                 SiparisNo = r.IsDBNull(33) ? null : r.GetString(33),
                 SasiNo = r.IsDBNull(34) ? null : r.GetString(34),
-                ModelYili = r.IsDBNull(35) ? null : r.GetInt32(35)
+                ModelYili = r.IsDBNull(35) ? null : r.GetInt32(35),
+                TipAdi      = r.IsDBNull(36) ? null : r.GetString(36),
+                Lastik      = r.IsDBNull(37) ? null : r.GetString(37),
+                Suspansiyon = r.IsDBNull(38) ? null : r.GetString(38),
+                Extension   = r.IsDBNull(39) ? null : r.GetString(39),
+                Gooseneck   = r.IsDBNull(40) ? null : r.GetString(40)
             };
         }
 

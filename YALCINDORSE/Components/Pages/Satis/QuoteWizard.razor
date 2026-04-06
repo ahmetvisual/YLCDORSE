@@ -7,12 +7,13 @@
 @inject NavigationManager Nav
 @inject AuthService Auth
 @inject DesktopWindowService WindowSvc
+@inject QuoteLookupService LookupSvc
 
-<div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;">
+<div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow:hidden;">
     <div class="wizard-container">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:var(--yl-primary)">@(isEditMode ? $"Teklif Duzenle - {quote.TeklifNo}" : isCopyMode ? "Teklif Kopyala" : "Teklif Olustur")</h3>
-            <span style="font-size:0.68rem;color:var(--yl-text-light)">@(isEditMode ? "Teklif detaylarini duzenleyin" : isCopyMode ? "Kaynak tekliften kopyalandi, degisiklikleri yapin" : "3 adimda teklif olusturun")</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
+            <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--yl-primary)">@(isEditMode ? $"Teklif Duzenle - {quote.TeklifNo}" : isCopyMode ? "Teklif Kopyala" : "Teklif Olustur")</h3>
+            <span style="font-size:0.78rem;color:var(--yl-text-light)">@(isEditMode ? "Teklif detaylarini duzenleyin" : isCopyMode ? "Kaynak tekliften kopyalandi, degisiklikleri yapin" : "3 adimda teklif olusturun")</span>
         </div>
 
         <!-- Adim Gostergesi -->
@@ -60,7 +61,6 @@
                 @{
                     var satisTipiOpts = new[] { ("NewProduction","Yeni Uretim"), ("SecondHand","Ikinci El"), ("SparePart","Yedek Parca") };
                     var teklifKanaliOpts = new[] { ("","— Seciniz —"), ("BAYI","Bayi"), ("ZIYARET","Ziyaret"), ("ONLINE","Online"), ("WHATSAPP","WhatsApp"), ("EMAIL","E-Mail"), ("WEB_SITESI","Web Sitesi"), ("FUAR","Fuar") };
-                    var teklifTipiOpts = new[] { ("","— Seciniz —"), ("LB","LB"), ("KB","KB"), ("SHC","SHC"), ("PLT","PLT") };
                     var puanOpts = new[] { ("WARM","WARM"), ("HOT","HOT"), ("COLD","COLD"), ("ORDER","ORDER"), ("CLOSED","CLOSED") };
                     var dilOpts = new[] { ("TR","Turkce"), ("EN","English"), ("DE","Deutsch"), ("FR","Francais"), ("RU","Russian") };
                     var paraBirimiOpts = new[] { ("EUR","EUR"), ("USD","USD"), ("TRY","TRY"), ("GBP","GBP") };
@@ -119,7 +119,7 @@
                                     </div>
                                 }
                             </div>
-                            <button class="wizard-btn wizard-btn-primary" style="padding:4px 10px;font-size:0.72rem" @onclick="() => showQuickAdd = true">+ Yeni</button>
+                            <button class="wizard-btn wizard-btn-primary" style="padding:5px 12px;font-size:0.8rem" @onclick="() => showQuickAdd = true">+ Yeni</button>
                         </div>
                     </div>
                     <div class="wizard-field compact">
@@ -143,34 +143,185 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Teklif Tipi</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("teklifTipi")'>
-                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("teklifTipi")'>
-                                <span>@(teklifTipiOpts.FirstOrDefault(o => o.Item1 == quote.TeklifTipi).Item2 ?? "— Seciniz —")</span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                            </button>
-                            @if (openDropdown == "teklifTipi")
-                            {
-                                <div class="custom-select-dropdown">
-                                    @foreach (var (val, label) in teklifTipiOpts)
-                                    {
-                                        <button class="custom-select-option @(quote.TeklifTipi == val ? "selected" : "")"
-                                                @onmousedown="() => { quote.TeklifTipi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
-                                    }
-                                </div>
-                            }
+                        <div style="display:flex;gap:4px;align-items:flex-start">
+                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("teklifTipi")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("teklifTipi")'>
+                                    <span>@(string.IsNullOrEmpty(quote.TeklifTipi) ? "— Seciniz —" : quote.TeklifTipi)</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "teklifTipi")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.TeklifTipi) ? "selected" : "")"
+                                                @onmousedown="() => { quote.TeklifTipi = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in teklifTipiValues)
+                                        {
+                                            <button class="custom-select-option @(quote.TeklifTipi == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.TeklifTipi = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <button class="wizard-btn lookup-mgr-btn" title="Secenekleri yonet" @onclick='() => ToggleLookupManager("TEKLIF_TIPI")'>&#x229E;</button>
                         </div>
+                        @if (openLookupManager == "TEKLIF_TIPI")
+                        {
+                            <div class="lookup-manager-panel">
+                                @foreach (var v in teklifTipiValues)
+                                {
+                                    <div class="lookup-mgr-row">
+                                        <span>@v</span>
+                                        <button @onclick='async () => await DeleteLookupValueAsync("TEKLIF_TIPI", v)'>&#xD7;</button>
+                                    </div>
+                                }
+                                <div class="lookup-mgr-add">
+                                    <input type="text" @bind="newLookupValue" placeholder="Yeni deger..." @bind:event="oninput" />
+                                    <button @onclick='async () => await AddLookupValueAsync("TEKLIF_TIPI")'>+</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="wizard-field compact">
+                        <label>Tip Adi</label>
+                        <input type="text" value="@quote.TipAdi"
+                               @onchange="(e) => { quote.TipAdi = e.Value?.ToString()?.ToUpperInvariant(); }"
+                               placeholder="Ornek: DEVEBOYNU" />
                     </div>
                     <div class="wizard-field compact">
                         <label>Aks Sayisi</label>
                         <input type="number" @bind="quote.AksSayisi" min="1" max="10" />
                     </div>
+                    <div class="wizard-field compact">
+                        <label>Lastik (Tire)</label>
+                        <input type="text" @bind="quote.Lastik" placeholder="Ornek: 385/65 R22.5" />
+                    </div>
+                    <div class="wizard-field compact">
+                        <label>Suspansiyon</label>
+                        <div style="display:flex;gap:4px;align-items:flex-start">
+                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("suspansiyon")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("suspansiyon")'>
+                                    <span>@(string.IsNullOrEmpty(quote.Suspansiyon) ? "— Seciniz —" : quote.Suspansiyon)</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "suspansiyon")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.Suspansiyon) ? "selected" : "")"
+                                                @onmousedown="() => { quote.Suspansiyon = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in suspansiyonValues)
+                                        {
+                                            <button class="custom-select-option @(quote.Suspansiyon == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.Suspansiyon = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <button class="wizard-btn lookup-mgr-btn" title="Secenekleri yonet" @onclick='() => ToggleLookupManager("SUSPANSIYON")'>&#x229E;</button>
+                        </div>
+                        @if (openLookupManager == "SUSPANSIYON")
+                        {
+                            <div class="lookup-manager-panel">
+                                @foreach (var v in suspansiyonValues)
+                                {
+                                    <div class="lookup-mgr-row">
+                                        <span>@v</span>
+                                        <button @onclick='async () => await DeleteLookupValueAsync("SUSPANSIYON", v)'>&#xD7;</button>
+                                    </div>
+                                }
+                                <div class="lookup-mgr-add">
+                                    <input type="text" @bind="newLookupValue" placeholder="Yeni deger..." @bind:event="oninput" />
+                                    <button @onclick='async () => await AddLookupValueAsync("SUSPANSIYON")'>+</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="wizard-field compact">
+                        <label>Extension</label>
+                        <div style="display:flex;gap:4px;align-items:flex-start">
+                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("extension")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("extension")'>
+                                    <span>@(string.IsNullOrEmpty(quote.Extension) ? "— Seciniz —" : quote.Extension)</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "extension")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.Extension) ? "selected" : "")"
+                                                @onmousedown="() => { quote.Extension = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in extensionValues)
+                                        {
+                                            <button class="custom-select-option @(quote.Extension == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.Extension = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <button class="wizard-btn lookup-mgr-btn" title="Secenekleri yonet" @onclick='() => ToggleLookupManager("EXTENSION")'>&#x229E;</button>
+                        </div>
+                        @if (openLookupManager == "EXTENSION")
+                        {
+                            <div class="lookup-manager-panel">
+                                @foreach (var v in extensionValues)
+                                {
+                                    <div class="lookup-mgr-row">
+                                        <span>@v</span>
+                                        <button @onclick='async () => await DeleteLookupValueAsync("EXTENSION", v)'>&#xD7;</button>
+                                    </div>
+                                }
+                                <div class="lookup-mgr-add">
+                                    <input type="text" @bind="newLookupValue" placeholder="Yeni deger..." @bind:event="oninput" />
+                                    <button @onclick='async () => await AddLookupValueAsync("EXTENSION")'>+</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="wizard-field compact">
+                        <label>Gooseneck</label>
+                        <div style="display:flex;gap:4px;align-items:flex-start">
+                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("gooseneck")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("gooseneck")'>
+                                    <span>@(string.IsNullOrEmpty(quote.Gooseneck) ? "— Seciniz —" : quote.Gooseneck)</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "gooseneck")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.Gooseneck) ? "selected" : "")"
+                                                @onmousedown="() => { quote.Gooseneck = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in gooseneckValues)
+                                        {
+                                            <button class="custom-select-option @(quote.Gooseneck == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.Gooseneck = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <button class="wizard-btn lookup-mgr-btn" title="Secenekleri yonet" @onclick='() => ToggleLookupManager("GOOSENECK")'>&#x229E;</button>
+                        </div>
+                        @if (openLookupManager == "GOOSENECK")
+                        {
+                            <div class="lookup-manager-panel">
+                                @foreach (var v in gooseneckValues)
+                                {
+                                    <div class="lookup-mgr-row">
+                                        <span>@v</span>
+                                        <button @onclick='async () => await DeleteLookupValueAsync("GOOSENECK", v)'>&#xD7;</button>
+                                    </div>
+                                }
+                                <div class="lookup-mgr-add">
+                                    <input type="text" @bind="newLookupValue" placeholder="Yeni deger..." @bind:event="oninput" />
+                                    <button @onclick='async () => await AddLookupValueAsync("GOOSENECK")'>+</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
                     @if (quote.SatisTipi == "SecondHand")
                     {
-                        <div class="wizard-field compact">
+                        <div class="wizard-field compact extra-field">
                             <label>Sasi No</label>
                             <input type="text" @bind="quote.SasiNo" placeholder="Sasi numarasi giriniz" />
                         </div>
-                        <div class="wizard-field compact">
+                        <div class="wizard-field compact extra-field">
                             <label>Model Yili</label>
                             <input type="number" @bind="quote.ModelYili" min="1990" max="2030" placeholder="Ornek: 2024" />
                         </div>
@@ -278,7 +429,7 @@
                         }
                         else
                         {
-                            <span style="font-size:0.8rem;color:var(--yl-text-light)">Musteri secilmedi veya ilgili kisi yok</span>
+                            <span style="font-size:0.85rem;color:var(--yl-text-light)">Musteri secilmedi veya ilgili kisi yok</span>
                         }
                     </div>
                     <div class="wizard-field compact">
@@ -293,9 +444,9 @@
         <!-- ADIM 2: Detay Kalemler -->
         @if (currentStep == 2)
         {
-            <div class="wizard-content fill">
+            <div class="wizard-content fill step2-fill">
                 <div class="wizard-section-title">Teklif Kalemleri</div>
-                <p style="font-size:0.68rem;color:var(--yl-text-light);margin:0 0 8px">
+                <p style="font-size:0.8rem;color:var(--yl-text-light);margin:0 0 10px">
                     Baslik ekleyip altina kalemler ekleyin veya "Arabasliktan Ekle" ile hazir sablonlari aktarin.
                 </p>
                 <QuoteItemsEditor @bind-Items="quoteItems" Dil="@quote.Dil" />
@@ -311,7 +462,7 @@
                     <div class="wizard-field">
                         <label>Teslimat Haftasi</label>
                         <input type="text" @bind="quote.TeslimatHaftasi" placeholder="orn: 12-14" />
-                        <span style="font-size:0.65rem;color:var(--yl-text-light)">Aralik girilebilir: 12-14</span>
+                        <span style="font-size:0.75rem;color:var(--yl-text-light)">Aralik girilebilir: 12-14</span>
                     </div>
                     <div class="wizard-field">
                         <label>Teslimat Tipi Kodu</label>
@@ -391,7 +542,7 @@
                         <span>Net Tutar</span>
                         <span>@quote.NetTutar.ToString("N2") @quote.ParaBirimi</span>
                     </div>
-                    <div class="summary-row" style="font-size:0.75rem;color:var(--yl-text-light)">
+                    <div class="summary-row" style="font-size:0.82rem;color:var(--yl-text-light)">
                         <span>Kalem Toplami</span>
                         <span>@(quoteItems.Where(i => i.KalemTipi != "HEADER").Sum(i => i.Tutar ?? 0).ToString("N2")) @quote.ParaBirimi</span>
                     </div>
@@ -564,6 +715,16 @@
     private void ToggleDropdown(string name) => openDropdown = openDropdown == name ? null : name;
     private void CloseDropdown(string name) { if (openDropdown == name) openDropdown = null; }
 
+    // Lookup degerleri (dinamik dropdownlar)
+    private List<string> teklifTipiValues  = new();
+    private List<string> suspansiyonValues = new();
+    private List<string> extensionValues   = new();
+    private List<string> gooseneckValues   = new();
+
+    // Lookup manager UI
+    private string? openLookupManager;
+    private string newLookupValue = "";
+
     // Quick add
     private bool showQuickAdd;
     private string quickAddTitle = "";
@@ -575,6 +736,10 @@
         {
             customers = await CustomerSvc.GetCustomersAsync();
             salesReps = await CustomerSvc.GetSalesRepsAsync();
+            teklifTipiValues  = await LookupSvc.GetValuesAsync("TEKLIF_TIPI");
+            suspansiyonValues = await LookupSvc.GetValuesAsync("SUSPANSIYON");
+            extensionValues   = await LookupSvc.GetValuesAsync("EXTENSION");
+            gooseneckValues   = await LookupSvc.GetValuesAsync("GOOSENECK");
         }
         catch { }
 
@@ -768,11 +933,46 @@
         Nav.NavigateTo("/satis/teklif-listesi");
     }
 
-    private void SaveDraftConfirm()  { pendingDurum = "Draft"; showConfirmDialog = true; }
-    private void SaveAndSendConfirm() { pendingDurum = "Sent";  showConfirmDialog = true; }
+    private void ToggleLookupManager(string type)
+    {
+        openLookupManager = openLookupManager == type ? null : type;
+        newLookupValue = "";
+    }
+
+    private async Task AddLookupValueAsync(string type)
+    {
+        if (string.IsNullOrWhiteSpace(newLookupValue)) return;
+        await LookupSvc.AddValueAsync(type, newLookupValue);
+        newLookupValue = "";
+        // Reload
+        switch (type)
+        {
+            case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
+            case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
+            case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
+            case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
+        }
+    }
+
+    private async Task DeleteLookupValueAsync(string type, string value)
+    {
+        await LookupSvc.DeleteValueAsync(type, value);
+        switch (type)
+        {
+            case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
+            case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
+            case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
+            case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
+        }
+    }
+
+    private void SaveDraftConfirm()  { if (!isSaving) { pendingDurum = "Draft"; showConfirmDialog = true; } }
+    private void SaveAndSendConfirm() { if (!isSaving) { pendingDurum = "Sent";  showConfirmDialog = true; } }
 
     private async Task ConfirmSaveAsync()
     {
+        if (isSaving) return;   // çift tıklama / çoklu kayıt koruması
+        isSaving = true;
         showConfirmDialog = false;
         await SaveQuote(pendingDurum);
     }
@@ -781,12 +981,12 @@
     {
         if (quote.MusteriId <= 0)
         {
+            isSaving = false;
             errorMessage = "Musteri secimi zorunludur.";
             currentStep = 1;
             return;
         }
 
-        isSaving = true;
         errorMessage = null; successMessage = null;
 
         try

@@ -80,14 +80,14 @@
                         <table class="quote-grid qt-merged-grid">
                             <thead>
                                 <tr>
-                                    <th>Musteri</th>
-                                    <th>Teklif No</th>
-                                    <th>Duzenleme Tarihi</th>
-                                    <th class="qt-hide-sm">Durum</th>
-                                    <th class="qt-hide-sm">Puan</th>
+                                    <th style="width:200px;">Musteri</th>
+                                    <th style="width:110px;">Teklif No</th>
+                                    <th style="width:110px;">Duzenleme Tarihi</th>
                                     <th style="text-align:center; width:56px;">Touch</th>
-                                    <th class="qt-hide-md">Sonraki Temas</th>
-                                    <th class="qt-hide-md qt-th-sort">
+                                    <th class="qt-hide-md" style="width:110px;">Sonraki Temas</th>
+                                    <th class="qt-hide-sm" style="width:100px;">Durum</th>
+                                    <th class="qt-hide-sm" style="width:90px;">Puan</th>
+                                    <th class="qt-hide-md qt-th-sort" style="width:140px;">
                                         Teklif Toplami
                                         <svg viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.8"
                                              width="9" height="9" style="margin-left:3px; vertical-align:middle; opacity:0.4;">
@@ -138,21 +138,11 @@
                                                 <div>@quote.TalepTarihi.ToString("dd.MM.yyyy")</div>
                                                 <div class="quote-date-rel @(IsLateDate(quote.TalepTarihi) ? "quote-date-rel--late" : "")">@GetRelativeTime(quote.TalepTarihi)</div>
                                             </td>
-                                            <!-- 4. Durum -->
-                                            <td class="qt-hide-sm">
-                                                <span class="yl-chip @GetStatusChipClass(quote.Durum)">
-                                                    @GetStatusName(quote.Durum)
-                                                </span>
-                                            </td>
-                                            <!-- 5. Puan -->
-                                            <td class="qt-hide-sm">
-                                                <span class="yl-chip @GetStandingChipClass(quote.Puan)">@quote.Puan</span>
-                                            </td>
-                                            <!-- 6. Touch -->
+                                            <!-- 4. Touch -->
                                             <td style="text-align:center; font-weight:700; color:var(--yl-accent);">
                                                 @(touchInfo?.TouchCount ?? 0)
                                             </td>
-                                            <!-- 7. Sonraki Temas -->
+                                            <!-- 5. Sonraki Temas -->
                                             <td class="qt-hide-md" style="font-size:0.72rem;">
                                                 @if (touchInfo?.NextTouchDate != null)
                                                 {
@@ -168,6 +158,16 @@
                                                 {
                                                     <span style="color:var(--yl-text-light);">—</span>
                                                 }
+                                            </td>
+                                            <!-- 6. Durum -->
+                                            <td class="qt-hide-sm">
+                                                <span class="yl-chip @GetStatusChipClass(quote.Durum)">
+                                                    @GetStatusName(quote.Durum)
+                                                </span>
+                                            </td>
+                                            <!-- 7. Puan -->
+                                            <td class="qt-hide-sm">
+                                                <span class="yl-chip @GetStandingChipClass(quote.Puan)">@quote.Puan</span>
                                             </td>
                                             <!-- 8. Teklif Toplami -->
                                             <td class="qt-hide-md quote-amount-cell">
@@ -189,13 +189,29 @@
                                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                                                         </svg>
                                                     </button>
-                                                    <button class="btn-expand" title="Belge Olustur" @onclick="() => GenerateDocumentAsync(quote.Id)"
+                                                    <button class="btn-expand" title="PDF (DevExpress)" @onclick="() => GenerateDocumentAsync(quote.Id)"
                                                             disabled="@isGenerating">
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
                                                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                                             <polyline points="14 2 14 8 20 8"/>
                                                             <line x1="12" y1="18" x2="12" y2="12"/>
                                                             <polyline points="9 15 12 18 15 15"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button class="btn-expand" title="PDF (QuestPDF)" @onclick="() => GenerateQuestDocumentAsync(quote.Id)"
+                                                            disabled="@isGenerating" style="color:#7C3AED;border-color:#7C3AED;">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                                            <polyline points="14 2 14 8 20 8"/>
+                                                            <path d="M9 13h6M9 17h4"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button class="btn-expand" title="Word Belgesi Olustur" @onclick="() => GenerateWordDocumentAsync(quote.Id)"
+                                                            disabled="@isGeneratingDocx" style="color:#1D6F42;border-color:#1D6F42;">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                                            <polyline points="14 2 14 8 20 8"/>
+                                                            <path d="M8 13h2l2 4 2-8 2 4h2"/>
                                                         </svg>
                                                     </button>
                                                     @{
@@ -331,6 +347,25 @@
                                         </svg>
                                         @(isGenerating ? "Hazirlaniyor..." : "Belge Indir")
                                     </button>
+                                    <button class="btn-transition" style="background:#F0FDF4;color:#1D6F42;border-color:rgba(29,111,66,0.3);"
+                                            @onclick="() => GenerateWordDocumentAsync(sel.Id)"
+                                            disabled="@isGeneratingDocx">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                             style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom;">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                            <polyline points="14 2 14 8 20 8"/>
+                                            <path d="M8 13h2l2 4 2-8 2 4h2"/>
+                                        </svg>
+                                        @(isGeneratingDocx ? "Hazirlaniyor..." : "Word Belge")
+                                    </button>
+                                    <button class="btn-transition" style="background:#F9FAFB;color:#6B7280;border-color:#D1D5DB;"
+                                            @onclick="OpenTemplatesFolder" title="Word sablon klasorunu ac">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                             style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom;">
+                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                                        </svg>
+                                        Sablon Klasoru
+                                    </button>
                                     <button class="btn-transition"
                                             style="@(selHazir ? "background:#FEF3C7;color:#D97706;border-color:rgba(217,119,6,0.3);" : "background:#F9FAFB;color:#6B7280;border-color:#D1D5DB;")"
                                             @onclick="() => HazirTeklifClickAsync(sel.Id)"
@@ -452,7 +487,9 @@
     private bool isLoading = true;
     private bool isDetailsLoading = false;
     private bool isTouchLoading = false;
-    private bool isGenerating = false;
+    private bool isGenerating      = false;
+    private bool isGeneratingQuest = false;
+    private bool isGeneratingDocx  = false;
     private bool isUploading = false;
     private string? errorMessage;
     private bool showToast, toastIsSuccess;
@@ -656,14 +693,14 @@
 
     private void GoToNewQuote()
     {
-        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Olustur", 860, 700))
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Olustur", 860, 870))
             Nav.NavigateTo("/satis/teklif-olustur");
     }
 
     private void EditQuote(int quoteId)
     {
         var p = new Dictionary<string, object> { { "QuoteId", quoteId } };
-        WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Duzenle", 860, 700, p);
+        WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Duzenle", 860, 870, p);
     }
 
     private async Task GenerateDocumentAsync(int quoteId)
@@ -688,10 +725,65 @@
         }
     }
 
+    private async Task GenerateQuestDocumentAsync(int quoteId)
+    {
+        if (isGeneratingQuest) return;
+        isGeneratingQuest = true;
+        StateHasChanged();
+        try
+        {
+            await ShowToastSuccess("QuestPDF hazirlaniyor...");
+            await DocSvc.OpenQuestPdfAsync(quoteId);
+            await ShowToastSuccess("QuestPDF acildi.");
+        }
+        catch (Exception ex)
+        {
+            await ShowToastError($"QuestPDF hatasi: {ex.Message}");
+        }
+        finally
+        {
+            isGeneratingQuest = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerateWordDocumentAsync(int quoteId)
+    {
+        if (isGeneratingDocx) return;
+        isGeneratingDocx = true;
+        StateHasChanged();
+        try
+        {
+            await ShowToastSuccess("Word belgesi hazirlaniyor...");
+            await DocSvc.OpenDocxAsync(quoteId);
+            await ShowToastSuccess("Word belgesi acildi.");
+        }
+        catch (FileNotFoundException fnf)
+        {
+            await ShowToastError($"Sablon bulunamadi. 'Sablon Klasoru' butonuyla sablon dosyasini ekleyin.");
+            _ = fnf;
+        }
+        catch (Exception ex)
+        {
+            await ShowToastError($"Word belgesi hatasi: {ex.Message}");
+        }
+        finally
+        {
+            isGeneratingDocx = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OpenTemplatesFolder()
+    {
+        try { QuoteDocumentService.OpenTemplatesFolder(); }
+        catch (Exception ex) { _ = ShowToastError($"Klasor acilamadi: {ex.Message}"); }
+    }
+
     private void CopyQuote(int quoteId)
     {
         var p = new Dictionary<string, object> { { "CopyFromQuoteId", quoteId } };
-        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Kopyala", 860, 700, p))
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Kopyala", 860, 870, p))
             Nav.NavigateTo("/satis/teklif-olustur");
     }
 
