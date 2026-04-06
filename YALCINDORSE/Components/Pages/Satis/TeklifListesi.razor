@@ -206,14 +206,6 @@
                                                             <path d="M9 13h6M9 17h4"/>
                                                         </svg>
                                                     </button>
-                                                    <button class="btn-expand" title="Word Belgesi Olustur" @onclick="() => GenerateWordDocumentAsync(quote.Id)"
-                                                            disabled="@isGeneratingDocx" style="color:#1D6F42;border-color:#1D6F42;">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
-                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                            <polyline points="14 2 14 8 20 8"/>
-                                                            <path d="M8 13h2l2 4 2-8 2 4h2"/>
-                                                        </svg>
-                                                    </button>
                                                     @{
                                                         QuoteAttachmentModel? _rowHti = null;
                                                         hazirTeklifInfo.TryGetValue(quote.Id, out _rowHti);
@@ -347,25 +339,6 @@
                                         </svg>
                                         @(isGenerating ? "Hazirlaniyor..." : "Belge Indir")
                                     </button>
-                                    <button class="btn-transition" style="background:#F0FDF4;color:#1D6F42;border-color:rgba(29,111,66,0.3);"
-                                            @onclick="() => GenerateWordDocumentAsync(sel.Id)"
-                                            disabled="@isGeneratingDocx">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                             style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom;">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                            <polyline points="14 2 14 8 20 8"/>
-                                            <path d="M8 13h2l2 4 2-8 2 4h2"/>
-                                        </svg>
-                                        @(isGeneratingDocx ? "Hazirlaniyor..." : "Word Belge")
-                                    </button>
-                                    <button class="btn-transition" style="background:#F9FAFB;color:#6B7280;border-color:#D1D5DB;"
-                                            @onclick="OpenTemplatesFolder" title="Word sablon klasorunu ac">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                             style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom;">
-                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                                        </svg>
-                                        Sablon Klasoru
-                                    </button>
                                     <button class="btn-transition"
                                             style="@(selHazir ? "background:#FEF3C7;color:#D97706;border-color:rgba(217,119,6,0.3);" : "background:#F9FAFB;color:#6B7280;border-color:#D1D5DB;")"
                                             @onclick="() => HazirTeklifClickAsync(sel.Id)"
@@ -489,7 +462,6 @@
     private bool isTouchLoading = false;
     private bool isGenerating      = false;
     private bool isGeneratingQuest = false;
-    private bool isGeneratingDocx  = false;
     private bool isUploading = false;
     private string? errorMessage;
     private bool showToast, toastIsSuccess;
@@ -745,39 +717,6 @@
             isGeneratingQuest = false;
             StateHasChanged();
         }
-    }
-
-    private async Task GenerateWordDocumentAsync(int quoteId)
-    {
-        if (isGeneratingDocx) return;
-        isGeneratingDocx = true;
-        StateHasChanged();
-        try
-        {
-            await ShowToastSuccess("Word belgesi hazirlaniyor...");
-            await DocSvc.OpenDocxAsync(quoteId);
-            await ShowToastSuccess("Word belgesi acildi.");
-        }
-        catch (FileNotFoundException fnf)
-        {
-            await ShowToastError($"Sablon bulunamadi. 'Sablon Klasoru' butonuyla sablon dosyasini ekleyin.");
-            _ = fnf;
-        }
-        catch (Exception ex)
-        {
-            await ShowToastError($"Word belgesi hatasi: {ex.Message}");
-        }
-        finally
-        {
-            isGeneratingDocx = false;
-            StateHasChanged();
-        }
-    }
-
-    private void OpenTemplatesFolder()
-    {
-        try { QuoteDocumentService.OpenTemplatesFolder(); }
-        catch (Exception ex) { _ = ShowToastError($"Klasor acilamadi: {ex.Message}"); }
     }
 
     private void CopyQuote(int quoteId)
