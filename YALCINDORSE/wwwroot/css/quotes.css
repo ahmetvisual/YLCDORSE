@@ -506,67 +506,21 @@
     letter-spacing: 0.04em;
 }
 
-/* Status Chips — mum gradyanı: transparan → renk → transparan */
-.chip-draft {
-    background: linear-gradient(90deg, transparent 0%, rgba(60,90,140,0.16) 30%, rgba(60,90,140,0.16) 70%, transparent 100%);
-    color: #3C5A8C;
-}
-
-.chip-sent {
-    background: linear-gradient(90deg, transparent 0%, rgba(0,120,180,0.18) 30%, rgba(0,120,180,0.18) 70%, transparent 100%);
-    color: #0078B4;
-}
-
-.chip-waiting {
-    background: linear-gradient(90deg, transparent 0%, rgba(160,110,0,0.18) 30%, rgba(160,110,0,0.18) 70%, transparent 100%);
-    color: #A06E00;
-}
-
-.chip-approved {
-    background: linear-gradient(90deg, transparent 0%, rgba(30,130,60,0.17) 30%, rgba(30,130,60,0.17) 70%, transparent 100%);
-    color: #1E823C;
-}
-
-.chip-rejected {
-    background: linear-gradient(90deg, transparent 0%, rgba(180,30,30,0.17) 30%, rgba(180,30,30,0.17) 70%, transparent 100%);
-    color: #B41E1E;
-}
-
-.chip-order {
-    background: linear-gradient(90deg, transparent 0%, rgba(30,130,60,0.20) 30%, rgba(30,130,60,0.20) 70%, transparent 100%);
-    color: #166534;
-}
-
-.chip-open {
-    background: linear-gradient(90deg, transparent 0%, rgba(109,40,217,0.16) 30%, rgba(109,40,217,0.16) 70%, transparent 100%);
-    color: #6D28D9;
-}
+/* Status Chips — düz arka plan */
+.chip-draft        { background: rgba(60,90,140,0.13);  color: #3C5A8C; }
+.chip-sent         { background: rgba(0,120,180,0.13);  color: #0078B4; }
+.chip-waiting      { background: rgba(160,110,0,0.13);  color: #A06E00; }
+.chip-approved     { background: rgba(30,130,60,0.13);  color: #1E823C; }
+.chip-rejected     { background: rgba(180,30,30,0.13);  color: #B41E1E; }
+.chip-order        { background: rgba(30,130,60,0.15);  color: #166534; }
+.chip-open         { background: rgba(109,40,217,0.12); color: #6D28D9; }
+.chip-closed       { background: rgba(75,85,99,0.13);   color: #4b5563; }
 
 /* Standing Chips */
-.chip-hot {
-    background: linear-gradient(90deg, transparent 0%, rgba(185,28,28,0.20) 30%, rgba(185,28,28,0.20) 70%, transparent 100%);
-    color: #B91C1C;
-}
-
-.chip-warm {
-    background: linear-gradient(90deg, transparent 0%, rgba(180,83,9,0.20) 30%, rgba(180,83,9,0.20) 70%, transparent 100%);
-    color: #B45309;
-}
-
-.chip-cold {
-    background: linear-gradient(90deg, transparent 0%, rgba(29,78,216,0.16) 30%, rgba(29,78,216,0.16) 70%, transparent 100%);
-    color: #1D4ED8;
-}
-
-.chip-taslak-puan {
-    background: linear-gradient(90deg, transparent 0%, rgba(100,116,139,0.16) 30%, rgba(100,116,139,0.16) 70%, transparent 100%);
-    color: #64748b;
-}
-
-.chip-closed {
-    background: linear-gradient(90deg, transparent 0%, rgba(75,85,99,0.16) 30%, rgba(75,85,99,0.16) 70%, transparent 100%);
-    color: #4b5563;
-}
+.chip-hot          { background: rgba(185,28,28,0.13);  color: #B91C1C; }
+.chip-warm         { background: rgba(180,83,9,0.13);   color: #B45309; }
+.chip-cold         { background: rgba(29,78,216,0.12);  color: #1D4ED8; }
+.chip-taslak-puan  { background: rgba(100,116,139,0.13); color: #64748b; }
 
 /* === FOOTER === */
 .quote-grid-footer {
