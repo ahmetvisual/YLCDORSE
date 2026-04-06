@@ -110,12 +110,44 @@ namespace YALCINDORSE.Services
         private readonly DatabaseHelper _db;
         private readonly AuthService _auth;
         private readonly SemaphoreSlim _schemaLock = new(1, 1);
-        private bool _schemaEnsured;
+        private static bool _schemaEnsured;   // static: Transient servis olsa da bir kez calisir
 
         public QuoteService(DatabaseHelper db, AuthService auth)
         {
             _db = db;
             _auth = auth;
+        }
+
+        /// <summary>YLTeklifler tablosuna eksik kolonlari ekler (her kolonu ayri komutla).</summary>
+        private async Task EnsureSchemaAsync(NpgsqlConnection conn)
+        {
+            if (_schemaEnsured) return;
+            await _schemaLock.WaitAsync();
+            try
+            {
+                if (_schemaEnsured) return;
+                _schemaEnsured = true;
+
+                var migrations = new[]
+                {
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "TipAdi"      TEXT""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Lastik"      TEXT""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Suspansiyon" TEXT""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Extension"   TEXT""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Gooseneck"   TEXT""",
+                };
+
+                foreach (var sql in migrations)
+                {
+                    try
+                    {
+                        using var cmd = new NpgsqlCommand(sql, conn);
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                    catch { /* kolon zaten varsa atla */ }
+                }
+            }
+            finally { _schemaLock.Release(); }
         }
 
         public async Task<List<QuoteListItemModel>> GetQuotesAsync(string search = "", string durum = "", int? saticiId = null, string puan = "", IReadOnlyList<string>? durumList = null)
@@ -248,6 +280,7 @@ namespace YALCINDORSE.Services
         {
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
 
             const string sql = """
                 INSERT INTO "YLTeklifler"
@@ -363,6 +396,7 @@ namespace YALCINDORSE.Services
         {
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
 
             const string sql = """
                 UPDATE "YLTeklifler" SET
@@ -435,6 +469,7 @@ namespace YALCINDORSE.Services
         {
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
 
             const string sql = """
                 SELECT "Id", "TeklifNo", "MusteriId", "IlgiliKisiId", "SatisTipi", "Kaynak",
