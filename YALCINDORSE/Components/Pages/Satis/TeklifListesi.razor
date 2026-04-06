@@ -877,10 +877,11 @@
     };
 
     private string GetStandingChipClass(string s) => s switch {
-        "HOT"  => "chip-hot",
-        "WARM" => "chip-warm",
-        "COLD" => "chip-cold",
-        _      => ""
+        "HOT"   => "chip-hot",
+        "WARM"  => "chip-warm",
+        "COLD"  => "chip-cold",
+        "DRAFT" => "chip-taslak-puan",
+        _       => "chip-taslak-puan"
     };
 
     private class QuoteTouchSummary
