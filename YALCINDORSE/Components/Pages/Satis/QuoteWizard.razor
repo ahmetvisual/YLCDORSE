@@ -942,27 +942,40 @@
     private async Task AddLookupValueAsync(string type)
     {
         if (string.IsNullOrWhiteSpace(newLookupValue)) return;
-        await LookupSvc.AddValueAsync(type, newLookupValue);
-        newLookupValue = "";
-        // Reload
-        switch (type)
+        try
         {
-            case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
-            case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
-            case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
-            case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
+            await LookupSvc.AddValueAsync(type, newLookupValue);
+            newLookupValue = "";
+            switch (type)
+            {
+                case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
+                case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
+                case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
+                case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Deger eklenemedi: {ex.Message}";
         }
     }
 
     private async Task DeleteLookupValueAsync(string type, string value)
     {
-        await LookupSvc.DeleteValueAsync(type, value);
-        switch (type)
+        try
         {
-            case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
-            case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
-            case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
-            case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
+            await LookupSvc.DeleteValueAsync(type, value);
+            switch (type)
+            {
+                case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
+                case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
+                case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
+                case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Deger silinemedi: {ex.Message}";
         }
     }
 
