@@ -269,8 +269,10 @@
 }
 
 .quote-customer {
-    font-weight: 500;
-    color: var(--yl-text);
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #111827;
+    letter-spacing: -0.01em;
 }
 
 .quote-contact {
@@ -299,10 +301,10 @@
 /* === ACTION BUTTONS === */
 .quote-row-actions {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     align-items: center;
-    opacity: 0.3;
-    transition: opacity var(--yl-transition-fast);
+    opacity: 0;
+    transition: opacity 0.15s ease;
 }
 
 .quote-grid tbody tr:hover .quote-row-actions {
@@ -314,9 +316,9 @@
 }
 
 .btn-expand {
-    background: none;
-    border: none;
-    color: var(--yl-text-light);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #6b7280;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -723,8 +725,16 @@
     color: #fca5a5;
 }
 
+.app-root.dark .btn-expand {
+    background: #1e2530;
+    border-color: #30363d;
+    color: #8b949e;
+}
+
 .app-root.dark .btn-expand:hover {
-    background: rgba(59, 125, 221, 0.12);
+    background: rgba(59, 125, 221, 0.15);
+    border-color: rgba(59,125,221,0.4);
+    color: #7dd3fc;
 }
 
 /* Dark Transition Buttons */
@@ -994,11 +1004,16 @@
 }
 
 .qt-merged-grid tbody tr:hover td {
-    background: #f7f9fc;
+    background: #f0f5ff;
+}
+
+.qt-merged-grid tbody tr:hover td:first-child {
+    border-left: 3px solid rgba(59,125,221,0.35);
+    padding-left: calc(var(--yl-space-md) - 3px);
 }
 
 .qt-merged-grid tbody tr.qt-selected td {
-    background: #eef4ff;
+    background: #e8f0ff;
 }
 
 .qt-merged-grid tbody tr.qt-selected td:first-child {
