@@ -78,6 +78,16 @@ namespace YALCINDORSE.Services
         public int GecikenTemasSayisi { get; set; }
         public int HareketsizSayisi { get; set; }
         public int ToplamTemas { get; set; }
+
+        // Dashboard icin ek alanlar
+        public int MusteriSayisi         { get; set; }
+        public int DraftSayisi           { get; set; }
+        public int SentSayisi            { get; set; }
+        public int WaitingApprovalSayisi { get; set; }
+        public int ApprovedSayisi        { get; set; }
+        public int RejectedSayisi        { get; set; }
+        public double OrtCevapSuresiGun   { get; set; }
+        public double OrtBeklemeSuresiGun { get; set; }
     }
 
     public class PersonPerformanceModel
@@ -546,8 +556,14 @@ namespace YALCINDORSE.Services
                 kpi.ToplamTeklif += count;
                 switch (durum)
                 {
-                    case "ORDER": kpi.OrderSayisi = count; break;
-                    case "CLOSED": kpi.ClosedSayisi = count; break;
+                    case "ORDER":           kpi.OrderSayisi           = count; break;
+                    case "CLOSED":          kpi.ClosedSayisi          = count; break;
+                    case "Draft":           kpi.DraftSayisi           = count; break;
+                    case "Sent":            kpi.SentSayisi            = count; break;
+                    case "WaitingApproval": kpi.WaitingApprovalSayisi = count; break;
+                    case "Approved":        kpi.ApprovedSayisi        = count; break;
+                    case "Rejected":        kpi.RejectedSayisi        = count; break;
+                    case "OPEN":            kpi.OpenSayisi            = count; break;
                 }
             }
             await r2.CloseAsync();
@@ -594,6 +610,46 @@ namespace YALCINDORSE.Services
             if (saticiId.HasValue)
                 cmd5.Parameters.AddWithValue("saticiId5", saticiId.Value);
             kpi.HareketsizSayisi = Convert.ToInt32(await cmd5.ExecuteScalarAsync());
+
+            // Aktif musteri sayisi
+            try
+            {
+                using var cmd6 = new NpgsqlCommand(
+                    """SELECT COUNT(*) FROM "YLCustomers" WHERE "IsActive" = TRUE;""", conn);
+                kpi.MusteriSayisi = Convert.ToInt32(await cmd6.ExecuteScalarAsync());
+            }
+            catch { kpi.MusteriSayisi = 0; }
+
+            // Ortalama cevap suresi (teklif olusturma -> ilk temas, gun)
+            try
+            {
+                const string ortCevapSql = """
+                    SELECT AVG(EXTRACT(EPOCH FROM (ft.first_touch - q."OlusturmaTarihi")) / 86400.0)
+                    FROM "YLTeklifler" q
+                    JOIN LATERAL (
+                        SELECT MIN(t."TemasTarihi") AS first_touch
+                        FROM "YLTemaslar" t WHERE t."TeklifId" = q."Id"
+                    ) ft ON ft.first_touch IS NOT NULL;
+                    """;
+                using var cmd7 = new NpgsqlCommand(ortCevapSql, conn);
+                var res = await cmd7.ExecuteScalarAsync();
+                kpi.OrtCevapSuresiGun = res == null || res == DBNull.Value ? 0 : Convert.ToDouble(res);
+            }
+            catch { kpi.OrtCevapSuresiGun = 0; }
+
+            // Ortalama bekleme suresi (aktif teklif, TalepTarihi -> bugun)
+            try
+            {
+                const string ortBeklemeSql = """
+                    SELECT AVG(EXTRACT(DAY FROM CURRENT_DATE - "TalepTarihi"))
+                    FROM "YLTeklifler"
+                    WHERE "Durum" IN ('Sent', 'WaitingApproval', 'OPEN');
+                    """;
+                using var cmd8 = new NpgsqlCommand(ortBeklemeSql, conn);
+                var res = await cmd8.ExecuteScalarAsync();
+                kpi.OrtBeklemeSuresiGun = res == null || res == DBNull.Value ? 0 : Convert.ToDouble(res);
+            }
+            catch { kpi.OrtBeklemeSuresiGun = 0; }
 
             return kpi;
         }

@@ -1,1 +1,358 @@
 @page "/"
+@using YALCINDORSE.Services
+@inject TouchService TouchSvc
+
+<div class="dash-shell">
+
+    <div class="dash-header">
+        <div>
+            <h2>Dashboard</h2>
+            <p>Sistem ozeti ve performans metrikleri</p>
+        </div>
+        <button class="dash-refresh-btn" @onclick="LoadAsync" disabled="@_loading">
+            @if (_loading)
+            {
+                <span>Yukleniyor...</span>
+            }
+            else
+            {
+                <span>Yenile</span>
+            }
+        </button>
+    </div>
+
+    @if (_loading && _kpi is null)
+    {
+        <div class="dash-loading">Veriler yukleniyor...</div>
+    }
+    else
+    {
+        <!-- === KPI ROW === -->
+        <div class="dash-kpi-row">
+
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-label">Toplam Musteri</div>
+                <div class="dash-kpi-value kv-blue">@(_kpi?.MusteriSayisi ?? 0)</div>
+                <div class="dash-kpi-sub">aktif kayit</div>
+            </div>
+
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-label">Aktif Teklif</div>
+                <div class="dash-kpi-value">@AktifTeklif</div>
+                <div class="dash-kpi-sub">toplam @(_kpi?.ToplamTeklif ?? 0)</div>
+            </div>
+
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-label">Donusum Orani</div>
+                <div class="dash-kpi-value kv-green">@DonusumOraniText</div>
+                <div class="dash-kpi-sub">siparis / teklif</div>
+            </div>
+
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-label">Onay Orani</div>
+                <div class="dash-kpi-value kv-green">@OnayOraniText</div>
+                <div class="dash-kpi-sub">onaylanan / cevaplanan</div>
+            </div>
+
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-label">Ort. Cevap Suresi</div>
+                <div class="dash-kpi-value kv-orange">@OrtCevapText</div>
+                <div class="dash-kpi-sub">ilk temasa kadar</div>
+            </div>
+
+            <div class="dash-kpi-card">
+                <div class="dash-kpi-label">Geciken Temas</div>
+                <div class="dash-kpi-value kv-red">@(_kpi?.GecikenTemasSayisi ?? 0)</div>
+                <div class="dash-kpi-sub">hareketsiz @(_kpi?.HareketsizSayisi ?? 0)</div>
+            </div>
+
+        </div>
+
+        <!-- === PIE ROW === -->
+        <div class="dash-pie-row">
+            @RenderPie("Durum Dagilimi", BuildDurumSlices(), _kpi?.ToplamTeklif ?? 0, "Teklif")
+            @RenderPie("Puan Dagilimi", BuildPuanSlices(), PuanToplam, "Sicak/Ilik/Soguk")
+            @RenderPie("Onaylatma Performansi", BuildOnaySlices(), OnayToplam, "Cevap")
+        </div>
+
+        <!-- === PANEL ROW === -->
+        <div class="dash-panel-row">
+
+            <div class="dash-panel">
+                <div class="dash-panel-title">Kisi Performansi</div>
+                @if (_performance is null || _performance.Count == 0)
+                {
+                    <div class="dash-panel-empty">Kayit bulunamadi</div>
+                }
+                else
+                {
+                    var maxTeklif = _performance.Max(p => p.TeklifSayisi);
+                    if (maxTeklif == 0) maxTeklif = 1;
+                    @foreach (var p in _performance.Take(6))
+                    {
+                        var pct = (int)Math.Round(100.0 * p.TeklifSayisi / maxTeklif);
+                        <div class="dash-perf-row">
+                            <div class="dash-perf-initials">@GetInitials(p.FullName)</div>
+                            <div class="dash-perf-body">
+                                <div class="dash-perf-name">@p.FullName</div>
+                                <div class="dash-perf-meta">
+                                    @p.TeklifSayisi teklif &middot; @p.TemasSayisi temas &middot; @p.SiparisSayisi siparis
+                                </div>
+                                <div class="dash-perf-bar">
+                                    <div class="dash-perf-bar-fill" style="width:@(pct)%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="dash-panel">
+                <div class="dash-panel-title">Hareketsiz Teklifler (30+ gun)</div>
+                @if (_stale is null || _stale.Count == 0)
+                {
+                    <div class="dash-panel-empty">Hareketsiz teklif yok</div>
+                }
+                else
+                {
+                    @foreach (var s in _stale.Take(10))
+                    {
+                        <div class="dash-stale-row">
+                            <div class="dash-stale-days">@s.GecenGun gun</div>
+                            <div class="dash-stale-no">@s.TeklifNo</div>
+                            <div class="dash-stale-customer">@s.Musteri</div>
+                            <div class="dash-stale-satici">@s.Satici</div>
+                        </div>
+                    }
+                }
+            </div>
+
+        </div>
+    }
+
+</div>
+
+@code {
+
+    // ── State ─────────────────────────────────────
+    private DashboardKpiModel? _kpi;
+    private List<PersonPerformanceModel>? _performance;
+    private List<TouchReminderModel>? _stale;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            _kpi         = await TouchSvc.GetDashboardKpisAsync();
+            _performance = await TouchSvc.GetPersonPerformanceAsync();
+            _stale       = await TouchSvc.GetStaleTouchesAsync(30);
+        }
+        catch
+        {
+            _kpi         = new DashboardKpiModel();
+            _performance = new List<PersonPerformanceModel>();
+            _stale       = new List<TouchReminderModel>();
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── Computed KPI values ───────────────────────
+    private int AktifTeklif => (_kpi?.ToplamTeklif ?? 0) - (_kpi?.ClosedSayisi ?? 0) - (_kpi?.OrderSayisi ?? 0);
+
+    private string DonusumOraniText
+    {
+        get
+        {
+            if (_kpi is null || _kpi.ToplamTeklif == 0) return "—";
+            var pct = 100.0 * _kpi.OrderSayisi / _kpi.ToplamTeklif;
+            return $"%{pct:F1}";
+        }
+    }
+
+    private string OnayOraniText
+    {
+        get
+        {
+            if (_kpi is null) return "—";
+            var toplam = _kpi.ApprovedSayisi + _kpi.RejectedSayisi;
+            if (toplam == 0) return "—";
+            var pct = 100.0 * _kpi.ApprovedSayisi / toplam;
+            return $"%{pct:F1}";
+        }
+    }
+
+    private string OrtCevapText
+    {
+        get
+        {
+            if (_kpi is null || _kpi.OrtCevapSuresiGun <= 0) return "—";
+            return $"{_kpi.OrtCevapSuresiGun:F1} gun";
+        }
+    }
+
+    // ── Slice data builders ───────────────────────
+    private record PieSlice(string Label, int Value, string Color);
+
+    private List<PieSlice> BuildDurumSlices()
+    {
+        var list = new List<PieSlice>();
+        if (_kpi is null) return list;
+        if (_kpi.DraftSayisi           > 0) list.Add(new("Taslak",        _kpi.DraftSayisi,           "#9CA3AF"));
+        if (_kpi.SentSayisi            > 0) list.Add(new("Gonderilen",    _kpi.SentSayisi,            "#3B82F6"));
+        if (_kpi.WaitingApprovalSayisi > 0) list.Add(new("Onay Bekliyor", _kpi.WaitingApprovalSayisi, "#F59E0B"));
+        if (_kpi.ApprovedSayisi        > 0) list.Add(new("Onaylandi",     _kpi.ApprovedSayisi,        "#10B981"));
+        if (_kpi.RejectedSayisi        > 0) list.Add(new("Reddedildi",    _kpi.RejectedSayisi,        "#EF4444"));
+        if (_kpi.OrderSayisi           > 0) list.Add(new("Siparis",       _kpi.OrderSayisi,           "#059669"));
+        if (_kpi.OpenSayisi            > 0) list.Add(new("Acik",          _kpi.OpenSayisi,            "#8B5CF6"));
+        if (_kpi.ClosedSayisi          > 0) list.Add(new("Kapali",        _kpi.ClosedSayisi,          "#6B7280"));
+        return list;
+    }
+
+    private List<PieSlice> BuildPuanSlices()
+    {
+        var list = new List<PieSlice>();
+        if (_kpi is null) return list;
+        if (_kpi.HotSayisi  > 0) list.Add(new("HOT",  _kpi.HotSayisi,  "#DC2626"));
+        if (_kpi.WarmSayisi > 0) list.Add(new("WARM", _kpi.WarmSayisi, "#D97706"));
+        if (_kpi.ColdSayisi > 0) list.Add(new("COLD", _kpi.ColdSayisi, "#2563EB"));
+        return list;
+    }
+
+    private List<PieSlice> BuildOnaySlices()
+    {
+        var list = new List<PieSlice>();
+        if (_kpi is null) return list;
+        var onay = _kpi.ApprovedSayisi + _kpi.OrderSayisi;
+        var red  = _kpi.RejectedSayisi + _kpi.ClosedSayisi;
+        var bek  = _kpi.SentSayisi + _kpi.WaitingApprovalSayisi + _kpi.OpenSayisi;
+        if (onay > 0) list.Add(new("Onaylandi",  onay, "#10B981"));
+        if (red  > 0) list.Add(new("Reddedildi", red,  "#EF4444"));
+        if (bek  > 0) list.Add(new("Beklemede",  bek,  "#F59E0B"));
+        return list;
+    }
+
+    private int PuanToplam => (_kpi?.HotSayisi ?? 0) + (_kpi?.WarmSayisi ?? 0) + (_kpi?.ColdSayisi ?? 0);
+
+    private int OnayToplam
+    {
+        get
+        {
+            if (_kpi is null) return 0;
+            return (_kpi.ApprovedSayisi + _kpi.OrderSayisi)
+                 + (_kpi.RejectedSayisi + _kpi.ClosedSayisi)
+                 + (_kpi.SentSayisi + _kpi.WaitingApprovalSayisi + _kpi.OpenSayisi);
+        }
+    }
+
+    // ── SVG Pie/Donut render ──────────────────────
+    private record PieRendered(string Label, int Value, double Pct, string Color, string? Path);
+
+    private List<PieRendered> PrepPie(List<PieSlice> slices)
+    {
+        var list = new List<PieRendered>();
+        if (slices.Count == 0) return list;
+        var total = slices.Sum(s => s.Value);
+        if (total <= 0) return list;
+
+        if (slices.Count == 1)
+        {
+            var s = slices[0];
+            list.Add(new PieRendered(s.Label, s.Value, 100.0, s.Color, null));
+            return list;
+        }
+
+        double acc = 0;
+        foreach (var s in slices)
+        {
+            var pctDeg = 360.0 * s.Value / total;
+            var pct    = 100.0 * s.Value / total;
+            var path   = ArcPath(100, 100, 90, acc, acc + pctDeg);
+            acc += pctDeg;
+            list.Add(new PieRendered(s.Label, s.Value, pct, s.Color, path));
+        }
+        return list;
+    }
+
+    private RenderFragment RenderPie(string title, List<PieSlice> slices, int centerValue, string centerLabel) => __builder =>
+    {
+        var rendered = PrepPie(slices);
+
+        <div class="dash-pie-card">
+            <div class="dash-pie-title">@title</div>
+            <div class="dash-pie-body">
+                @if (rendered.Count == 0)
+                {
+                    <div class="dash-pie-empty">Veri yok</div>
+                }
+                else
+                {
+                    <div class="dash-pie-svg-wrap">
+                        <svg class="dash-pie-svg" viewBox="0 0 200 200">
+                            @if (rendered.Count == 1)
+                            {
+                                <circle cx="100" cy="100" r="90" fill="@rendered[0].Color" />
+                            }
+                            else
+                            {
+                                @foreach (var r in rendered)
+                                {
+                                    <path d="@r.Path" fill="@r.Color" stroke="#fff" stroke-width="2" />
+                                }
+                            }
+                            <circle cx="100" cy="100" r="55" fill="#fff" />
+                        </svg>
+                        <div class="dash-pie-center-text">
+                            <div class="dash-pie-center-value">@centerValue</div>
+                            <div class="dash-pie-center-label">@centerLabel</div>
+                        </div>
+                    </div>
+
+                    <div class="dash-pie-legend">
+                        @foreach (var r in rendered)
+                        {
+                            <div class="dash-pie-legend-item">
+                                <div class="dash-pie-legend-swatch" style="background:@r.Color"></div>
+                                <div class="dash-pie-legend-label">@r.Label</div>
+                                <div class="dash-pie-legend-count">@r.Value</div>
+                                <div class="dash-pie-legend-pct">%@r.Pct.ToString("F0")</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    };
+
+    // ── Helpers ───────────────────────────────────
+    private static string ArcPath(double cx, double cy, double r, double startDeg, double endDeg)
+    {
+        double s = (startDeg - 90) * Math.PI / 180.0;
+        double e = (endDeg   - 90) * Math.PI / 180.0;
+        double x1 = cx + r * Math.Cos(s), y1 = cy + r * Math.Sin(s);
+        double x2 = cx + r * Math.Cos(e), y2 = cy + r * Math.Sin(e);
+        int largeArc = (endDeg - startDeg) > 180 ? 1 : 0;
+        return string.Format(System.Globalization.CultureInfo.InvariantCulture,
+            "M {0} {1} L {2} {3} A {4} {4} 0 {5} 1 {6} {7} Z",
+            cx, cy, x1, y1, r, largeArc, x2, y2);
+    }
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpperInvariant();
+        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpperInvariant();
+    }
+}
