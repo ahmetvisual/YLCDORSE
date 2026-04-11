@@ -362,8 +362,15 @@
         finally { _qfSaving = false; }
     }
 
+    private async Task<bool> ConfirmAsync(string message)
+    {
+        try { return await JS.InvokeAsync<bool>("confirm", message); }
+        catch { return false; }
+    }
+
     private async Task PostponeAsync(int teklifId, int days)
     {
+        if (!await ConfirmAsync($"Bir sonraki temas tarihi {days} gun ertelensin mi?")) return;
         try
         {
             await TouchSvc.PostponeTouchAsync(teklifId, days);
@@ -374,6 +381,14 @@
 
     private async Task SetStatusAsync(int teklifId, string durum)
     {
+        var label = durum switch
+        {
+            "Approved" => "ONAYLANDI",
+            "Rejected" => "REDDEDILDI",
+            "CLOSED"   => "KAPATILDI (listeden kalkacak)",
+            _          => durum
+        };
+        if (!await ConfirmAsync($"Teklif durumu '{label}' olarak degistirilsin mi?")) return;
         try
         {
             await TouchSvc.UpdateQuoteStatusAsync(teklifId, durum);
@@ -384,6 +399,7 @@
 
     private async Task SetPuanAsync(int teklifId, string puan)
     {
+        if (!await ConfirmAsync($"Teklif puani '{puan}' olarak degistirilsin mi?")) return;
         try
         {
             await TouchSvc.UpdateQuotePuanAsync(teklifId, puan);
