@@ -95,7 +95,7 @@
                                             <path d="M5 15 L1 10 M5 15 L9 10" stroke-linecap="round"/>
                                         </svg>
                                     </th>
-                                    <th style="width:160px;"></th>
+                                    <th style="width:148px;">ISLEM</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -189,16 +189,7 @@
                                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                                                         </svg>
                                                     </button>
-                                                    <button class="btn-expand" title="PDF (DevExpress)" @onclick="() => GenerateDocumentAsync(quote.Id)"
-                                                            disabled="@isGenerating">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
-                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                            <polyline points="14 2 14 8 20 8"/>
-                                                            <line x1="12" y1="18" x2="12" y2="12"/>
-                                                            <polyline points="9 15 12 18 15 15"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button class="btn-expand" title="PDF (QuestPDF)" @onclick="() => GenerateQuestDocumentAsync(quote.Id)"
+                                                    <button class="btn-expand" title="PDF (Teklif Olustur)" @onclick="() => GenerateQuestDocumentAsync(quote.Id)"
                                                             disabled="@isGenerating" style="color:#7C3AED;border-color:#7C3AED;">
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
                                                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -337,17 +328,16 @@
                                 bool selHazir = selHazirModel != null;
                                 string selDosyaAdi = selHazirModel?.DosyaAdi ?? "";
                                 <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 6px 14px;align-items:center;justify-content:flex-start;">
-                                    <button class="btn-transition" style="background:#f0f5ff;color:#185FA5;border-color:rgba(24,95,165,0.25);"
-                                            @onclick="() => GenerateDocumentAsync(sel.Id)"
+                                    <button class="btn-transition" style="background:#F5F3FF;color:#7C3AED;border-color:rgba(124,58,237,0.3);"
+                                            @onclick="() => GenerateQuestDocumentAsync(sel.Id)"
                                             disabled="@isGenerating">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                              style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom;">
                                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                             <polyline points="14 2 14 8 20 8"/>
-                                            <line x1="12" y1="18" x2="12" y2="12"/>
-                                            <polyline points="9 15 12 18 15 15"/>
+                                            <path d="M9 13h6M9 17h4"/>
                                         </svg>
-                                        @(isGenerating ? "Hazirlaniyor..." : "Belge Indir")
+                                        @(isGenerating ? "Hazirlaniyor..." : "PDF (Teklif Olustur)")
                                     </button>
                                     <button class="btn-transition"
                                             style="@(selHazir ? "background:#FEF3C7;color:#D97706;border-color:rgba(217,119,6,0.3);" : "background:#F9FAFB;color:#6B7280;border-color:#D1D5DB;")"
