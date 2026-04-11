@@ -1214,3 +1214,164 @@
     border-color: #30363d;
     color: #c9d1d9;
 }
+
+/* ==========================================================
+   CONFIRM MODAL
+   ========================================================== */
+.dash-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: dashConfirmFadeIn 0.18s ease-out;
+}
+
+@keyframes dashConfirmFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.dash-confirm-modal {
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    width: 100%;
+    max-width: 440px;
+    margin: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border-top: 4px solid var(--yl-primary);
+    animation: dashConfirmSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+@keyframes dashConfirmSlideIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dash-confirm-modal.is-success { border-top-color: #059669; }
+.dash-confirm-modal.is-danger  { border-top-color: #dc2626; }
+.dash-confirm-modal.is-warning { border-top-color: #d97706; }
+.dash-confirm-modal.is-primary { border-top-color: var(--yl-primary); }
+
+.dash-confirm-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 24px 12px 24px;
+}
+
+.dash-confirm-icon {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    background: rgba(26, 58, 107, 0.1);
+    color: var(--yl-primary);
+}
+.dash-confirm-icon svg { width: 26px; height: 26px; }
+
+.dash-confirm-modal.is-success .dash-confirm-icon { background: rgba(5, 150, 105, 0.12); color: #059669; }
+.dash-confirm-modal.is-danger  .dash-confirm-icon { background: rgba(220, 38, 38, 0.12); color: #dc2626; }
+.dash-confirm-modal.is-warning .dash-confirm-icon { background: rgba(217, 119, 6, 0.12); color: #d97706; }
+
+.dash-confirm-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--yl-primary);
+    line-height: 1.2;
+}
+.dash-confirm-modal.is-success .dash-confirm-title { color: #047857; }
+.dash-confirm-modal.is-danger  .dash-confirm-title { color: #991b1b; }
+.dash-confirm-modal.is-warning .dash-confirm-title { color: #92400e; }
+
+.dash-confirm-body {
+    padding: 6px 24px 22px 82px;
+    font-size: 0.85rem;
+    color: #374151;
+    line-height: 1.55;
+}
+
+.dash-confirm-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 20px;
+    background: #f8fafc;
+    border-top: 1px solid var(--yl-border);
+}
+
+.dash-confirm-btn {
+    border: 1px solid transparent;
+    padding: 9px 18px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.15s ease;
+    min-width: 96px;
+}
+
+.dash-confirm-btn.is-cancel {
+    background: #fff;
+    border-color: var(--yl-border);
+    color: #4b5563;
+}
+.dash-confirm-btn.is-cancel:hover { background: #f1f5f9; color: #1f2937; }
+
+.dash-confirm-btn.is-ok {
+    background: var(--yl-primary);
+    color: #fff;
+    border-color: var(--yl-primary);
+    box-shadow: 0 4px 10px rgba(26, 58, 107, 0.25);
+}
+.dash-confirm-btn.is-ok:hover { background: #0f2a52; border-color: #0f2a52; }
+
+.dash-confirm-modal.is-success .dash-confirm-btn.is-ok {
+    background: #059669; border-color: #059669;
+    box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
+}
+.dash-confirm-modal.is-success .dash-confirm-btn.is-ok:hover { background: #047857; border-color: #047857; }
+
+.dash-confirm-modal.is-danger .dash-confirm-btn.is-ok {
+    background: #dc2626; border-color: #dc2626;
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
+}
+.dash-confirm-modal.is-danger .dash-confirm-btn.is-ok:hover { background: #991b1b; border-color: #991b1b; }
+
+.dash-confirm-modal.is-warning .dash-confirm-btn.is-ok {
+    background: #d97706; border-color: #d97706;
+    box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3);
+}
+.dash-confirm-modal.is-warning .dash-confirm-btn.is-ok:hover { background: #b45309; border-color: #b45309; }
+
+/* Dark mode */
+.app-root.dark .dash-confirm-overlay { background: rgba(0, 0, 0, 0.7); }
+.app-root.dark .dash-confirm-modal { background: #1e2530; border-color: #30363d; }
+.app-root.dark .dash-confirm-title { color: #93c5fd; }
+.app-root.dark .dash-confirm-body { color: #c9d1d9; }
+.app-root.dark .dash-confirm-footer { background: #161b22; border-top-color: #30363d; }
+.app-root.dark .dash-confirm-btn.is-cancel { background: #161b22; border-color: #30363d; color: #8b949e; }
+.app-root.dark .dash-confirm-btn.is-cancel:hover { background: #0d1117; color: #c9d1d9; }
+.app-root.dark .dash-confirm-icon { background: rgba(125, 211, 252, 0.1); color: #7dd3fc; }
+
+/* Mobil */
+@media (max-width: 640px) {
+    .dash-confirm-modal { max-width: none; margin: 16px; }
+    .dash-confirm-header { padding: 18px 18px 10px 18px; }
+    .dash-confirm-body { padding: 6px 18px 18px 72px; font-size: 0.82rem; }
+    .dash-confirm-footer { padding: 12px 14px; }
+    .dash-confirm-btn { min-width: 80px; padding: 8px 14px; }
+}

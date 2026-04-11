@@ -86,7 +86,7 @@
             <div class="dash-kpi-card">
                 <div class="dash-kpi-label">Onay Orani</div>
                 <div class="dash-kpi-value kv-green">@OnayOraniText</div>
-                <div class="dash-kpi-sub">onaylanan / cevaplanan</div>
+                <div class="dash-kpi-sub">onaylanan / tum teklifler</div>
             </div>
 
             <div class="dash-kpi-card">
@@ -281,6 +281,41 @@
     </div>
     }
 
+    @* === CONFIRM MODAL === *@
+    @if (_confirmOpen)
+    {
+        <div class="dash-confirm-overlay" @onclick="ConfirmCancel">
+            <div class="dash-confirm-modal @($"is-{_confirmVariant}")" @onclick:stopPropagation="true">
+                <div class="dash-confirm-header">
+                    <div class="dash-confirm-icon">
+                        @if (_confirmVariant == "success")
+                        {
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                        }
+                        else if (_confirmVariant == "danger")
+                        {
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12" y2="16.5" stroke-linecap="round" stroke-width="3"/></svg>
+                        }
+                        else if (_confirmVariant == "warning")
+                        {
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12" y2="17" stroke-linecap="round" stroke-width="3"/></svg>
+                        }
+                        else
+                        {
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16" stroke-linecap="round" stroke-width="3"/></svg>
+                        }
+                    </div>
+                    <div class="dash-confirm-title">@_confirmTitle</div>
+                </div>
+                <div class="dash-confirm-body">@_confirmMessage</div>
+                <div class="dash-confirm-footer">
+                    <button class="dash-confirm-btn is-cancel" @onclick="ConfirmCancel">@_confirmCancelText</button>
+                    <button class="dash-confirm-btn is-ok" @onclick="ConfirmOk" autofocus>@_confirmOkText</button>
+                </div>
+            </div>
+        </div>
+    }
+
 </div>
 
 @code {
@@ -362,15 +397,47 @@
         finally { _qfSaving = false; }
     }
 
-    private async Task<bool> ConfirmAsync(string message)
+    // === Custom confirm modal ===
+    private bool _confirmOpen = false;
+    private string _confirmTitle = "Onay";
+    private string _confirmMessage = "";
+    private string _confirmOkText = "EVET";
+    private string _confirmCancelText = "IPTAL";
+    private string _confirmVariant = "primary"; // primary / success / danger / warning
+    private TaskCompletionSource<bool>? _confirmTcs;
+
+    private Task<bool> ConfirmAsync(string message, string title = "Onay", string okText = "EVET", string variant = "primary")
     {
-        try { return await JS.InvokeAsync<bool>("confirm", message); }
-        catch { return false; }
+        _confirmMessage = message;
+        _confirmTitle   = title;
+        _confirmOkText  = okText;
+        _confirmVariant = variant;
+        _confirmOpen    = true;
+        _confirmTcs     = new TaskCompletionSource<bool>();
+        StateHasChanged();
+        return _confirmTcs.Task;
+    }
+
+    private void ConfirmOk()
+    {
+        _confirmOpen = false;
+        _confirmTcs?.TrySetResult(true);
+    }
+
+    private void ConfirmCancel()
+    {
+        _confirmOpen = false;
+        _confirmTcs?.TrySetResult(false);
     }
 
     private async Task PostponeAsync(int teklifId, int days)
     {
-        if (!await ConfirmAsync($"Bir sonraki temas tarihi {days} gun ertelensin mi?")) return;
+        var ok = await ConfirmAsync(
+            $"Bir sonraki temas tarihi {days} gun ertelensin mi?",
+            title: "TEMAS ERTELE",
+            okText: "ERTELE",
+            variant: "warning");
+        if (!ok) return;
         try
         {
             await TouchSvc.PostponeTouchAsync(teklifId, days);
@@ -381,14 +448,19 @@
 
     private async Task SetStatusAsync(int teklifId, string durum)
     {
-        var label = durum switch
+        var (title, label, variant) = durum switch
         {
-            "Approved" => "ONAYLANDI",
-            "Rejected" => "REDDEDILDI",
-            "CLOSED"   => "KAPATILDI (listeden kalkacak)",
-            _          => durum
+            "Approved" => ("TEKLIFI ONAYLA",       "ONAYLANDI",                         "success"),
+            "Rejected" => ("TEKLIFI REDDET",       "REDDEDILDI",                        "danger"),
+            "CLOSED"   => ("TEKLIFI KAPAT",        "KAPATILDI (hatirlatma listesinden kalkacak)", "danger"),
+            _          => ("DURUM DEGISTIR",       durum,                               "primary")
         };
-        if (!await ConfirmAsync($"Teklif durumu '{label}' olarak degistirilsin mi?")) return;
+        var ok = await ConfirmAsync(
+            $"Teklif durumu '{label}' olarak degistirilsin mi?",
+            title: title,
+            okText: "EVET, DEGISTIR",
+            variant: variant);
+        if (!ok) return;
         try
         {
             await TouchSvc.UpdateQuoteStatusAsync(teklifId, durum);
@@ -399,7 +471,19 @@
 
     private async Task SetPuanAsync(int teklifId, string puan)
     {
-        if (!await ConfirmAsync($"Teklif puani '{puan}' olarak degistirilsin mi?")) return;
+        var (label, variant) = puan switch
+        {
+            "HOT"  => ("SICAK",   "danger"),
+            "WARM" => ("ILIK",    "warning"),
+            "COLD" => ("SOGUK",   "primary"),
+            _      => (puan,      "primary")
+        };
+        var ok = await ConfirmAsync(
+            $"Teklif puani '{label}' olarak degistirilsin mi?",
+            title: "PUAN DEGISTIR",
+            okText: "EVET, DEGISTIR",
+            variant: variant);
+        if (!ok) return;
         try
         {
             await TouchSvc.UpdateQuotePuanAsync(teklifId, puan);
@@ -498,9 +582,14 @@
         get
         {
             if (_kpi is null) return "—";
-            var toplam = _kpi.ApprovedSayisi + _kpi.RejectedSayisi;
+            // Pie "Onaylatma Performansi" ile ayni mantik:
+            // Onaylandi = Approved+Order, toplam = Onaylandi + Reddedildi + Beklemede
+            var onay = _kpi.ApprovedSayisi + _kpi.OrderSayisi;
+            var red  = _kpi.RejectedSayisi + _kpi.ClosedSayisi;
+            var bek  = _kpi.SentSayisi + _kpi.WaitingApprovalSayisi + _kpi.OpenSayisi;
+            var toplam = onay + red + bek;
             if (toplam == 0) return "—";
-            var pct = 100.0 * _kpi.ApprovedSayisi / toplam;
+            var pct = 100.0 * onay / toplam;
             return $"%{pct:F1}";
         }
     }
