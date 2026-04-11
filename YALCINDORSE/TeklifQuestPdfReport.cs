@@ -49,9 +49,33 @@ namespace YALCINDORSE
         public byte[]? UrunFoto1  { get; set; }
         public byte[]? UrunFoto2  { get; set; }
 
-        public List<TeklifReport.SpecGroup>  SpecGroups  { get; set; } = new();
-        public List<byte[]>                  CizimImages { get; set; } = new();
-        public List<TeklifReport.ListItem>   ListItems   { get; set; } = new();
+        public List<SpecGroup>  SpecGroups  { get; set; } = new();
+        public List<byte[]>     CizimImages { get; set; } = new();
+        public List<ListItem>   ListItems   { get; set; } = new();
+
+        // ─── İç Tipler ──────────────────────────────────────────────────────
+        public class SpecGroup
+        {
+            public string GrupAdi { get; set; } = "";
+            public List<(string Ozellik, string Deger)> Rows { get; set; } = new();
+        }
+
+        public class ListItem
+        {
+            public string Metin    { get; set; } = "";
+            public string Numara   { get; set; } = "";
+            public bool   IsHeader { get; set; }
+            public bool   Bold     { get; set; }
+
+            public ListItem() { }
+            public ListItem(string numara, string metin, bool isHeader, bool bold)
+            {
+                Numara   = numara;
+                Metin    = metin;
+                IsHeader = isHeader;
+                Bold     = bold;
+            }
+        }
 
         // ─── Üretim ─────────────────────────────────────────────────────────
         public byte[] GeneratePdf()
