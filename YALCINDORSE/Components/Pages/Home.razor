@@ -8,29 +8,42 @@
 <div class="dash-shell">
 
     <div class="dash-header">
-        <div></div>
-        <div class="dash-header-actions">
-            @{ var remindCount = (_overdue?.Count ?? 0) + (_today?.Count ?? 0); }
-            <button class="dash-remind-btn" @onclick="ScrollToTimelineAsync" title="Hatirlatmalar">
-                <svg class="dash-remind-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        <div class="dash-filter-bar">
+
+            <div class="dash-filter-input-wrap">
+                <svg class="dash-filter-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
-                <span>HATIRLATMALAR</span>
-                @if (remindCount > 0)
+                <input class="dash-filter-input" type="text" placeholder="Musteri ara..."
+                       value="@_filterMusteri"
+                       @oninput="@(e => { _filterMusteri = e.Value?.ToString() ?? ""; })" />
+                @if (!string.IsNullOrEmpty(_filterMusteri))
                 {
-                    <span class="dash-remind-badge is-pulse">@remindCount</span>
+                    <button class="dash-filter-input-clear" @onclick='() => _filterMusteri = ""' title="Temizle">&times;</button>
                 }
-            </button>
+            </div>
+
+            <select class="dash-filter-select" value="@_filterSatici"
+                    @onchange="@(e => _filterSatici = e.Value?.ToString() ?? "")">
+                <option value="">Tum Saticilar</option>
+                @foreach (var p in _performance ?? new List<PersonPerformanceModel>())
+                {
+                    <option value="@p.FullName">@p.FullName</option>
+                }
+            </select>
+
+            @if (IsFiltered)
+            {
+                <span class="dash-filter-badge">
+                    Filtreli
+                    <button class="dash-filter-badge-close" @onclick="ResetFilter" title="Filtreyi kaldir">&times;</button>
+                </span>
+            }
+
+        </div>
+        <div class="dash-header-actions">
             <button class="dash-refresh-btn" @onclick="LoadAsync" disabled="@_loading">
-                @if (_loading)
-                {
-                    <span>Yukleniyor...</span>
-                }
-                else
-                {
-                    <span>Yenile</span>
-                }
+                @if (_loading) { <span>Yukleniyor...</span> } else { <span>Yenile</span> }
             </button>
         </div>
     </div>
@@ -144,13 +157,13 @@
 
             <div class="dash-panel">
                 <div class="dash-panel-title">Hareketsiz Teklifler (30+ gun)</div>
-                @if (_stale is null || _stale.Count == 0)
+                @if (FilteredStale.Count == 0)
                 {
-                    <div class="dash-panel-empty">Hareketsiz teklif yok</div>
+                    <div class="dash-panel-empty">@(IsFiltered ? "Eslesen kayit yok" : "Hareketsiz teklif yok")</div>
                 }
                 else
                 {
-                    @foreach (var s in _stale.Take(10))
+                    @foreach (var s in FilteredStale.Take(10))
                     {
                         <div class="dash-stale-row">
                             <div class="dash-stale-days">@s.GecenGun gun</div>
@@ -175,9 +188,9 @@
             </div>
 
             @* GECIKEN GORUSMELER *@
-            @if (_overdue is not null && _overdue.Count > 0)
+            @if (FilteredOverdue.Count > 0)
             {
-                @foreach (var o in _overdue.Take(6))
+                @foreach (var o in FilteredOverdue.Take(6))
                 {
                     <div class="dash-tl-item dash-tl-overdue">
                         <div class="dash-tl-item-head">
@@ -199,9 +212,9 @@
             }
 
             @* BUGUNUN PLANLARI *@
-            @if (_today is not null && _today.Count > 0)
+            @if (FilteredToday.Count > 0)
             {
-                @foreach (var t in _today.Take(5))
+                @foreach (var t in FilteredToday.Take(5))
                 {
                     <div class="dash-tl-item dash-tl-planned">
                         <div class="dash-tl-item-head">
@@ -223,9 +236,9 @@
             }
 
             @* HAFTANIN PLANLARI *@
-            @if (_week is not null && _week.Count > 0)
+            @if (FilteredWeek.Count > 0)
             {
-                @foreach (var w in _week.Take(4))
+                @foreach (var w in FilteredWeek.Take(4))
                 {
                     <div class="dash-tl-item dash-tl-upcoming">
                         <div class="dash-tl-item-head">
@@ -247,9 +260,9 @@
             }
 
             @* YAPILMIS SON GORUSMELER *@
-            @if (_recent is not null && _recent.Count > 0)
+            @if (FilteredRecent.Count > 0)
             {
-                @foreach (var r in _recent.Take(12))
+                @foreach (var r in FilteredRecent.Take(12))
                 {
                     <div class="dash-tl-item dash-tl-done">
                         <div class="dash-tl-item-head">
@@ -269,10 +282,12 @@
                 }
             }
 
-            @if ((_overdue?.Count ?? 0) == 0 && (_today?.Count ?? 0) == 0
-                 && (_week?.Count ?? 0) == 0 && (_recent?.Count ?? 0) == 0)
+            @if (FilteredOverdue.Count == 0 && FilteredToday.Count == 0
+                 && FilteredWeek.Count == 0 && FilteredRecent.Count == 0)
             {
-                <div class="dash-tl-empty">Kayit yok</div>
+                <div class="dash-tl-empty">
+                    @(IsFiltered ? "Filtreyle eslesen gorusme bulunamadi" : "Kayit yok")
+                </div>
             }
 
         </div>
@@ -329,6 +344,44 @@
     private List<TouchReminderModel>? _week;
     private List<TouchActivityModel>? _recent;
     private bool _loading;
+
+    // ── Filtre ────────────────────────────────────
+    private string _filterMusteri = "";
+    private string _filterSatici  = "";
+
+    private bool IsFiltered => !string.IsNullOrWhiteSpace(_filterMusteri) || !string.IsNullOrWhiteSpace(_filterSatici);
+
+    private void ResetFilter() { _filterMusteri = ""; _filterSatici = ""; }
+
+    private List<TouchReminderModel> ApplyFilter(List<TouchReminderModel>? list)
+    {
+        if (list is null) return new();
+        var q = list.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(_filterMusteri))
+            q = q.Where(x => x.Musteri.Contains(_filterMusteri, StringComparison.OrdinalIgnoreCase)
+                           || x.TeklifNo.Contains(_filterMusteri, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(_filterSatici))
+            q = q.Where(x => string.Equals(x.Satici, _filterSatici, StringComparison.OrdinalIgnoreCase));
+        return q.ToList();
+    }
+
+    private List<TouchActivityModel> ApplyFilterRecent(List<TouchActivityModel>? list)
+    {
+        if (list is null) return new();
+        var q = list.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(_filterMusteri))
+            q = q.Where(x => x.Musteri.Contains(_filterMusteri, StringComparison.OrdinalIgnoreCase)
+                           || (x.TeklifNo?.Contains(_filterMusteri, StringComparison.OrdinalIgnoreCase) == true));
+        if (!string.IsNullOrWhiteSpace(_filterSatici))
+            q = q.Where(x => string.Equals(x.TemasEdenAdi, _filterSatici, StringComparison.OrdinalIgnoreCase));
+        return q.ToList();
+    }
+
+    private List<TouchReminderModel> FilteredOverdue => ApplyFilter(_overdue);
+    private List<TouchReminderModel> FilteredToday   => ApplyFilter(_today);
+    private List<TouchReminderModel> FilteredWeek    => ApplyFilter(_week);
+    private List<TouchReminderModel> FilteredStale   => ApplyFilter(_stale);
+    private List<TouchActivityModel> FilteredRecent  => ApplyFilterRecent(_recent);
 
     // Toast + quick form state
     private bool _showToast = false;
