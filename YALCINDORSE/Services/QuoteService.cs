@@ -465,6 +465,40 @@ namespace YALCINDORSE.Services
             await cmd.ExecuteNonQueryAsync();
         }
 
+        /// <summary>
+        /// Bir teklifi tüm ilişkili kayıtlarıyla birlikte siler
+        /// (kalemleri, revizyon logu, özellikler, ekler, ana kayıt).
+        /// </summary>
+        public async Task DeleteQuoteAsync(int quoteId)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            using var tx = await conn.BeginTransactionAsync();
+            try
+            {
+                var tables = new[]
+                {
+                    """DELETE FROM "YLTeklifKalemleri"    WHERE "TeklifId" = @id""",
+                    """DELETE FROM "YLTeklifRevLog"       WHERE "TeklifId" = @id""",
+                    """DELETE FROM "YLTeklifOzellikleri"  WHERE "TeklifId" = @id""",
+                    """DELETE FROM "YLTeklifEkleri"       WHERE "TeklifId" = @id""",
+                    """DELETE FROM "YLTeklifler"          WHERE "Id"       = @id""",
+                };
+                foreach (var sql in tables)
+                {
+                    using var cmd = new NpgsqlCommand(sql, conn, tx);
+                    cmd.Parameters.AddWithValue("id", quoteId);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        }
+
         public async Task<QuoteModel?> GetQuoteByIdAsync(int quoteId)
         {
             using var conn = _db.GetConnection();
