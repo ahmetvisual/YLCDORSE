@@ -1,22 +1,58 @@
 @page "/"
 @using YALCINDORSE.Services
+@using Microsoft.JSInterop
 @inject TouchService TouchSvc
+@inject DesktopWindowService WindowService
+@inject IJSRuntime JS
 
 <div class="dash-shell">
 
     <div class="dash-header">
         <div></div>
-        <button class="dash-refresh-btn" @onclick="LoadAsync" disabled="@_loading">
-            @if (_loading)
-            {
-                <span>Yukleniyor...</span>
-            }
-            else
-            {
-                <span>Yenile</span>
-            }
-        </button>
+        <div class="dash-header-actions">
+            @{ var remindCount = (_overdue?.Count ?? 0) + (_today?.Count ?? 0); }
+            <button class="dash-remind-btn" @onclick="ScrollToTimelineAsync" title="Hatirlatmalar">
+                <svg class="dash-remind-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span>HATIRLATMALAR</span>
+                @if (remindCount > 0)
+                {
+                    <span class="dash-remind-badge is-pulse">@remindCount</span>
+                }
+            </button>
+            <button class="dash-refresh-btn" @onclick="LoadAsync" disabled="@_loading">
+                @if (_loading)
+                {
+                    <span>Yukleniyor...</span>
+                }
+                else
+                {
+                    <span>Yenile</span>
+                }
+            </button>
+        </div>
     </div>
+
+    @* === TOAST: Geciken hatirlatma uyarisi === *@
+    @if (_showToast && (_overdue?.Count ?? 0) > 0)
+    {
+        <div class="dash-toast">
+            <button class="dash-toast-close" @onclick="() => _showToast = false">&times;</button>
+            <div class="dash-toast-icon">!</div>
+            <div class="dash-toast-body">
+                <div class="dash-toast-title">@_overdue!.Count geciken gorusme</div>
+                <div class="dash-toast-text">
+                    @(_overdue.First().Musteri) ve @(_overdue.Count - 1) diger teklif icin temas bekleniyor.
+                </div>
+                <div class="dash-toast-actions">
+                    <button class="dash-toast-btn" @onclick="ScrollToTimelineAsync">GORUNTULE</button>
+                    <button class="dash-toast-btn is-ghost" @onclick="() => _showToast = false">KAPAT</button>
+                </div>
+            </div>
+        </div>
+    }
 
     @if (_loading && _kpi is null)
     {
@@ -131,7 +167,7 @@
 
     <!-- === SIDE TIMELINE === -->
     <aside class="dash-side">
-        <div class="dash-timeline">
+        <div class="dash-timeline" id="dash-timeline">
 
             <div class="dash-tl-today">
                 <span class="dash-tl-today-dot"></span>
@@ -156,6 +192,8 @@
                         {
                             <div class="dash-tl-note">@o.SonTemasNotu</div>
                         }
+                        @RenderItemActions(o.TeklifId)
+                        @RenderQuickForm(o.TeklifId)
                     </div>
                 }
             }
@@ -178,6 +216,8 @@
                         {
                             <div class="dash-tl-note">@t.SonTemasNotu</div>
                         }
+                        @RenderItemActions(t.TeklifId)
+                        @RenderQuickForm(t.TeklifId)
                     </div>
                 }
             }
@@ -200,6 +240,8 @@
                         {
                             <div class="dash-tl-note">@w.SonTemasNotu</div>
                         }
+                        @RenderItemActions(w.TeklifId)
+                        @RenderQuickForm(w.TeklifId)
                     </div>
                 }
             }
@@ -253,10 +295,126 @@
     private List<TouchActivityModel>? _recent;
     private bool _loading;
 
+    // Toast + quick form state
+    private bool _showToast = false;
+    private int? _quickFormFor = null;   // Hangi teklifId'de form acik
+    private string _qfTipi = "CALL";
+    private string _qfNot  = "";
+    private DateTime? _qfSonraki = null;
+    private bool _qfSaving = false;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
+        // Ilk yuklemede geciken varsa toast goster
+        if ((_overdue?.Count ?? 0) > 0)
+            _showToast = true;
     }
+
+    // Timeline paneline scroll (header butonundan + toast'tan cagrilir)
+    private async Task ScrollToTimelineAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval",
+                "document.getElementById('dash-timeline')?.scrollIntoView({behavior:'smooth',block:'start'});");
+        }
+        catch { }
+        _showToast = false;
+    }
+
+    // ── HIZLI AKSIYONLAR ──────────────────────────
+
+    private void OpenQuickForm(int teklifId)
+    {
+        _quickFormFor = teklifId;
+        _qfTipi    = "CALL";
+        _qfNot     = "";
+        _qfSonraki = DateTime.Today.AddDays(3);
+    }
+
+    private void CloseQuickForm()
+    {
+        _quickFormFor = null;
+        _qfNot = "";
+    }
+
+    private async Task SaveQuickTouchAsync(int teklifId)
+    {
+        if (_qfSaving) return;
+        _qfSaving = true;
+        try
+        {
+            await TouchSvc.CreateTouchAsync(new TouchModel
+            {
+                TeklifId            = teklifId,
+                RevizyonNo          = 0,
+                TemasTarihi         = DateTime.Now,
+                TemasTipi           = _qfTipi,
+                Not                 = string.IsNullOrWhiteSpace(_qfNot) ? null : _qfNot.Trim(),
+                SonrakiTemasTarihi  = _qfSonraki,
+                YonetimDahilMi      = false,
+            });
+            CloseQuickForm();
+            await LoadAsync();
+        }
+        catch { }
+        finally { _qfSaving = false; }
+    }
+
+    private async Task PostponeAsync(int teklifId, int days)
+    {
+        try
+        {
+            await TouchSvc.PostponeTouchAsync(teklifId, days);
+            await LoadAsync();
+        }
+        catch { }
+    }
+
+    private void OpenQuoteDetail(int teklifId)
+    {
+        var p = new Dictionary<string, object> { { "QuoteId", teklifId } };
+        WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>(
+            "Teklif Duzenle", 860, 870, p);
+    }
+
+    // ── RENDER FRAGMENTS ──────────────────────────
+
+    private RenderFragment RenderItemActions(int teklifId) => __builder =>
+    {
+        <div class="dash-tl-actions">
+            <button class="dash-tl-btn is-primary" @onclick="() => OpenQuoteDetail(teklifId)">DETAY</button>
+            <button class="dash-tl-btn is-success" @onclick="() => OpenQuickForm(teklifId)">+ TEMAS</button>
+            <button class="dash-tl-btn" @onclick="() => PostponeAsync(teklifId, 3)">+3G</button>
+            <button class="dash-tl-btn" @onclick="() => PostponeAsync(teklifId, 7)">+7G</button>
+        </div>
+    };
+
+    private RenderFragment RenderQuickForm(int teklifId) => __builder =>
+    {
+        if (_quickFormFor != teklifId) return;
+
+        <div class="dash-tl-quickform">
+            <div class="dash-tl-quickform-row">
+                <select @bind="_qfTipi">
+                    <option value="CALL">Arama</option>
+                    <option value="MAIL">Mail</option>
+                    <option value="VISIT">Ziyaret</option>
+                    <option value="MEETING">Toplanti</option>
+                    <option value="NOTE">Not</option>
+                </select>
+                <input type="date" @bind="_qfSonraki" />
+            </div>
+            <textarea placeholder="Gorusme notu..." @bind="_qfNot" rows="2"></textarea>
+            <div class="dash-tl-quickform-buttons">
+                <button class="dash-tl-btn" @onclick="CloseQuickForm" disabled="@_qfSaving">IPTAL</button>
+                <button class="dash-tl-btn is-success" @onclick="() => SaveQuickTouchAsync(teklifId)" disabled="@_qfSaving">
+                    @(_qfSaving ? "KAYDEDILIYOR..." : "KAYDET")
+                </button>
+            </div>
+        </div>
+    };
 
     private async Task LoadAsync()
     {

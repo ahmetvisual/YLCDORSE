@@ -823,6 +823,30 @@ namespace YALCINDORSE.Services
             return items;
         }
 
+        // ── HIZLI AKSIYONLAR ───────────────────────────────────────
+
+        /// <summary>
+        /// Son temas kaydinin SonrakiTemasTarihi'ni +days gun erteler.
+        /// Hatirlatma panelindeki "Ertele" butonlari icin.
+        /// </summary>
+        public async Task PostponeTouchAsync(int teklifId, int days)
+        {
+            await EnsureSchemaAsync();
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            const string sql = """
+                UPDATE "YLTemaslar"
+                SET "SonrakiTemasTarihi" = GREATEST(CURRENT_DATE, COALESCE("SonrakiTemasTarihi", CURRENT_DATE)) + @d
+                WHERE "Id" = (SELECT MAX("Id") FROM "YLTemaslar" WHERE "TeklifId" = @tid);
+                """;
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("tid", teklifId);
+            cmd.Parameters.AddWithValue("d", days);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
         // ── RECENT ACTIVITY (timeline icin) ─────────────────────────
 
         public async Task<List<TouchActivityModel>> GetRecentTouchesAsync(int limit = 15)

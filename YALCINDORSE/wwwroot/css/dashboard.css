@@ -316,6 +316,290 @@
     color: #fff;
 }
 
+/* === HATIRLATMA BUTONU (header) === */
+.dash-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dash-remind-btn {
+    position: relative;
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    padding: 7px 14px 7px 12px;
+    font-size: 0.8rem;
+    color: #dc2626;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.dash-remind-btn:hover {
+    background: #dc2626;
+    color: #fff;
+}
+
+.dash-remind-btn:hover .dash-remind-badge {
+    background: #fff;
+    color: #dc2626;
+}
+
+.dash-remind-bell {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    animation: dashBellRing 2.5s ease-in-out infinite;
+    transform-origin: top center;
+}
+
+@keyframes dashBellRing {
+    0%, 88%, 100% { transform: rotate(0); }
+    90%           { transform: rotate(14deg); }
+    92%           { transform: rotate(-12deg); }
+    94%           { transform: rotate(10deg); }
+    96%           { transform: rotate(-8deg); }
+    98%           { transform: rotate(0); }
+}
+
+.dash-remind-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    line-height: 1;
+}
+
+.dash-remind-badge.is-pulse {
+    animation: dashBadgePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dashBadgePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+    50%      { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+}
+
+/* === TOAST (sag alt kose) === */
+.dash-toast {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-left: 4px solid #dc2626;
+    padding: 14px 16px 14px 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 340px;
+    z-index: 9999;
+    animation: dashToastIn 450ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+
+@keyframes dashToastIn {
+    0%   { opacity: 0; transform: translateX(30px) translateY(10px); }
+    100% { opacity: 1; transform: translateX(0) translateY(0); }
+}
+
+.dash-toast-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 1.1rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dash-toast-body { flex: 1; min-width: 0; }
+
+.dash-toast-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--yl-primary);
+    margin-bottom: 2px;
+}
+
+.dash-toast-text {
+    font-size: 0.72rem;
+    color: var(--yl-text-light);
+    line-height: 1.35;
+}
+
+.dash-toast-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.dash-toast-btn {
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    border-radius: 0;
+}
+
+.dash-toast-btn:hover { background: #991b1b; }
+
+.dash-toast-btn.is-ghost {
+    background: transparent;
+    color: var(--yl-text-light);
+    border: 1px solid var(--yl-border);
+}
+
+.dash-toast-btn.is-ghost:hover { background: #f3f4f6; color: var(--yl-text); }
+
+.dash-toast-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: none;
+    border: none;
+    color: var(--yl-text-light);
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    line-height: 1;
+    padding: 0;
+}
+
+.dash-toast-close:hover { color: var(--yl-primary); }
+
+/* === HIZLI AKSIYON BUTONLARI (timeline icinde) === */
+.dash-tl-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 7px;
+    flex-wrap: wrap;
+}
+
+.dash-tl-btn {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--yl-border);
+    color: var(--yl-primary);
+    padding: 3px 8px;
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.15s ease;
+}
+
+.dash-tl-btn:hover {
+    background: var(--yl-primary);
+    color: #fff;
+    border-color: var(--yl-primary);
+}
+
+.dash-tl-btn.is-primary {
+    background: #185FA5;
+    color: #fff;
+    border-color: #185FA5;
+}
+
+.dash-tl-btn.is-primary:hover { background: #0f4275; }
+
+.dash-tl-btn.is-success {
+    background: #059669;
+    color: #fff;
+    border-color: #059669;
+}
+
+.dash-tl-btn.is-success:hover { background: #047857; }
+
+/* Kirmizi kartlarda buton kontrasti */
+.dash-tl-overdue .dash-tl-btn {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: transparent;
+    color: #b91c1c;
+}
+
+.dash-tl-overdue .dash-tl-btn:hover {
+    background: #fff;
+    color: #7f1d1d;
+}
+
+.dash-tl-overdue .dash-tl-btn.is-primary {
+    background: #7f1d1d;
+    color: #fff;
+}
+
+.dash-tl-overdue .dash-tl-btn.is-primary:hover { background: #450a0a; }
+
+/* === HIZLI TEMAS FORMU === */
+.dash-tl-quickform {
+    margin-top: 8px;
+    padding: 10px;
+    background: #f9fafb;
+    border: 1px solid var(--yl-border);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    animation: dashQuickFormIn 250ms ease-out;
+}
+
+@keyframes dashQuickFormIn {
+    0%   { opacity: 0; transform: translateY(-4px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.dash-tl-overdue .dash-tl-quickform {
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.dash-tl-quickform-row {
+    display: flex;
+    gap: 6px;
+}
+
+.dash-tl-quickform select,
+.dash-tl-quickform input,
+.dash-tl-quickform textarea {
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    padding: 4px 7px;
+    font-size: 0.7rem;
+    background: #fff;
+    color: var(--yl-text);
+    width: 100%;
+    font-family: inherit;
+}
+
+.dash-tl-quickform select { flex: 1; }
+.dash-tl-quickform input[type="date"] { flex: 1; }
+.dash-tl-quickform textarea { resize: vertical; min-height: 44px; }
+
+.dash-tl-quickform-buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+}
+
 .dash-loading {
     text-align: center;
     padding: 60px 20px;
@@ -797,3 +1081,41 @@
 .app-root.dark .dash-tl-planned .dash-tl-title { color: #86efac; }
 .app-root.dark .dash-tl-upcoming .dash-tl-title { color: #93c5fd; }
 .app-root.dark .dash-tl-note { color: #8b949e; border-left-color: #30363d; }
+
+/* Dark: header buton + toast + quick form */
+.app-root.dark .dash-remind-btn {
+    background: #161b22;
+    border-color: #30363d;
+    color: #fca5a5;
+}
+.app-root.dark .dash-remind-btn:hover { background: #7f1d1d; color: #fff; }
+
+.app-root.dark .dash-toast {
+    background: #1e2530;
+    border-color: #30363d;
+    border-left-color: #dc2626;
+}
+.app-root.dark .dash-toast-title { color: #7dd3fc; }
+.app-root.dark .dash-toast-text  { color: #8b949e; }
+.app-root.dark .dash-toast-icon  { background: #450a0a; color: #fca5a5; }
+.app-root.dark .dash-toast-btn.is-ghost { background: transparent; border-color: #30363d; color: #8b949e; }
+.app-root.dark .dash-toast-btn.is-ghost:hover { background: #161b22; color: #c9d1d9; }
+
+.app-root.dark .dash-tl-btn {
+    background: #161b22;
+    border-color: #30363d;
+    color: #7dd3fc;
+}
+.app-root.dark .dash-tl-btn:hover { background: #1e3a8a; color: #fff; border-color: #1e3a8a; }
+
+.app-root.dark .dash-tl-quickform {
+    background: #161b22;
+    border-color: #30363d;
+}
+.app-root.dark .dash-tl-quickform select,
+.app-root.dark .dash-tl-quickform input,
+.app-root.dark .dash-tl-quickform textarea {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #c9d1d9;
+}
