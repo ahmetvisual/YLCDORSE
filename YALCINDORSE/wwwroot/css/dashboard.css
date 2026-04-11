@@ -4,8 +4,256 @@
 
 .dash-shell {
     padding: 16px;
-    max-width: 1600px;
+    max-width: 1800px;
     margin: 0 auto;
+}
+
+/* === Ana / yan panel iki sutunlu yerleshim === */
+.dash-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 16px;
+    align-items: start;
+}
+
+.dash-main { min-width: 0; }
+
+.dash-side { min-width: 0; }
+
+/* === SIDE TIMELINE === */
+.dash-timeline {
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    padding: 14px 12px 12px;
+    position: relative;
+    max-height: calc(100vh - 130px);
+    overflow-y: auto;
+}
+
+.dash-timeline::before {
+    content: "";
+    position: absolute;
+    left: 22px;
+    top: 50px;
+    bottom: 14px;
+    width: 2px;
+    background: #e5e7eb;
+    z-index: 0;
+}
+
+.dash-tl-today {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    padding: 11px 12px 11px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+}
+
+.dash-tl-today-dot {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
+    animation: dashTlPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dashTlPulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4); }
+    50%      { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.15); }
+}
+
+.dash-tl-item {
+    position: relative;
+    padding: 9px 10px 9px 30px;
+    margin-bottom: 7px;
+    font-size: 0.72rem;
+    z-index: 1;
+    animation: dashTlSlideIn 450ms ease-out both;
+}
+
+@keyframes dashTlSlideIn {
+    0%   { opacity: 0; transform: translateX(8px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.dash-tl-item:nth-child(2)  { animation-delay: 60ms; }
+.dash-tl-item:nth-child(3)  { animation-delay: 120ms; }
+.dash-tl-item:nth-child(4)  { animation-delay: 180ms; }
+.dash-tl-item:nth-child(5)  { animation-delay: 240ms; }
+.dash-tl-item:nth-child(6)  { animation-delay: 300ms; }
+.dash-tl-item:nth-child(7)  { animation-delay: 360ms; }
+.dash-tl-item:nth-child(n+8) { animation-delay: 420ms; }
+
+.dash-tl-item-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.dash-tl-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 0.7rem;
+    color: var(--yl-text-light);
+}
+
+.dash-tl-no {
+    color: #185FA5;
+    font-weight: 700;
+    font-size: 0.7rem;
+}
+
+.dash-tl-musteri {
+    color: var(--yl-text);
+    font-size: 0.7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Gecikmis (kirmizi kart) */
+.dash-tl-overdue {
+    background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
+    color: #fff;
+    padding-left: 34px;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+}
+
+.dash-tl-overdue .dash-tl-item-body,
+.dash-tl-overdue .dash-tl-no,
+.dash-tl-overdue .dash-tl-musteri { color: #fff; }
+
+.dash-tl-overdue .dash-tl-no { color: #fef3c7; }
+
+.dash-tl-overdue .dash-tl-icon {
+    position: absolute;
+    left: 10px;
+    top: 9px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    color: #dc2626;
+    font-weight: 900;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+/* Bugunun gorusmeleri */
+.dash-tl-planned {
+    padding-left: 34px;
+    color: var(--yl-text);
+}
+
+.dash-tl-planned .dash-tl-icon {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    width: 16px;
+    height: 16px;
+    background: #10b981;
+    color: #fff;
+    font-size: 0.68rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.dash-tl-planned .dash-tl-title { color: #059669; }
+
+/* Haftanin gorusmeleri */
+.dash-tl-upcoming {
+    padding-left: 34px;
+}
+
+.dash-tl-upcoming .dash-tl-icon {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    width: 16px;
+    height: 16px;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.dash-tl-upcoming .dash-tl-title { color: #1d4ed8; }
+
+/* Yapilmis (gri checkmark) */
+.dash-tl-done {
+    color: var(--yl-text-light);
+    padding-left: 34px;
+}
+
+.dash-tl-done .dash-tl-item-head {
+    font-weight: 600;
+    color: var(--yl-text);
+    gap: 8px;
+}
+
+.dash-tl-check {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border: 2px solid #9ca3af;
+    color: #6b7280;
+    font-size: 0.65rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.dash-tl-date {
+    font-size: 0.72rem;
+    color: var(--yl-text);
+}
+
+.dash-tl-badge {
+    margin-left: auto;
+    background: #eef2ff;
+    color: #4338ca;
+    padding: 1px 6px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.dash-tl-empty {
+    text-align: center;
+    padding: 20px 10px;
+    color: var(--yl-text-light);
+    font-size: 0.78rem;
 }
 
 .dash-header {
@@ -421,6 +669,12 @@
 
 /* === RESPONSIVE === */
 
+/* Buyuk tablet — yan panel altta */
+@media (max-width: 1280px) {
+    .dash-layout { grid-template-columns: 1fr; }
+    .dash-timeline { max-height: none; }
+}
+
 /* Tablet */
 @media (max-width: 1200px) {
     .dash-kpi-row { grid-template-columns: repeat(3, 1fr); }
@@ -505,3 +759,21 @@
     background: #1e3a8a;
     color: #fff;
 }
+
+/* Timeline dark mode */
+.app-root.dark .dash-timeline {
+    background: #1e2530;
+    border-color: #30363d;
+}
+
+.app-root.dark .dash-timeline::before { background: #30363d; }
+
+.app-root.dark .dash-tl-musteri { color: #c9d1d9; }
+.app-root.dark .dash-tl-item-body { color: #8b949e; }
+.app-root.dark .dash-tl-no { color: #7dd3fc; }
+.app-root.dark .dash-tl-done .dash-tl-item-head { color: #c9d1d9; }
+.app-root.dark .dash-tl-done .dash-tl-date { color: #c9d1d9; }
+.app-root.dark .dash-tl-check { background: #0d1117; border-color: #30363d; color: #8b949e; }
+.app-root.dark .dash-tl-badge { background: #1e3a8a; color: #bfdbfe; }
+.app-root.dark .dash-tl-planned .dash-tl-title { color: #86efac; }
+.app-root.dark .dash-tl-upcoming .dash-tl-title { color: #93c5fd; }

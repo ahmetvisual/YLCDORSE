@@ -99,6 +99,17 @@ namespace YALCINDORSE.Services
         public int SiparisSayisi { get; set; }
     }
 
+    public class TouchActivityModel
+    {
+        public int      TeklifId     { get; set; }
+        public string   TeklifNo     { get; set; } = "";
+        public string   Musteri      { get; set; } = "";
+        public string   TemasTipi    { get; set; } = "";
+        public DateTime TemasTarihi  { get; set; }
+        public string?  Not          { get; set; }
+        public string?  TemasEdenAdi { get; set; }
+    }
+
     public class CalendarEntryModel
     {
         public DateTime Tarih { get; set; }
@@ -807,6 +818,45 @@ namespace YALCINDORSE.Services
                     NetTutar = reader.IsDBNull(9) ? 0 : reader.GetDecimal(9),
                     ParaBirimi = reader.IsDBNull(10) ? null : reader.GetString(10),
                     SonTemasNotu = reader.IsDBNull(11) ? null : reader.GetString(11)
+                });
+            }
+            return items;
+        }
+
+        // ── RECENT ACTIVITY (timeline icin) ─────────────────────────
+
+        public async Task<List<TouchActivityModel>> GetRecentTouchesAsync(int limit = 15)
+        {
+            await EnsureSchemaAsync();
+            var items = new List<TouchActivityModel>();
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            const string sql = """
+                SELECT t."TeklifId", q."TeklifNo", COALESCE(c."Title", '') AS "Musteri",
+                       t."TemasTipi", t."TemasTarihi", t."Not", u."FullName"
+                FROM "YLTemaslar" t
+                JOIN "YLTeklifler" q ON q."Id" = t."TeklifId"
+                LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
+                LEFT JOIN "YLUsers" u ON u."Id" = t."TemasEden"
+                ORDER BY t."TemasTarihi" DESC
+                LIMIT @lim;
+                """;
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("lim", limit);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                items.Add(new TouchActivityModel
+                {
+                    TeklifId     = reader.GetInt32(0),
+                    TeklifNo     = reader.IsDBNull(1) ? "" : reader.GetString(1),
+                    Musteri      = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                    TemasTipi    = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                    TemasTarihi  = reader.GetDateTime(4),
+                    Not          = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    TemasEdenAdi = reader.IsDBNull(6) ? null : reader.GetString(6)
                 });
             }
             return items;

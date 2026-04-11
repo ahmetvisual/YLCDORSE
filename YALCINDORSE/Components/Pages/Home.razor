@@ -24,6 +24,8 @@
     }
     else
     {
+    <div class="dash-layout">
+    <div class="dash-main">
         <!-- === KPI ROW === -->
         <div class="dash-kpi-row">
 
@@ -125,6 +127,100 @@
             </div>
 
         </div>
+    </div>
+
+    <!-- === SIDE TIMELINE === -->
+    <aside class="dash-side">
+        <div class="dash-timeline">
+
+            <div class="dash-tl-today">
+                <span class="dash-tl-today-dot"></span>
+                BUGUN &mdash; @DateTime.Today.ToString("d MMMM", new System.Globalization.CultureInfo("tr-TR"))
+            </div>
+
+            @* GECIKEN GORUSMELER *@
+            @if (_overdue is not null && _overdue.Count > 0)
+            {
+                @foreach (var o in _overdue.Take(6))
+                {
+                    <div class="dash-tl-item dash-tl-overdue">
+                        <div class="dash-tl-item-head">
+                            <span class="dash-tl-icon">!</span>
+                            <span class="dash-tl-title">@o.GecenGun GUN GECIKTI</span>
+                        </div>
+                        <div class="dash-tl-item-body">
+                            <span class="dash-tl-no">@o.TeklifNo</span>
+                            <span class="dash-tl-musteri">@o.Musteri</span>
+                        </div>
+                    </div>
+                }
+            }
+
+            @* BUGUNUN PLANLARI *@
+            @if (_today is not null && _today.Count > 0)
+            {
+                @foreach (var t in _today.Take(5))
+                {
+                    <div class="dash-tl-item dash-tl-planned">
+                        <div class="dash-tl-item-head">
+                            <span class="dash-tl-icon">&#128337;</span>
+                            <span class="dash-tl-title">BUGUN GORUSME</span>
+                        </div>
+                        <div class="dash-tl-item-body">
+                            <span class="dash-tl-no">@t.TeklifNo</span>
+                            <span class="dash-tl-musteri">@t.Musteri</span>
+                        </div>
+                    </div>
+                }
+            }
+
+            @* HAFTANIN PLANLARI *@
+            @if (_week is not null && _week.Count > 0)
+            {
+                @foreach (var w in _week.Take(4))
+                {
+                    <div class="dash-tl-item dash-tl-upcoming">
+                        <div class="dash-tl-item-head">
+                            <span class="dash-tl-icon">&#9745;</span>
+                            <span class="dash-tl-title">@w.PlanlananTarih.ToString("d MMMM", new System.Globalization.CultureInfo("tr-TR"))</span>
+                        </div>
+                        <div class="dash-tl-item-body">
+                            <span class="dash-tl-no">@w.TeklifNo</span>
+                            <span class="dash-tl-musteri">@w.Musteri</span>
+                        </div>
+                    </div>
+                }
+            }
+
+            @* YAPILMIS SON GORUSMELER *@
+            @if (_recent is not null && _recent.Count > 0)
+            {
+                @foreach (var r in _recent.Take(12))
+                {
+                    <div class="dash-tl-item dash-tl-done">
+                        <div class="dash-tl-item-head">
+                            <span class="dash-tl-check">&#10003;</span>
+                            <span class="dash-tl-date">@r.TemasTarihi.ToString("d MMMM", new System.Globalization.CultureInfo("tr-TR"))</span>
+                            <span class="dash-tl-badge">@TemasTipiText(r.TemasTipi)</span>
+                        </div>
+                        <div class="dash-tl-item-body">
+                            <span class="dash-tl-no">@r.TeklifNo</span>
+                            <span class="dash-tl-musteri">@r.Musteri</span>
+                        </div>
+                    </div>
+                }
+            }
+
+            @if ((_overdue?.Count ?? 0) == 0 && (_today?.Count ?? 0) == 0
+                 && (_week?.Count ?? 0) == 0 && (_recent?.Count ?? 0) == 0)
+            {
+                <div class="dash-tl-empty">Kayit yok</div>
+            }
+
+        </div>
+    </aside>
+
+    </div>
     }
 
 </div>
@@ -135,6 +231,10 @@
     private DashboardKpiModel? _kpi;
     private List<PersonPerformanceModel>? _performance;
     private List<TouchReminderModel>? _stale;
+    private List<TouchReminderModel>? _overdue;
+    private List<TouchReminderModel>? _today;
+    private List<TouchReminderModel>? _week;
+    private List<TouchActivityModel>? _recent;
     private bool _loading;
 
     protected override async Task OnInitializedAsync()
@@ -151,12 +251,20 @@
             _kpi         = await TouchSvc.GetDashboardKpisAsync();
             _performance = await TouchSvc.GetPersonPerformanceAsync();
             _stale       = await TouchSvc.GetStaleTouchesAsync(30);
+            _overdue     = await TouchSvc.GetOverdueTouchesAsync();
+            _today       = await TouchSvc.GetTodayTouchesAsync();
+            _week        = await TouchSvc.GetWeekTouchesAsync();
+            _recent      = await TouchSvc.GetRecentTouchesAsync(12);
         }
         catch
         {
-            _kpi         = new DashboardKpiModel();
-            _performance = new List<PersonPerformanceModel>();
-            _stale       = new List<TouchReminderModel>();
+            _kpi         ??= new DashboardKpiModel();
+            _performance ??= new List<PersonPerformanceModel>();
+            _stale       ??= new List<TouchReminderModel>();
+            _overdue     ??= new List<TouchReminderModel>();
+            _today       ??= new List<TouchReminderModel>();
+            _week        ??= new List<TouchReminderModel>();
+            _recent      ??= new List<TouchActivityModel>();
         }
         finally
         {
@@ -359,6 +467,16 @@
             "M {0} {1} L {2} {3} A {4} {4} 0 {5} 1 {6} {7} Z",
             cx, cy, x1, y1, r, largeArc, x2, y2);
     }
+
+    private static string TemasTipiText(string tip) => tip switch
+    {
+        "CALL"    => "Arama",
+        "MAIL"    => "Mail",
+        "VISIT"   => "Ziyaret",
+        "NOTE"    => "Not",
+        "MEETING" => "Toplanti",
+        _         => tip
+    };
 
     private static string GetInitials(string name)
     {
