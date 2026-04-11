@@ -34,8 +34,8 @@
 .dash-timeline::before {
     content: "";
     position: absolute;
-    left: 22px;
-    top: 50px;
+    left: 29px;
+    top: 58px;
     bottom: 14px;
     width: 2px;
     background: #e5e7eb;
@@ -123,6 +123,25 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.dash-tl-note {
+    font-size: 0.68rem;
+    font-style: italic;
+    color: var(--yl-text-light);
+    margin-top: 3px;
+    padding-left: 6px;
+    border-left: 2px solid #e5e7eb;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+.dash-tl-overdue .dash-tl-note {
+    color: #fef3c7;
+    border-left-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Gecikmis (kirmizi kart) */
@@ -777,3 +796,4 @@
 .app-root.dark .dash-tl-badge { background: #1e3a8a; color: #bfdbfe; }
 .app-root.dark .dash-tl-planned .dash-tl-title { color: #86efac; }
 .app-root.dark .dash-tl-upcoming .dash-tl-title { color: #93c5fd; }
+.app-root.dark .dash-tl-note { color: #8b949e; border-left-color: #30363d; }

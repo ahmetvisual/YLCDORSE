@@ -152,6 +152,10 @@
                             <span class="dash-tl-no">@o.TeklifNo</span>
                             <span class="dash-tl-musteri">@o.Musteri</span>
                         </div>
+                        @if (!string.IsNullOrWhiteSpace(o.SonTemasNotu))
+                        {
+                            <div class="dash-tl-note">@o.SonTemasNotu</div>
+                        }
                     </div>
                 }
             }
@@ -170,6 +174,10 @@
                             <span class="dash-tl-no">@t.TeklifNo</span>
                             <span class="dash-tl-musteri">@t.Musteri</span>
                         </div>
+                        @if (!string.IsNullOrWhiteSpace(t.SonTemasNotu))
+                        {
+                            <div class="dash-tl-note">@t.SonTemasNotu</div>
+                        }
                     </div>
                 }
             }
@@ -188,6 +196,10 @@
                             <span class="dash-tl-no">@w.TeklifNo</span>
                             <span class="dash-tl-musteri">@w.Musteri</span>
                         </div>
+                        @if (!string.IsNullOrWhiteSpace(w.SonTemasNotu))
+                        {
+                            <div class="dash-tl-note">@w.SonTemasNotu</div>
+                        }
                     </div>
                 }
             }
@@ -207,6 +219,10 @@
                             <span class="dash-tl-no">@r.TeklifNo</span>
                             <span class="dash-tl-musteri">@r.Musteri</span>
                         </div>
+                        @if (!string.IsNullOrWhiteSpace(r.Not))
+                        {
+                            <div class="dash-tl-note">@r.Not</div>
+                        }
                     </div>
                 }
             }
