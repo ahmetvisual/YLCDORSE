@@ -25,13 +25,22 @@ namespace YALCINDORSE.Helpers
         {
             try
             {
-                string configPath = Path.Combine(FileSystem.AppDataDirectory, "configuration.txt");
-
-                if (File.Exists(configPath))
+                // 1) Kullanıcının runtime'da UpdateHost() ile yazdığı dosya (AppDataDirectory)
+                string appDataPath = Path.Combine(FileSystem.AppDataDirectory, "configuration.txt");
+                if (File.Exists(appDataPath))
                 {
-                    string firstLine = File.ReadLines(configPath).FirstOrDefault() ?? "";
-                    if (!string.IsNullOrWhiteSpace(firstLine))
-                        return firstLine.Trim();
+                    string line = File.ReadLines(appDataPath).FirstOrDefault() ?? "";
+                    if (!string.IsNullOrWhiteSpace(line))
+                        return line.Trim();
+                }
+
+                // 2) Proje klasöründen build'e kopyalanan dosya (exe'nin yanı)
+                string exePath = Path.Combine(AppContext.BaseDirectory, "configuration.txt");
+                if (File.Exists(exePath))
+                {
+                    string line = File.ReadLines(exePath).FirstOrDefault() ?? "";
+                    if (!string.IsNullOrWhiteSpace(line))
+                        return line.Trim();
                 }
 
                 return GetDefaultHost();
