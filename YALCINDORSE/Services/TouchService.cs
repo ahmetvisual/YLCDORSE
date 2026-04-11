@@ -110,17 +110,6 @@ namespace YALCINDORSE.Services
         public string?  TemasEdenAdi { get; set; }
     }
 
-    public class CalendarEntryModel
-    {
-        public DateTime Tarih { get; set; }
-        public string Tip { get; set; } = ""; // TOUCH, REVISION, PLANNED, OVERDUE, OFFER
-        public string Baslik { get; set; } = "";
-        public int TeklifId { get; set; }
-        public string? TeklifNo { get; set; }
-        public string? Musteri { get; set; }
-        public string? Durum { get; set; }
-    }
-
     // ── Service ─────────────────────────────────────────────────────
 
     public class TouchService
@@ -720,12 +709,6 @@ namespace YALCINDORSE.Services
                 "t.\"SonrakiTemasTarihi\" > CURRENT_DATE AND t.\"SonrakiTemasTarihi\" <= CURRENT_DATE + INTERVAL '7 days'");
         }
 
-        public async Task<List<TouchReminderModel>> GetUpcomingMeetingsAsync()
-        {
-            return await GetRemindersByDateConditionAsync(
-                "t.\"SonrakiTemasTarihi\" > CURRENT_DATE + INTERVAL '7 days' AND t.\"SonrakiTemasTarihi\" <= CURRENT_DATE + INTERVAL '30 days'");
-        }
-
         public async Task<List<TouchReminderModel>> GetStaleTouchesAsync(int days = 30)
         {
             await EnsureSchemaAsync();
@@ -881,69 +864,6 @@ namespace YALCINDORSE.Services
                     TemasTarihi  = reader.GetDateTime(4),
                     Not          = reader.IsDBNull(5) ? null : reader.GetString(5),
                     TemasEdenAdi = reader.IsDBNull(6) ? null : reader.GetString(6)
-                });
-            }
-            return items;
-        }
-
-        // ── CALENDAR ────────────────────────────────────────────────
-
-        public async Task<List<CalendarEntryModel>> GetCalendarEntriesAsync(int year, int month)
-        {
-            await EnsureSchemaAsync();
-            var items = new List<CalendarEntryModel>();
-            using var conn = _db.GetConnection();
-            await conn.OpenAsync();
-
-            var startDate = new DateTime(year, month, 1);
-            var endDate = startDate.AddMonths(1);
-
-            const string sql = """
-                -- Gorusmeler (temaslar)
-                SELECT 'TOUCH' AS "Tip", t."TemasTarihi"::DATE AS "Tarih",
-                       q."TeklifNo" || ' - ' ||
-                       CASE t."TemasTipi" WHEN 'CALL' THEN 'Arama' WHEN 'MAIL' THEN 'Mail'
-                       WHEN 'VISIT' THEN 'Ziyaret' WHEN 'NOTE' THEN 'Not' WHEN 'MEETING' THEN 'Toplanti'
-                       ELSE t."TemasTipi" END AS "Baslik",
-                       q."Id" AS "TeklifId", q."TeklifNo", c."Title" AS "Musteri", q."Durum"
-                FROM "YLTemaslar" t
-                JOIN "YLTeklifler" q ON q."Id" = t."TeklifId"
-                LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
-                WHERE t."TemasTarihi"::DATE >= @startDate AND t."TemasTarihi"::DATE < @endDate
-
-                UNION ALL
-
-                -- Planli temaslar (sonraki temas tarihi bu ayda olanlar)
-                SELECT CASE WHEN t."SonrakiTemasTarihi" < CURRENT_DATE THEN 'OVERDUE' ELSE 'PLANNED' END,
-                       t."SonrakiTemasTarihi",
-                       COALESCE(c."Title", q."TeklifNo") || ' · Gorusme',
-                       q."Id", q."TeklifNo", c."Title", q."Durum"
-                FROM "YLTemaslar" t
-                JOIN "YLTeklifler" q ON q."Id" = t."TeklifId"
-                LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
-                WHERE t."SonrakiTemasTarihi" >= @startDate AND t."SonrakiTemasTarihi" < @endDate
-                  AND q."Durum" NOT IN ('CLOSED', 'ORDER')
-                  AND t."Id" = (SELECT MAX(t2."Id") FROM "YLTemaslar" t2 WHERE t2."TeklifId" = t."TeklifId")
-
-                ORDER BY "Tarih" ASC;
-                """;
-
-            using var cmd = new NpgsqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("startDate", startDate);
-            cmd.Parameters.AddWithValue("endDate", endDate);
-
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                items.Add(new CalendarEntryModel
-                {
-                    Tip = reader.GetString(0),
-                    Tarih = reader.GetDateTime(1),
-                    Baslik = reader.IsDBNull(2) ? "" : reader.GetString(2),
-                    TeklifId = reader.GetInt32(3),
-                    TeklifNo = reader.IsDBNull(4) ? null : reader.GetString(4),
-                    Musteri = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    Durum = reader.IsDBNull(6) ? null : reader.GetString(6)
                 });
             }
             return items;
