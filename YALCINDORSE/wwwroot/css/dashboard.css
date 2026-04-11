@@ -141,14 +141,64 @@
 
 .dash-pie-svg-wrap {
     width: 100%;
-    max-width: 200px;
+    max-width: 220px;
     position: relative;
+    filter: drop-shadow(0 6px 14px rgba(26, 58, 107, 0.12));
 }
 
 .dash-pie-svg {
     width: 100%;
     height: auto;
     display: block;
+    overflow: visible;
+}
+
+/* Pie grubu: acilir-kapanir donus animasyonu */
+.dash-pie-group {
+    transform-origin: 100px 100px;
+    animation: dashPieSpin 900ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+
+@keyframes dashPieSpin {
+    0%   { transform: scale(0.3) rotate(-90deg); opacity: 0; }
+    60%  { opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Her dilim sirasiyla fade-in + scale */
+.dash-pie-slice {
+    transform-origin: 100px 100px;
+    animation: dashSliceIn 550ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+    animation-delay: var(--slice-delay, 0ms);
+    transition: transform 0.25s ease, filter 0.25s ease;
+    cursor: pointer;
+}
+
+@keyframes dashSliceIn {
+    0%   { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Hover: dilim parlasin ve hafif buyusun */
+.dash-pie-group:hover .dash-pie-slice {
+    filter: brightness(0.88) saturate(0.9);
+}
+
+.dash-pie-slice:hover {
+    filter: brightness(1.1) saturate(1.2) drop-shadow(0 0 6px rgba(0, 0, 0, 0.15)) !important;
+    transform: scale(1.05);
+}
+
+/* Orta delik icin hafif fade-in */
+.dash-pie-hole {
+    transform-origin: 100px 100px;
+    animation: dashHoleIn 900ms ease-out both;
+    animation-delay: 250ms;
+}
+
+@keyframes dashHoleIn {
+    0%   { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 .dash-pie-center-text {
@@ -159,6 +209,13 @@
     align-items: center;
     justify-content: center;
     pointer-events: none;
+    animation: dashCenterIn 700ms ease-out both;
+    animation-delay: 500ms;
+}
+
+@keyframes dashCenterIn {
+    0%   { opacity: 0; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 .dash-pie-center-value {
@@ -190,7 +247,22 @@
     gap: 7px;
     font-size: 0.72rem;
     color: var(--yl-text);
+    animation: dashLegendIn 500ms ease-out both;
+    animation-delay: 600ms;
 }
+
+@keyframes dashLegendIn {
+    0%   { opacity: 0; transform: translateX(-8px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.dash-pie-legend-item:nth-child(2) { animation-delay: 680ms; }
+.dash-pie-legend-item:nth-child(3) { animation-delay: 760ms; }
+.dash-pie-legend-item:nth-child(4) { animation-delay: 840ms; }
+.dash-pie-legend-item:nth-child(5) { animation-delay: 920ms; }
+.dash-pie-legend-item:nth-child(6) { animation-delay: 1000ms; }
+.dash-pie-legend-item:nth-child(7) { animation-delay: 1080ms; }
+.dash-pie-legend-item:nth-child(8) { animation-delay: 1160ms; }
 
 .dash-pie-legend-swatch {
     width: 10px;
