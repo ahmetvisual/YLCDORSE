@@ -246,31 +246,18 @@
     {
         _loading = true;
         StateHasChanged();
-        try
-        {
-            _kpi         = await TouchSvc.GetDashboardKpisAsync();
-            _performance = await TouchSvc.GetPersonPerformanceAsync();
-            _stale       = await TouchSvc.GetStaleTouchesAsync(30);
-            _overdue     = await TouchSvc.GetOverdueTouchesAsync();
-            _today       = await TouchSvc.GetTodayTouchesAsync();
-            _week        = await TouchSvc.GetWeekTouchesAsync();
-            _recent      = await TouchSvc.GetRecentTouchesAsync(12);
-        }
-        catch
-        {
-            _kpi         ??= new DashboardKpiModel();
-            _performance ??= new List<PersonPerformanceModel>();
-            _stale       ??= new List<TouchReminderModel>();
-            _overdue     ??= new List<TouchReminderModel>();
-            _today       ??= new List<TouchReminderModel>();
-            _week        ??= new List<TouchReminderModel>();
-            _recent      ??= new List<TouchActivityModel>();
-        }
-        finally
-        {
-            _loading = false;
-            StateHasChanged();
-        }
+
+        // Her veri kaynagini izole et - biri patlasa digerleri calissin
+        try { _kpi         = await TouchSvc.GetDashboardKpisAsync();     } catch { _kpi         = new DashboardKpiModel(); }
+        try { _performance = await TouchSvc.GetPersonPerformanceAsync(); } catch { _performance = new List<PersonPerformanceModel>(); }
+        try { _stale       = await TouchSvc.GetStaleTouchesAsync(30);    } catch { _stale       = new List<TouchReminderModel>(); }
+        try { _overdue     = await TouchSvc.GetOverdueTouchesAsync();    } catch { _overdue     = new List<TouchReminderModel>(); }
+        try { _today       = await TouchSvc.GetTodayTouchesAsync();      } catch { _today       = new List<TouchReminderModel>(); }
+        try { _week        = await TouchSvc.GetWeekTouchesAsync();       } catch { _week        = new List<TouchReminderModel>(); }
+        try { _recent      = await TouchSvc.GetRecentTouchesAsync(12);   } catch { _recent      = new List<TouchActivityModel>(); }
+
+        _loading = false;
+        StateHasChanged();
     }
 
     // ── Computed KPI values ───────────────────────

@@ -787,7 +787,7 @@ namespace YALCINDORSE.Services
             var sql = $"""
                 SELECT q."Id", q."TeklifNo", c."Title", c."CustomerCode", u."FullName",
                        q."Durum", q."Puan", t."SonrakiTemasTarihi",
-                       EXTRACT(DAY FROM CURRENT_DATE - t."SonrakiTemasTarihi")::INT AS "GecenGun",
+                       (CURRENT_DATE - t."SonrakiTemasTarihi")::INT AS "GecenGun",
                        q."NetTutar", q."ParaBirimi",
                        t."Not" AS "SonTemasNotu"
                 FROM "YLTemaslar" t
