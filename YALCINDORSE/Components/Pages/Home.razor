@@ -372,6 +372,26 @@
         catch { }
     }
 
+    private async Task SetStatusAsync(int teklifId, string durum)
+    {
+        try
+        {
+            await TouchSvc.UpdateQuoteStatusAsync(teklifId, durum);
+            await LoadAsync();
+        }
+        catch { }
+    }
+
+    private async Task SetPuanAsync(int teklifId, string puan)
+    {
+        try
+        {
+            await TouchSvc.UpdateQuotePuanAsync(teklifId, puan);
+            await LoadAsync();
+        }
+        catch { }
+    }
+
     private void OpenQuoteDetail(int teklifId)
     {
         var p = new Dictionary<string, object> { { "QuoteId", teklifId } };
@@ -386,8 +406,18 @@
         <div class="dash-tl-actions">
             <button class="dash-tl-btn is-primary" @onclick="() => OpenQuoteDetail(teklifId)">DETAY</button>
             <button class="dash-tl-btn is-success" @onclick="() => OpenQuickForm(teklifId)">+ TEMAS</button>
-            <button class="dash-tl-btn" @onclick="() => PostponeAsync(teklifId, 3)">+3G</button>
-            <button class="dash-tl-btn" @onclick="() => PostponeAsync(teklifId, 7)">+7G</button>
+            <button class="dash-tl-btn" @onclick="() => PostponeAsync(teklifId, 1)">+1G</button>
+        </div>
+        <div class="dash-tl-actions dash-tl-actions-status">
+            <button class="dash-tl-btn is-success" @onclick='() => SetStatusAsync(teklifId, "Approved")' title="Onaylandi olarak isaretle">ONAY</button>
+            <button class="dash-tl-btn is-danger" @onclick='() => SetStatusAsync(teklifId, "Rejected")' title="Reddedildi olarak isaretle">RED</button>
+            <button class="dash-tl-btn is-muted" @onclick='() => SetStatusAsync(teklifId, "CLOSED")' title="Kapat ve listeden kaldir">KAPAT</button>
+        </div>
+        <div class="dash-tl-actions dash-tl-actions-puan">
+            <span class="dash-tl-puan-label">Puan:</span>
+            <button class="dash-tl-puan is-puan-hot"  @onclick='() => SetPuanAsync(teklifId, "HOT")'  title="Sicak">HOT</button>
+            <button class="dash-tl-puan is-puan-warm" @onclick='() => SetPuanAsync(teklifId, "WARM")' title="Ilik">WARM</button>
+            <button class="dash-tl-puan is-puan-cold" @onclick='() => SetPuanAsync(teklifId, "COLD")' title="Soguk">COLD</button>
         </div>
     };
 

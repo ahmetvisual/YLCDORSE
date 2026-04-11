@@ -551,6 +551,78 @@
 
 .dash-tl-overdue .dash-tl-btn.is-primary:hover { background: #450a0a; }
 
+/* Status butonlari (ONAY / RED / KAPAT) */
+.dash-tl-btn.is-danger {
+    background: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+.dash-tl-btn.is-danger:hover { background: #991b1b; border-color: #991b1b; }
+
+.dash-tl-btn.is-muted {
+    background: #6b7280;
+    color: #fff;
+    border-color: #6b7280;
+}
+.dash-tl-btn.is-muted:hover { background: #374151; border-color: #374151; }
+
+.dash-tl-overdue .dash-tl-btn.is-danger { background: #fff; color: #7f1d1d; }
+.dash-tl-overdue .dash-tl-btn.is-danger:hover { background: #fecaca; }
+.dash-tl-overdue .dash-tl-btn.is-muted { background: rgba(255,255,255,0.85); color: #4b1d1d; }
+.dash-tl-overdue .dash-tl-btn.is-muted:hover { background: #fff; }
+
+/* Ikinci satir status/puan actions */
+.dash-tl-actions-status,
+.dash-tl-actions-puan {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--yl-border);
+}
+
+.dash-tl-overdue .dash-tl-actions-status,
+.dash-tl-overdue .dash-tl-actions-puan {
+    border-top-color: rgba(255, 255, 255, 0.35);
+}
+
+.dash-tl-actions-puan { align-items: center; }
+
+.dash-tl-puan-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--yl-text-light);
+    margin-right: 2px;
+}
+
+.dash-tl-overdue .dash-tl-puan-label { color: rgba(255, 255, 255, 0.85); }
+
+.dash-tl-puan {
+    border: 1px solid var(--yl-border);
+    background: #fff;
+    padding: 2px 7px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.15s ease;
+    color: var(--yl-primary);
+}
+
+.dash-tl-puan.is-puan-hot  { color: #dc2626; border-color: #dc2626; }
+.dash-tl-puan.is-puan-warm { color: #d97706; border-color: #d97706; }
+.dash-tl-puan.is-puan-cold { color: #2563eb; border-color: #2563eb; }
+
+.dash-tl-puan.is-puan-hot:hover  { background: #dc2626; color: #fff; }
+.dash-tl-puan.is-puan-warm:hover { background: #d97706; color: #fff; }
+.dash-tl-puan.is-puan-cold:hover { background: #2563eb; color: #fff; }
+
+.dash-tl-overdue .dash-tl-puan {
+    background: rgba(255,255,255,0.92);
+    border-color: transparent;
+}
+
 /* === HIZLI TEMAS FORMU === */
 .dash-tl-quickform {
     margin-top: 8px;
@@ -1107,6 +1179,21 @@
     color: #7dd3fc;
 }
 .app-root.dark .dash-tl-btn:hover { background: #1e3a8a; color: #fff; border-color: #1e3a8a; }
+
+.app-root.dark .dash-tl-btn.is-danger { background: #7f1d1d; color: #fecaca; border-color: #7f1d1d; }
+.app-root.dark .dash-tl-btn.is-danger:hover { background: #991b1b; color: #fff; }
+.app-root.dark .dash-tl-btn.is-muted { background: #374151; color: #d1d5db; border-color: #374151; }
+.app-root.dark .dash-tl-btn.is-muted:hover { background: #4b5563; color: #fff; }
+
+.app-root.dark .dash-tl-actions-status,
+.app-root.dark .dash-tl-actions-puan { border-top-color: #30363d; }
+
+.app-root.dark .dash-tl-puan-label { color: #8b949e; }
+
+.app-root.dark .dash-tl-puan { background: #161b22; border-color: #30363d; }
+.app-root.dark .dash-tl-puan.is-puan-hot  { color: #fca5a5; border-color: #7f1d1d; }
+.app-root.dark .dash-tl-puan.is-puan-warm { color: #fcd34d; border-color: #78350f; }
+.app-root.dark .dash-tl-puan.is-puan-cold { color: #93c5fd; border-color: #1e3a8a; }
 
 .app-root.dark .dash-tl-quickform {
     background: #161b22;
