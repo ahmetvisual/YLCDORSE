@@ -1,6 +1,7 @@
 @page "/crm/cari-kartlar"
 @using YALCINDORSE.Services
 @inject CustomerService CustomerSvc
+@inject IJSRuntime JS
 
 <div class="crm-shell @(StandaloneWindow ? "standalone-window" : "")">
     <div class="crm-workspace-panel">
@@ -46,7 +47,7 @@
         }
 
         <div class="crm-layout">
-            <aside class="crm-master-panel">
+            <aside class="crm-master-panel" @onkeydown="HandleListKeyDown">
                 <div class="crm-master-toolbar">
                     <div class="crm-search-box">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -71,7 +72,7 @@
                     <div class="crm-customer-list">
                         @foreach (var item in FilteredCustomers)
                         {
-                            <button type="button" class="crm-customer-item @(selectedCustomerId == item.Id ? "active" : "")" @onclick="() => SelectCustomerAsync(item.Id)">
+                            <button type="button" id="cari-@item.Id" class="crm-customer-item @(selectedCustomerId == item.Id ? "active" : "")" @onclick="() => SelectCustomerAsync(item.Id)">
                                 <div class="crm-customer-item-top">
                                     <span class="crm-customer-code">@item.CustomerCode</span>
                                     <span class="badge @(item.IsActive ? "badge-active" : "badge-inactive")">
@@ -209,8 +210,36 @@
                                     {
                                         var contact = currentCustomer.Contacts[i];
                                         <div class="crm-contact-card">
-                                            <div class="crm-contact-card-header">
-                                                <strong>@(string.IsNullOrWhiteSpace(contact.ContactName) ? $"Ilgili Kisi {i + 1}" : contact.ContactName)</strong>
+                                            <!-- Satir 1: Ad/Email/Mobil  |  Satir 2: Unvan/Telefon/Departman -->
+                                            <div class="crm-contact-fields-grid">
+                                                <div class="ccf">
+                                                    <label>Ad Soyad *</label>
+                                                    <input type="text" class="form-input" @bind="contact.ContactName" placeholder="Ad soyad" />
+                                                </div>
+                                                <div class="ccf">
+                                                    <label>E-posta</label>
+                                                    <input type="email" class="form-input" @bind="contact.Email" placeholder="E-posta" />
+                                                </div>
+                                                <div class="ccf">
+                                                    <label>Mobil</label>
+                                                    <input type="text" class="form-input" @bind="contact.Mobile" placeholder="Mobil" />
+                                                </div>
+                                                <div class="ccf">
+                                                    <label>Unvan</label>
+                                                    <input type="text" class="form-input" @bind="contact.ContactTitle" placeholder="Unvan" />
+                                                </div>
+                                                <div class="ccf">
+                                                    <label>Telefon</label>
+                                                    <input type="text" class="form-input" @bind="contact.Phone" placeholder="Telefon" />
+                                                </div>
+                                                <div class="ccf">
+                                                    <label>Departman</label>
+                                                    <input type="text" class="form-input" @bind="contact.Department" placeholder="Departman" />
+                                                </div>
+                                            </div>
+                                            <!-- Alt bar: Not | Primary | Sil -->
+                                            <div class="crm-contact-footer">
+                                                <input type="text" class="form-input crm-contact-note-input" @bind="contact.Notes" placeholder="Not (opsiyonel)" />
                                                 <div class="crm-contact-card-actions">
                                                     <label class="crm-inline-check">
                                                         <input type="checkbox" checked="@contact.IsPrimary" @onchange="args => TogglePrimaryContact(contact, args)" />
@@ -222,37 +251,6 @@
                                                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                                                         </svg>
                                                     </button>
-                                                </div>
-                                            </div>
-
-                                            <div class="crm-form-grid crm-contact-grid">
-                                                <div class="form-col">
-                                                    <label>Ad Soyad *</label>
-                                                    <input type="text" class="form-input" @bind="contact.ContactName" placeholder="Ilgili kisi adi" />
-                                                </div>
-                                                <div class="form-col">
-                                                    <label>Unvan</label>
-                                                    <input type="text" class="form-input" @bind="contact.ContactTitle" placeholder="Unvan" />
-                                                </div>
-                                                <div class="form-col">
-                                                    <label>Departman</label>
-                                                    <input type="text" class="form-input" @bind="contact.Department" placeholder="Departman" />
-                                                </div>
-                                                <div class="form-col">
-                                                    <label>E-posta</label>
-                                                    <input type="email" class="form-input" @bind="contact.Email" placeholder="E-posta" />
-                                                </div>
-                                                <div class="form-col">
-                                                    <label>Telefon</label>
-                                                    <input type="text" class="form-input" @bind="contact.Phone" placeholder="Telefon" />
-                                                </div>
-                                                <div class="form-col">
-                                                    <label>Mobil</label>
-                                                    <input type="text" class="form-input" @bind="contact.Mobile" placeholder="Mobil telefon" />
-                                                </div>
-                                                <div class="form-col crm-form-span-2">
-                                                    <label>Notlar</label>
-                                                    <textarea class="form-input crm-textarea crm-contact-note" @bind="contact.Notes" rows="3" placeholder="Kisiye ait notlar"></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -418,6 +416,53 @@
             message = $"Veritabani hatasi: {ex.Message} (Lutfen baglantiyi veya tablolari kontrol edin)";
             messageSuccess = false;
         }
+    }
+
+    private bool _arrowListenerAttached = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Yön tuşlarının liste panelinde sayfa scroll'u yapmasını engelle
+            await JS.InvokeVoidAsync("eval", @"
+                (function() {
+                    var panel = document.querySelector('.crm-master-panel');
+                    if (!panel || panel._arrowNavReady) return;
+                    panel._arrowNavReady = true;
+                    panel.addEventListener('keydown', function(e) {
+                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                            e.preventDefault();
+                        }
+                    }, { passive: false, capture: true });
+                })();
+            ");
+        }
+    }
+
+    private async Task HandleListKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key != "ArrowDown" && e.Key != "ArrowUp") return;
+
+        var list = FilteredCustomers.ToList();
+        if (list.Count == 0) return;
+
+        var idx = selectedCustomerId.HasValue
+            ? list.FindIndex(x => x.Id == selectedCustomerId.Value)
+            : -1;
+
+        var next = e.Key == "ArrowDown"
+            ? Math.Min(idx + 1, list.Count - 1)
+            : Math.Max(idx - 1, 0);
+
+        if (next == idx && idx != -1) return;
+
+        var targetId = list[Math.Max(next, 0)].Id;
+        await SelectCustomerAsync(targetId);
+
+        // Seçili öğeyi listede görünür alana kaydır
+        await JS.InvokeVoidAsync("eval",
+            $"document.getElementById('cari-{targetId}')?.scrollIntoView({{block:'nearest',behavior:'smooth'}});");
     }
 
     private async Task LoadSalesRepsAsync()
