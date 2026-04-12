@@ -57,7 +57,7 @@
             <div class="dash-toast-body">
                 <div class="dash-toast-title">@_overdue!.Count geciken gorusme</div>
                 <div class="dash-toast-text">
-                    @(_overdue.First().Musteri) ve @(_overdue.Count - 1) diger teklif icin temas bekleniyor.
+                    @(_overdue.First().Musteri) ve @(_overdue.Count - 1) diger teklif icin touch bekleniyor.
                 </div>
                 <div class="dash-toast-actions">
                     <button class="dash-toast-btn" @onclick="ScrollToTimelineAsync">GORUNTULE</button>
@@ -140,11 +140,11 @@
             <div class="dash-kpi-card">
                 <div class="dash-kpi-label">Ort. Cevap Suresi</div>
                 <div class="dash-kpi-value kv-orange">@OrtCevapText</div>
-                <div class="dash-kpi-sub">ilk temasa kadar</div>
+                <div class="dash-kpi-sub">ilk touch'a kadar</div>
             </div>
 
             <div class="dash-kpi-card">
-                <div class="dash-kpi-label">Geciken Temas</div>
+                <div class="dash-kpi-label">Geciken Touch</div>
                 <div class="dash-kpi-value kv-red">@(_kpi?.GecikenTemasSayisi ?? 0)</div>
                 <div class="dash-kpi-sub">hareketsiz @(_kpi?.HareketsizSayisi ?? 0)</div>
             </div>
@@ -179,7 +179,7 @@
                             <div class="dash-perf-body">
                                 <div class="dash-perf-name">@p.FullName</div>
                                 <div class="dash-perf-meta">
-                                    @p.TeklifSayisi teklif &middot; @p.TemasSayisi temas &middot; @p.SiparisSayisi siparis
+                                    @p.TeklifSayisi teklif &middot; @p.TemasSayisi touch &middot; @p.SiparisSayisi siparis
                                 </div>
                                 <div class="dash-perf-bar">
                                     <div class="dash-perf-bar-fill" style="width:@(pct)%"></div>
@@ -521,8 +521,8 @@
     private async Task PostponeAsync(int teklifId, int days)
     {
         var ok = await ConfirmAsync(
-            $"Bir sonraki temas tarihi {days} gun ertelensin mi?",
-            title: "TEMAS ERTELE",
+            $"Bir sonraki touch tarihi {days} gun ertelensin mi?",
+            title: "TOUCH ERTELE",
             okText: "ERTELE",
             variant: "warning");
         if (!ok) return;
@@ -593,7 +593,7 @@
     {
         <div class="dash-tl-actions">
             <button class="dash-tl-btn is-primary" @onclick="() => OpenQuoteDetail(teklifId)">DETAY</button>
-            <button class="dash-tl-btn is-success" @onclick="() => OpenQuickForm(teklifId)">+ TEMAS</button>
+            <button class="dash-tl-btn is-success" @onclick="() => OpenQuickForm(teklifId)">+ TOUCH</button>
             <button class="dash-tl-btn" @onclick="() => PostponeAsync(teklifId, 1)">+1G</button>
         </div>
         <div class="dash-tl-actions dash-tl-actions-status">
