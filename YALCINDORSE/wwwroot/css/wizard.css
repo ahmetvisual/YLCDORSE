@@ -670,6 +670,52 @@
 .app-root.dark .searchable-select-item:hover { background: rgba(255,255,255,0.05); }
 .app-root.dark .searchable-select-item.selected { background: rgba(59,125,221,0.1); }
 
+/* ─── Zirve / Resmi Cari arama öğeleri ──────────────────────── */
+.qw-badge-zrv {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    background: #1e3a6e;
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 0;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+.qw-cari-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.qw-cari-linked {
+    font-size: 0.7rem;
+    color: var(--yl-text-light);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.qw-cari-warn {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #d97706;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+/* Eşleşmemiş satır — tıklanamaz, soluk */
+.qw-cari-unmatched {
+    opacity: 0.55;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Dark mode */
+.app-root.dark .qw-badge-zrv { background: #2a4a8a; }
+.app-root.dark .qw-cari-linked { color: #8b949e; }
+.app-root.dark .qw-cari-warn { color: #fbbf24; }
+
 /* ============================================================
    ARABASLIK IMPORT PANEL (QuoteItemsEditor icinde)
    ============================================================ */

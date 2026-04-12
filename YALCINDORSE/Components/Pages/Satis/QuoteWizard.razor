@@ -8,6 +8,7 @@
 @inject AuthService Auth
 @inject DesktopWindowService WindowSvc
 @inject QuoteLookupService LookupSvc
+@inject ZirveService ZirveSvc
 
 <div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow:hidden;">
     <div class="wizard-container">
@@ -99,21 +100,42 @@
                                 @if (showCustomerDropdown)
                                 {
                                     <div class="searchable-select-dropdown">
-                                        @{ var filtered = GetFilteredCustomers(); }
-                                        @if (!filtered.Any())
+                                        @{ var combined = GetCombinedSearch(); }
+                                        @if (!combined.Any())
                                         {
                                             <div class="searchable-select-empty">Sonuc bulunamadi</div>
                                         }
                                         else
                                         {
-                                            @foreach (var c in filtered.Take(50))
+                                            @foreach (var item in combined)
                                             {
-                                                <button class="searchable-select-item @(quote.MusteriId == c.Id ? "selected" : "")"
-                                                        @onmousedown="() => SelectCustomer(c)"
-                                                        @onmousedown:preventDefault>
-                                                    <span class="searchable-select-code">@c.CustomerCode</span>
-                                                    <span>@c.Title</span>
-                                                </button>
+                                                @if (!item.IsSelectable)
+                                                {
+                                                    <div class="searchable-select-item qw-cari-unmatched"
+                                                         title="Bu resmi cari ic sistemde eslesmemis. Cari Kartlar > Resmi Cariler sekmesinden eslestirin.">
+                                                        <span class="qw-badge-zrv">ZRV</span>
+                                                        <span class="searchable-select-code">@item.Kod</span>
+                                                        <span class="qw-cari-name">@item.Ad</span>
+                                                        <span class="qw-cari-warn">eslesmemis</span>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <button class="searchable-select-item @(quote.MusteriId == item.MusteriId ? "selected" : "")"
+                                                            @onmousedown="() => SelectCariItem(item)"
+                                                            @onmousedown:preventDefault>
+                                                        @if (item.IsResmi)
+                                                        {
+                                                            <span class="qw-badge-zrv">ZRV</span>
+                                                        }
+                                                        <span class="searchable-select-code">@item.Kod</span>
+                                                        <span class="qw-cari-name">@item.Ad</span>
+                                                        @if (item.IsResmi && item.EslesmisBilgi != null)
+                                                        {
+                                                            <span class="qw-cari-linked">&#8594; @item.EslesmisBilgi</span>
+                                                        }
+                                                    </button>
+                                                }
                                             }
                                         }
                                     </div>
@@ -695,6 +717,7 @@
     // Customer search
     private string customerSearchText = "";
     private bool showCustomerDropdown = false;
+    private List<ResmiCariListItemModel> resmiCariler = new();
 
     // Edit mode
     [Parameter] public int QuoteId { get; set; }
@@ -736,6 +759,7 @@
         {
             customers = await CustomerSvc.GetCustomersAsync();
             salesReps = await CustomerSvc.GetSalesRepsAsync();
+            try { resmiCariler = await ZirveSvc.GetResmiCarilerAsync(); } catch { }
             teklifTipiValues  = await LookupSvc.GetValuesAsync("TEKLIF_TIPI");
             suspansiyonValues = await LookupSvc.GetValuesAsync("SUSPANSIYON");
             extensionValues   = await LookupSvc.GetValuesAsync("EXTENSION");
@@ -826,17 +850,63 @@
         return current;
     }
 
-    private List<CustomerListItemModel> GetFilteredCustomers()
+    // ── Unified customer search model ────────────
+    private record CariSearchItem(
+        string Kod,
+        string Ad,
+        bool IsResmi,
+        int? MusteriId,       // null = unmatched resmi cari
+        string? EslesmisBilgi // matched resmi cari: linked customer name
+    )
     {
-        if (string.IsNullOrWhiteSpace(customerSearchText))
-            return customers;
-        var q = customerSearchText.Trim().ToLowerInvariant();
-        return customers.Where(c =>
-            (c.Title?.ToLowerInvariant().Contains(q) == true) ||
-            (c.CustomerCode?.ToLowerInvariant().Contains(q) == true)
-        ).ToList();
+        public bool IsSelectable => MusteriId.HasValue && MusteriId > 0;
     }
 
+    private List<CariSearchItem> GetCombinedSearch()
+    {
+        var q = customerSearchText.Trim().ToLowerInvariant();
+        var result = new List<CariSearchItem>();
+
+        // İç cariler
+        var internalFiltered = string.IsNullOrWhiteSpace(q)
+            ? customers
+            : customers.Where(c =>
+                (c.Title?.ToLowerInvariant().Contains(q) == true) ||
+                (c.CustomerCode?.ToLowerInvariant().Contains(q) == true)).ToList();
+        foreach (var c in internalFiltered)
+            result.Add(new CariSearchItem(c.CustomerCode, c.Title, false, c.Id, null));
+
+        // Resmi cariler (Zirve) — vergi no ile de arama yapılabilir
+        var resmiFiltered = string.IsNullOrWhiteSpace(q)
+            ? resmiCariler
+            : resmiCariler.Where(r =>
+                r.CariAdi.ToLowerInvariant().Contains(q) ||
+                r.HesapKodu.ToLowerInvariant().Contains(q) ||
+                (r.VergiNo?.ToLowerInvariant().Contains(q) == true)).ToList();
+        foreach (var r in resmiFiltered)
+            result.Add(new CariSearchItem(
+                r.HesapKodu,
+                r.CariAdi,
+                IsResmi: true,
+                MusteriId: r.EslesmisCariId,
+                EslesmisBilgi: r.EslesmisCariAdi));
+
+        return result.Take(60).ToList();
+    }
+
+    private async Task SelectCariItem(CariSearchItem item)
+    {
+        if (!item.IsSelectable) return;
+        quote.MusteriId = item.MusteriId!.Value;
+        customerSearchText = item.IsResmi
+            ? $"{item.Kod} — {item.Ad}"
+            : $"{item.Kod} - {item.Ad}";
+        showCustomerDropdown = false;
+        errorMessage = null; successMessage = null;
+        await OnCustomerChanged();
+    }
+
+    // Eski metod — geriye dönük uyumluluk için korundu
     private async Task SelectCustomer(CustomerListItemModel c)
     {
         quote.MusteriId = c.Id;
