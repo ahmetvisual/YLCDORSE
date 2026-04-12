@@ -6,57 +6,6 @@
 @inject DatabaseHelper Db
 
 <div class="rc-shell">
-    <!-- ═══ BAGLANTI AYARLARI (sifre bos ise goster) ═══ -->
-    @if (_showConfig)
-    {
-        <div class="rc-config-panel">
-            <div class="rc-config-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-config-icon">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
-                             1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06
-                             a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
-                             A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0
-                             9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33
-                             l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4
-                             h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                <h3>Zirve MSSQL Baglanti Ayarlari</h3>
-            </div>
-            <div class="rc-config-body">
-                <div class="rc-config-row">
-                    <label>Sunucu</label>
-                    <span class="rc-config-val">@(string.Join(" / ", Db.MssqlServers))</span>
-                </div>
-                <div class="rc-config-row">
-                    <label>Veritabani</label>
-                    <span class="rc-config-val">@Db.MssqlDatabase</span>
-                </div>
-                <div class="rc-config-row">
-                    <label>Kullanici</label>
-                    <input type="text" class="rc-config-input" @bind="_cfgUser" placeholder="sa" />
-                </div>
-                <div class="rc-config-row">
-                    <label>Sifre</label>
-                    <input type="password" class="rc-config-input" @bind="_cfgPassword" placeholder="MSSQL sifresi" />
-                </div>
-                @if (!string.IsNullOrEmpty(_cfgMessage))
-                {
-                    <div class="rc-config-msg @(_cfgOk ? "is-ok" : "is-err")">@_cfgMessage</div>
-                }
-                <div class="rc-config-actions">
-                    <button class="rc-btn rc-btn-primary" @onclick="TestAndSaveConfig" disabled="@_cfgTesting">
-                        @(_cfgTesting ? "Test Ediliyor..." : "Baglantiyi Test Et ve Kaydet")
-                    </button>
-                    @if (_cfgOk)
-                    {
-                        <button class="rc-btn rc-btn-ghost" @onclick="() => _showConfig = false">Kapat</button>
-                    }
-                </div>
-            </div>
-        </div>
-    }
-
     <!-- ═══ HEADER ═══ -->
     <div class="rc-header">
         <div class="rc-header-left">
@@ -88,13 +37,6 @@
             {
                 <span class="rc-sync-date">Son: @_sonSenkron.Value.ToString("dd.MM.yyyy HH:mm")</span>
             }
-            <button class="rc-btn rc-btn-ghost" @onclick="() => _showConfig = true" title="Baglanti Ayarlari">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
-                             1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/>
-                </svg>
-            </button>
             <button class="rc-btn rc-btn-primary" @onclick="SenkronizeEt" disabled="@_syncing">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-btn-icon @(_syncing ? "rc-spin" : "")">
                     <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
@@ -357,7 +299,6 @@
     private bool _loading;
     private bool _syncing;
     private bool _matching;
-    private bool _showConfig;
 
     private List<ResmiCariListItemModel> _list = new();
     private ResmiCariModel? _detail;
@@ -371,13 +312,6 @@
 
     private DateTime? _sonSenkron;
     private (int toplam, int eslesmis, int eslesmemis) _stats;
-
-    // Config
-    private string _cfgUser = "sa";
-    private string _cfgPassword = "";
-    private string _cfgMessage = "";
-    private bool _cfgOk;
-    private bool _cfgTesting;
 
     // Matching
     private List<CustomerListItemModel> _dahiliCariler = new();
@@ -432,15 +366,6 @@
     /* ─── LIFECYCLE ────────────────────────────── */
     protected override async Task OnInitializedAsync()
     {
-        _cfgUser = Db.MssqlUser;
-
-        // Sifre bos ise config panelini ac
-        if (!Db.HasMssqlConfig || string.IsNullOrWhiteSpace(Db.MssqlDatabase))
-        {
-            _showConfig = true;
-            return;
-        }
-
         await LoadAllAsync();
     }
 
@@ -486,9 +411,6 @@
             _toast = sonuc.Hata;
             _toastOk = false;
 
-            // Baglanti hatasiysa config panelini ac
-            if (sonuc.Hata.Contains("baglanilamadi"))
-                _showConfig = true;
         }
         else
         {
@@ -564,29 +486,6 @@
             _stats = tStats.Result;
         }
         catch { }
-    }
-
-    /* ─── CONFIG ───────────────────────────────── */
-    private async Task TestAndSaveConfig()
-    {
-        _cfgTesting = true;
-        _cfgMessage = "";
-        StateHasChanged();
-
-        Db.UpdateMssqlCredentials(_cfgUser, _cfgPassword);
-        var (ok, msg) = await Db.TestMssqlAsync();
-        _cfgMessage = msg;
-        _cfgOk = ok;
-        _cfgTesting = false;
-        StateHasChanged();
-
-        if (ok)
-        {
-            // Basarili — sayfayi yukle
-            await Task.Delay(500);
-            _showConfig = false;
-            await LoadAllAsync();
-        }
     }
 
     /* ─── HELPERS ──────────────────────────────── */

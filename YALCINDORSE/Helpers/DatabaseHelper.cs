@@ -10,23 +10,23 @@ namespace YALCINDORSE.Helpers
         private string[] _pgHosts = Array.Empty<string>();
         private int _activePgIdx;
 
+        // PG kimlik bilgileri (kod icinde sabit)
+        private const string PgDatabase = "TRAILER2";
+        private const string PgUser     = "erpci";
+        private const string PgPassword = "Guclu1579!_1";
+
         /* ─── MSSQL (Zirve) ─────────────────────────── */
         private string[] _mssqlServers = Array.Empty<string>();
-        private string _mssqlDatabase = "";
-        private string _mssqlUser = "sa";
-        private string _mssqlPassword = "";
         private int _activeMssqlIdx;
 
-        public bool HasMssqlConfig =>
-            _mssqlServers.Length > 0
-            && !string.IsNullOrWhiteSpace(_mssqlDatabase)
-            && !string.IsNullOrWhiteSpace(_mssqlUser);
+        // Zirve MSSQL kimlik bilgileri (kod icinde sabit — PG ile ayni yaklasim)
+        private const string MssqlDatabase = "YALCIN_DORSE_LTD_\u015eT\u0130_2026";  // YALCIN_DORSE_LTD_ŞTİ_2026
+        private const string MssqlUser     = "ZRVERP";
+        private const string MssqlPassword = "Zdata_2026_!1";
 
-        public string MssqlUser => _mssqlUser;
-        public string MssqlDatabase => _mssqlDatabase;
-        public string[] MssqlServers => _mssqlServers;
+        public bool HasMssqlConfig => _mssqlServers.Length > 0;
 
-        /* ─── Constructor ────────────────────────────── */
+        /* ─── Constructor ──────────────────────────── */
         public DatabaseHelper()
         {
             var lines = ReadConfigurationLines();
@@ -42,7 +42,7 @@ namespace YALCINDORSE.Helpers
         private void BuildPgConnectionString(string host)
         {
             _pgConnectionString =
-                $"Host={host};Database=TRAILER2;Username=erpci;Password=Guclu1579!_1;SSL Mode=Disable;Timeout=5;";
+                $"Host={host};Database={PgDatabase};Username={PgUser};Password={PgPassword};SSL Mode=Disable;Timeout=5;";
         }
 
         public NpgsqlConnection GetConnection() => new NpgsqlConnection(_pgConnectionString);
@@ -90,10 +90,10 @@ namespace YALCINDORSE.Helpers
            MSSQL (ZİRVE)
            ═══════════════════════════════════════════════ */
 
-        private string BuildMssqlCs(string server)
+        private static string BuildMssqlCs(string server)
         {
-            return $"Server={server};Database={_mssqlDatabase};"
-                 + $"User Id={_mssqlUser};Password={_mssqlPassword};"
+            return $"Server={server};Database={MssqlDatabase};"
+                 + $"User Id={MssqlUser};Password={MssqlPassword};"
                  + "TrustServerCertificate=True;Encrypt=False;Connect Timeout=5;";
         }
 
@@ -125,10 +125,7 @@ namespace YALCINDORSE.Helpers
         public async Task<(bool ok, string message)> TestMssqlAsync()
         {
             if (!HasMssqlConfig)
-                return (false, "MSSQL yapilandirmasi bulunamadi. configuration.txt 2. satiri kontrol edin.");
-
-            if (string.IsNullOrWhiteSpace(_mssqlPassword))
-                return (false, "MSSQL sifresi bos. Lutfen sifre girin.");
+                return (false, "MSSQL sunucu adresi bulunamadi. configuration.txt 2. satiri kontrol edin.");
 
             foreach (var server in _mssqlServers)
             {
@@ -140,20 +137,11 @@ namespace YALCINDORSE.Helpers
                 }
                 catch (Exception ex)
                 {
-                    // Sonraki sunucuyu dene
                     if (server == _mssqlServers[^1])
                         return (false, $"Baglanti basarisiz: {ex.Message}");
                 }
             }
             return (false, "Tum sunuculara baglanti basarisiz.");
-        }
-
-        /// <summary>MSSQL kullanici adi ve sifre güncelle, configuration.txt'ye kaydet.</summary>
-        public void UpdateMssqlCredentials(string user, string password)
-        {
-            _mssqlUser = user;
-            _mssqlPassword = password;
-            SaveConfiguration();
         }
 
         /* ═══════════════════════════════════════════════
@@ -194,32 +182,19 @@ namespace YALCINDORSE.Helpers
         }
 
         /// <summary>
-        /// Satır 2 formatı: server1|server2|database|user|password
-        /// (password pipe içerebilir — sondan birleştirilir)
+        /// Satır 2: sadece sunucu adresleri — server1|server2
+        /// Veritabani, kullanici, sifre kodda sabit.
         /// </summary>
         private void ParseMssqlConfig(string[] lines)
         {
             if (lines.Length < 2 || string.IsNullOrWhiteSpace(lines[1]))
                 return;
 
-            var parts = lines[1].Trim().Split('|');
-
-            // 2-sunucu: server1|server2|db|user|password...
-            if (parts.Length >= 5)
-            {
-                _mssqlServers = new[] { parts[0].Trim(), parts[1].Trim() };
-                _mssqlDatabase = parts[2].Trim();
-                _mssqlUser = parts[3].Trim();
-                _mssqlPassword = string.Join("|", parts.Skip(4)); // sifrede | olabilir
-            }
-            // 1-sunucu: server|db|user|password...
-            else if (parts.Length >= 4)
-            {
-                _mssqlServers = new[] { parts[0].Trim() };
-                _mssqlDatabase = parts[1].Trim();
-                _mssqlUser = parts[2].Trim();
-                _mssqlPassword = string.Join("|", parts.Skip(3));
-            }
+            _mssqlServers = lines[1].Trim()
+                .Split('|')
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .ToArray();
         }
 
         private void SaveConfiguration()
@@ -227,12 +202,7 @@ namespace YALCINDORSE.Helpers
             try
             {
                 var pgLine = string.Join("|", _pgHosts);
-
-                string mssqlLine = "";
-                if (_mssqlServers.Length >= 2)
-                    mssqlLine = $"{_mssqlServers[0]}|{_mssqlServers[1]}|{_mssqlDatabase}|{_mssqlUser}|{_mssqlPassword}";
-                else if (_mssqlServers.Length == 1)
-                    mssqlLine = $"{_mssqlServers[0]}|{_mssqlDatabase}|{_mssqlUser}|{_mssqlPassword}";
+                var mssqlLine = string.Join("|", _mssqlServers);
 
                 var configPath = Path.Combine(FileSystem.AppDataDirectory, "configuration.txt");
                 File.WriteAllLines(configPath, new[] { pgLine, mssqlLine });
