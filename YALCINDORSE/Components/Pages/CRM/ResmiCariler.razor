@@ -1,0 +1,601 @@
+@page "/crm/resmi-cariler"
+@using YALCINDORSE.Services
+@using YALCINDORSE.Helpers
+@inject ZirveService ZirveSvc
+@inject CustomerService CustomerSvc
+@inject DatabaseHelper Db
+
+<div class="rc-shell">
+    <!-- ═══ BAGLANTI AYARLARI (sifre bos ise goster) ═══ -->
+    @if (_showConfig)
+    {
+        <div class="rc-config-panel">
+            <div class="rc-config-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-config-icon">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
+                             1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06
+                             a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                             A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0
+                             9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33
+                             l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4
+                             h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <h3>Zirve MSSQL Baglanti Ayarlari</h3>
+            </div>
+            <div class="rc-config-body">
+                <div class="rc-config-row">
+                    <label>Sunucu</label>
+                    <span class="rc-config-val">@(string.Join(" / ", Db.MssqlServers))</span>
+                </div>
+                <div class="rc-config-row">
+                    <label>Veritabani</label>
+                    <span class="rc-config-val">@Db.MssqlDatabase</span>
+                </div>
+                <div class="rc-config-row">
+                    <label>Kullanici</label>
+                    <input type="text" class="rc-config-input" @bind="_cfgUser" placeholder="sa" />
+                </div>
+                <div class="rc-config-row">
+                    <label>Sifre</label>
+                    <input type="password" class="rc-config-input" @bind="_cfgPassword" placeholder="MSSQL sifresi" />
+                </div>
+                @if (!string.IsNullOrEmpty(_cfgMessage))
+                {
+                    <div class="rc-config-msg @(_cfgOk ? "is-ok" : "is-err")">@_cfgMessage</div>
+                }
+                <div class="rc-config-actions">
+                    <button class="rc-btn rc-btn-primary" @onclick="TestAndSaveConfig" disabled="@_cfgTesting">
+                        @(_cfgTesting ? "Test Ediliyor..." : "Baglantiyi Test Et ve Kaydet")
+                    </button>
+                    @if (_cfgOk)
+                    {
+                        <button class="rc-btn rc-btn-ghost" @onclick="() => _showConfig = false">Kapat</button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ═══ HEADER ═══ -->
+    <div class="rc-header">
+        <div class="rc-header-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-header-icon">
+                <path d="M3 7h18"/>
+                <path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
+                <path d="M8 11h8"/><path d="M8 15h5"/>
+            </svg>
+            <div>
+                <h3>Resmi Cariler <span class="rc-header-badge">Zirve</span></h3>
+                <p class="rc-header-sub">
+                    @if (_stats.toplam > 0)
+                    {
+                        <span>@_stats.toplam kayit</span>
+                        <span class="rc-dot"></span>
+                        <span class="rc-stat-ok">@_stats.eslesmis eslesmis</span>
+                        <span class="rc-dot"></span>
+                        <span class="rc-stat-warn">@_stats.eslesmemis eslesmemis</span>
+                    }
+                    else
+                    {
+                        <span>Henuz senkronize edilmedi</span>
+                    }
+                </p>
+            </div>
+        </div>
+        <div class="rc-header-actions">
+            @if (_sonSenkron.HasValue)
+            {
+                <span class="rc-sync-date">Son: @_sonSenkron.Value.ToString("dd.MM.yyyy HH:mm")</span>
+            }
+            <button class="rc-btn rc-btn-ghost" @onclick="() => _showConfig = true" title="Baglanti Ayarlari">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
+                             1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/>
+                </svg>
+            </button>
+            <button class="rc-btn rc-btn-primary" @onclick="SenkronizeEt" disabled="@_syncing">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-btn-icon @(_syncing ? "rc-spin" : "")">
+                    <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                    <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                </svg>
+                @(_syncing ? "Senkronize Ediliyor..." : "Senkronize Et")
+            </button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_toast))
+    {
+        <div class="rc-toast @(_toastOk ? "is-ok" : "is-err")">
+            @_toast
+            <button class="rc-toast-close" @onclick='() => _toast = ""'>&times;</button>
+        </div>
+    }
+
+    <!-- ═══ FILTRE TABS ═══ -->
+    <div class="rc-filter-bar">
+        <button class="rc-tab @(_filter == "all" ? "active" : "")" @onclick='() => _filter = "all"'>
+            Tumu <span class="rc-tab-cnt">@_stats.toplam</span>
+        </button>
+        <button class="rc-tab @(_filter == "matched" ? "active" : "")" @onclick='() => _filter = "matched"'>
+            Eslesmis <span class="rc-tab-cnt rc-cnt-ok">@_stats.eslesmis</span>
+        </button>
+        <button class="rc-tab @(_filter == "unmatched" ? "active" : "")" @onclick='() => _filter = "unmatched"'>
+            Eslesmemis <span class="rc-tab-cnt rc-cnt-warn">@_stats.eslesmemis</span>
+        </button>
+    </div>
+
+    <!-- ═══ MASTER-DETAIL LAYOUT ═══ -->
+    <div class="rc-layout">
+        <!-- SOL: LİSTE -->
+        <aside class="rc-list-panel">
+            <div class="rc-search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-search-icon">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" class="rc-search-input" placeholder="Hesap kodu, cari adi, vergi no..."
+                       @bind="_search" @bind:event="oninput" />
+                @if (!string.IsNullOrWhiteSpace(_search))
+                {
+                    <button class="rc-search-clear" @onclick='() => _search = ""'>&times;</button>
+                }
+            </div>
+
+            <div class="rc-list-count">@FilteredList.Count kayit</div>
+
+            <div class="rc-list-scroll">
+                @if (_loading)
+                {
+                    @for (int i = 0; i < 8; i++)
+                    {
+                        <div class="rc-skel-item">
+                            <div class="rc-skel-line w60"></div>
+                            <div class="rc-skel-line w40"></div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    @foreach (var item in FilteredList)
+                    {
+                        <button class="rc-list-item @(_selected?.Id == item.Id ? "active" : "") @(item.EslesmisCariId.HasValue ? "matched" : "unmatched")"
+                                @onclick="() => SelectItem(item.Id)">
+                            <div class="rc-item-top">
+                                <span class="rc-item-code">@item.HesapKodu</span>
+                                @if (item.EslesmisCariId.HasValue)
+                                {
+                                    <span class="rc-item-badge rc-badge-ok" title="Eslesmis">✓</span>
+                                }
+                                else
+                                {
+                                    <span class="rc-item-badge rc-badge-warn" title="Eslesmemis">✗</span>
+                                }
+                            </div>
+                            <div class="rc-item-name">@item.CariAdi</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Il))
+                            {
+                                <div class="rc-item-sub">@item.Il</div>
+                            }
+                        </button>
+                    }
+                }
+            </div>
+        </aside>
+
+        <!-- SAG: DETAY + ESLESTIRME -->
+        <section class="rc-detail-panel">
+            @if (_detail == null)
+            {
+                <div class="rc-detail-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;opacity:0.3;">
+                        <path d="M3 7h18"/><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
+                        <path d="M8 11h8"/><path d="M8 15h5"/>
+                    </svg>
+                    <p>Detay gormek icin listeden bir cari secin.</p>
+                </div>
+            }
+            else
+            {
+                <div class="rc-detail-scroll">
+                    <!-- DETAY HEADER -->
+                    <div class="rc-detail-header">
+                        <div>
+                            <div class="rc-detail-code">@_detail.HesapKodu</div>
+                            <div class="rc-detail-name">@_detail.CariAdi</div>
+                            @if (!string.IsNullOrWhiteSpace(_detail.Unvan))
+                            {
+                                <div class="rc-detail-unvan">@_detail.Unvan</div>
+                            }
+                        </div>
+                        @if (_detail.EslesmisCariId.HasValue)
+                        {
+                            <span class="rc-match-chip is-ok">Eslesmis</span>
+                        }
+                        else
+                        {
+                            <span class="rc-match-chip is-warn">Eslesmemis</span>
+                        }
+                    </div>
+
+                    <!-- BILGI GRID -->
+                    <div class="rc-info-grid">
+                        <div class="rc-info-group">
+                            <h4>Vergi Bilgileri</h4>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Vergi No</span>
+                                <span class="rc-val">@(string.IsNullOrWhiteSpace(_detail.VergiNo) ? "—" : _detail.VergiNo)</span>
+                            </div>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">TC Kimlik No</span>
+                                <span class="rc-val">@(string.IsNullOrWhiteSpace(_detail.TCKimlikNo) ? "—" : _detail.TCKimlikNo)</span>
+                            </div>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Vergi Dairesi</span>
+                                <span class="rc-val">@(string.IsNullOrWhiteSpace(_detail.VergiDairesi) ? "—" : _detail.VergiDairesi)</span>
+                            </div>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">V.D. Kodu</span>
+                                <span class="rc-val">@(string.IsNullOrWhiteSpace(_detail.VergiDairesiKodu) ? "—" : _detail.VergiDairesiKodu)</span>
+                            </div>
+                        </div>
+
+                        <div class="rc-info-group">
+                            <h4>Adres</h4>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Il / Ilce</span>
+                                <span class="rc-val">@(Coalesce(_detail.Il, "—")) / @(Coalesce(_detail.Ilce, "—"))</span>
+                            </div>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Ulke</span>
+                                <span class="rc-val">@(Coalesce(_detail.Ulke, "—"))</span>
+                            </div>
+                            <div class="rc-info-row full">
+                                <span class="rc-lbl">Adres 1</span>
+                                <span class="rc-val">@(Coalesce(_detail.Adres1, "—"))</span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(_detail.Adres2))
+                            {
+                                <div class="rc-info-row full">
+                                    <span class="rc-lbl">Adres 2</span>
+                                    <span class="rc-val">@_detail.Adres2</span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="rc-info-group">
+                            <h4>Iletisim</h4>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Telefon</span>
+                                <span class="rc-val">@(Coalesce(_detail.Telefon1, "—"))</span>
+                            </div>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Cep</span>
+                                <span class="rc-val">@(Coalesce(_detail.Cep, "—"))</span>
+                            </div>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Email</span>
+                                <span class="rc-val">@(Coalesce(_detail.Email, "—"))</span>
+                            </div>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Web</span>
+                                <span class="rc-val">@(Coalesce(_detail.Web, "—"))</span>
+                            </div>
+                            <div class="rc-info-row">
+                                <span class="rc-lbl">Yetkili</span>
+                                <span class="rc-val">@(Coalesce(_detail.Yetkili, "—"))</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ ESLESTIRME PANEL ═══ -->
+                    <div class="rc-match-panel">
+                        <h4>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/>
+                                <path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>
+                            </svg>
+                            Dahili Cari Eslestirme
+                        </h4>
+
+                        @if (_detail.EslesmisCariId.HasValue)
+                        {
+                            <div class="rc-match-current">
+                                <div class="rc-match-info">
+                                    <span class="rc-match-label">Eslesmis Cari:</span>
+                                    <span class="rc-match-name">@_detail.EslesmisCariAdi</span>
+                                </div>
+                                <button class="rc-btn rc-btn-danger-sm" @onclick="KaldirEslestirme" disabled="@_matching">
+                                    Kaldir
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="rc-match-form">
+                                <div class="rc-match-select-wrap">
+                                    <input type="text" class="rc-match-search" placeholder="Dahili cari ara..."
+                                           @bind="_matchSearch" @bind:event="oninput" />
+                                    @if (FilteredDahiliCariler.Any())
+                                    {
+                                        <div class="rc-match-dropdown">
+                                            @foreach (var dc in FilteredDahiliCariler.Take(15))
+                                            {
+                                                <button class="rc-match-option @(_matchSelectedId == dc.Id ? "selected" : "")"
+                                                        @onclick="() => { _matchSelectedId = dc.Id; _matchSearch = dc.Title; }">
+                                                    <span class="rc-opt-code">@dc.CustomerCode</span>
+                                                    <span class="rc-opt-name">@dc.Title</span>
+                                                    @if (!string.IsNullOrWhiteSpace(dc.TaxNumber))
+                                                    {
+                                                        <span class="rc-opt-vno">@dc.TaxNumber</span>
+                                                    }
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <button class="rc-btn rc-btn-primary" @onclick="YapEslestirme"
+                                        disabled="@(_matchSelectedId == null || _matching)">
+                                    @(_matching ? "..." : "Eslesir")
+                                </button>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(_matchMsg))
+                        {
+                            <div class="rc-match-msg @(_matchOk ? "is-ok" : "is-err")">@_matchMsg</div>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+</div>
+
+@code {
+    /* ─── STATE ────────────────────────────────── */
+    private bool _loading;
+    private bool _syncing;
+    private bool _matching;
+    private bool _showConfig;
+
+    private List<ResmiCariListItemModel> _list = new();
+    private ResmiCariModel? _detail;
+    private ResmiCariModel? _selected => _detail; // alias for list highlight
+
+    private string _search = "";
+    private string _filter = "all"; // all, matched, unmatched
+
+    private string _toast = "";
+    private bool _toastOk;
+
+    private DateTime? _sonSenkron;
+    private (int toplam, int eslesmis, int eslesmemis) _stats;
+
+    // Config
+    private string _cfgUser = "sa";
+    private string _cfgPassword = "";
+    private string _cfgMessage = "";
+    private bool _cfgOk;
+    private bool _cfgTesting;
+
+    // Matching
+    private List<CustomerListItemModel> _dahiliCariler = new();
+    private string _matchSearch = "";
+    private int? _matchSelectedId;
+    private string _matchMsg = "";
+    private bool _matchOk;
+
+    /* ─── COMPUTED ─────────────────────────────── */
+    private List<ResmiCariListItemModel> FilteredList
+    {
+        get
+        {
+            IEnumerable<ResmiCariListItemModel> q = _list;
+
+            // Tab filtre
+            if (_filter == "matched")
+                q = q.Where(x => x.EslesmisCariId.HasValue);
+            else if (_filter == "unmatched")
+                q = q.Where(x => !x.EslesmisCariId.HasValue);
+
+            // Arama
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                var s = _search.Trim().ToUpperInvariant();
+                q = q.Where(x =>
+                    (x.HesapKodu?.ToUpperInvariant().Contains(s) == true) ||
+                    (x.CariAdi?.ToUpperInvariant().Contains(s) == true) ||
+                    (x.VergiNo?.ToUpperInvariant().Contains(s) == true) ||
+                    (x.Il?.ToUpperInvariant().Contains(s) == true) ||
+                    (x.EslesmisCariAdi?.ToUpperInvariant().Contains(s) == true));
+            }
+            return q.ToList();
+        }
+    }
+
+    private IEnumerable<CustomerListItemModel> FilteredDahiliCariler
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_matchSearch) || _matchSearch.Length < 2)
+                return Enumerable.Empty<CustomerListItemModel>();
+
+            var s = _matchSearch.Trim().ToUpperInvariant();
+            return _dahiliCariler.Where(x =>
+                (x.Title?.ToUpperInvariant().Contains(s) == true) ||
+                (x.CustomerCode?.ToUpperInvariant().Contains(s) == true) ||
+                (x.TaxNumber?.ToUpperInvariant().Contains(s) == true));
+        }
+    }
+
+    /* ─── LIFECYCLE ────────────────────────────── */
+    protected override async Task OnInitializedAsync()
+    {
+        _cfgUser = Db.MssqlUser;
+
+        // Sifre bos ise config panelini ac
+        if (!Db.HasMssqlConfig || string.IsNullOrWhiteSpace(Db.MssqlDatabase))
+        {
+            _showConfig = true;
+            return;
+        }
+
+        await LoadAllAsync();
+    }
+
+    private async Task LoadAllAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var tList   = SafeAsync(() => ZirveSvc.GetResmiCarilerAsync());
+            var tSon    = SafeAsync(() => ZirveSvc.GetSonSenkronTarihiAsync());
+            var tDahili = SafeAsync(() => CustomerSvc.GetCustomersAsync());
+
+            // Value-tuple icin SafeAsync kullanilamaz (struct); ayri handle
+            var tStats  = ZirveSvc.GetIstatistiklerAsync()
+                          .ContinueWith(t => t.IsCompletedSuccessfully ? t.Result : (0, 0, 0));
+
+            await Task.WhenAll(tList, tStats, tSon, tDahili);
+
+            _list = tList.Result ?? new();
+            _stats = tStats.Result;
+            _sonSenkron = tSon.Result;
+            _dahiliCariler = tDahili.Result ?? new();
+        }
+        catch { }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    /* ─── SENKRONİZASYON ──────────────────────── */
+    private async Task SenkronizeEt()
+    {
+        _syncing = true;
+        _toast = "";
+        StateHasChanged();
+
+        var sonuc = await ZirveSvc.SenkronizeEtAsync();
+
+        if (!string.IsNullOrEmpty(sonuc.Hata))
+        {
+            _toast = sonuc.Hata;
+            _toastOk = false;
+
+            // Baglanti hatasiysa config panelini ac
+            if (sonuc.Hata.Contains("baglanilamadi"))
+                _showConfig = true;
+        }
+        else
+        {
+            _toast = $"Senkronizasyon tamamlandi: {sonuc.Yeni} yeni, {sonuc.Guncellenen} guncellendi ({sonuc.Toplam} toplam)";
+            _toastOk = true;
+        }
+
+        _syncing = false;
+        await LoadAllAsync();
+    }
+
+    /* ─── DETAY SECIM ──────────────────────────── */
+    private async Task SelectItem(int id)
+    {
+        _matchMsg = "";
+        _matchSearch = "";
+        _matchSelectedId = null;
+        _detail = await ZirveSvc.GetResmiCariByIdAsync(id);
+        StateHasChanged();
+    }
+
+    /* ─── ESLESTIRME ───────────────────────────── */
+    private async Task YapEslestirme()
+    {
+        if (_detail == null || _matchSelectedId == null) return;
+        _matching = true;
+        _matchMsg = "";
+        StateHasChanged();
+
+        var (ok, msg) = await ZirveSvc.EslestirAsync(_detail.Id, _matchSelectedId.Value);
+        _matchMsg = msg;
+        _matchOk = ok;
+        _matching = false;
+
+        if (ok)
+        {
+            _detail = await ZirveSvc.GetResmiCariByIdAsync(_detail.Id);
+            await RefreshListAndStats();
+            _matchSearch = "";
+            _matchSelectedId = null;
+        }
+        StateHasChanged();
+    }
+
+    private async Task KaldirEslestirme()
+    {
+        if (_detail == null) return;
+        _matching = true;
+        _matchMsg = "";
+        StateHasChanged();
+
+        var (ok, msg) = await ZirveSvc.EslestirmeKaldirAsync(_detail.Id);
+        _matchMsg = msg;
+        _matchOk = ok;
+        _matching = false;
+
+        if (ok)
+        {
+            _detail = await ZirveSvc.GetResmiCariByIdAsync(_detail.Id);
+            await RefreshListAndStats();
+        }
+        StateHasChanged();
+    }
+
+    private async Task RefreshListAndStats()
+    {
+        try
+        {
+            var tList = ZirveSvc.GetResmiCarilerAsync();
+            var tStats = ZirveSvc.GetIstatistiklerAsync();
+            await Task.WhenAll(tList, tStats);
+            _list = tList.Result;
+            _stats = tStats.Result;
+        }
+        catch { }
+    }
+
+    /* ─── CONFIG ───────────────────────────────── */
+    private async Task TestAndSaveConfig()
+    {
+        _cfgTesting = true;
+        _cfgMessage = "";
+        StateHasChanged();
+
+        Db.UpdateMssqlCredentials(_cfgUser, _cfgPassword);
+        var (ok, msg) = await Db.TestMssqlAsync();
+        _cfgMessage = msg;
+        _cfgOk = ok;
+        _cfgTesting = false;
+        StateHasChanged();
+
+        if (ok)
+        {
+            // Basarili — sayfayi yukle
+            await Task.Delay(500);
+            _showConfig = false;
+            await LoadAllAsync();
+        }
+    }
+
+    /* ─── HELPERS ──────────────────────────────── */
+    private static string Coalesce(string? val, string fallback)
+        => string.IsNullOrWhiteSpace(val) ? fallback : val;
+
+    private static async Task<T?> SafeAsync<T>(Func<Task<T>> factory) where T : class
+    { try { return await factory(); } catch { return null; } }
+
+    private static async Task<T?> SafeAsync<T>(Func<Task<T?>> factory) where T : struct
+    { try { return await factory(); } catch { return null; } }
+}
