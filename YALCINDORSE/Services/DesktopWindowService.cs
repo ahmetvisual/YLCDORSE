@@ -104,7 +104,7 @@ namespace YALCINDORSE.Services
 
         public bool OpenCustomerCardsWindow()
         {
-            return OpenWindow<YALCINDORSE.Components.Pages.CRM.CariKartlari>("Cari Kartlar", 1440, 920);
+            return OpenWindow<YALCINDORSE.Components.Pages.CRM.CariKartlari>("Cari Kartlar", 1080, 820);
         }
 
         /// <summary>

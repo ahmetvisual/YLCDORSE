@@ -452,7 +452,7 @@ h4 {
     background: #fff5f5;
     color: var(--yl-danger);
     border: 1px solid #fecaca;
-    border-radius: 12px;
+    border-radius: 0;
     padding: 10px 12px;
     font-size: 0.85rem;
     display: flex;
@@ -1511,7 +1511,7 @@ h4 {
     background: var(--yl-primary);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: var(--yl-font-sm);
     font-weight: 500;
     cursor: pointer;
@@ -1531,7 +1531,7 @@ h4 {
 .alert {
     padding: 10px 16px;
     margin: 12px 20px 0;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 0.85rem;
     display: flex;
     align-items: center;
@@ -1610,7 +1610,7 @@ h4 {
 .badge {
     display: inline-block;
     padding: 3px 10px;
-    border-radius: 20px;
+    border-radius: 0;
     font-size: 0.75rem;
     font-weight: 600;
 }
@@ -1637,7 +1637,7 @@ h4 {
     align-items: center;
     justify-content: center;
     border: none;
-    border-radius: 6px;
+    border-radius: 0;
     cursor: pointer;
     transition: background 0.15s;
     background: transparent;
@@ -1680,7 +1680,7 @@ h4 {
 
 .modal-panel {
     background: var(--yl-white);
-    border-radius: 12px;
+    border-radius: 0;
     width: 100%;
     max-width: 560px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.2);
@@ -1775,7 +1775,7 @@ h4 {
     width: 100%;
     padding: 4px 8px;
     border: 1px solid var(--yl-border);
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 0.8rem;
     outline: none;
     transition: border-color 0.2s;
@@ -1804,7 +1804,7 @@ h4 {
 
 .crm-workspace-panel {
     background: var(--yl-white);
-    border-radius: 8px;
+    border-radius: 0;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     display: flex;
     flex-direction: column;
@@ -1853,7 +1853,7 @@ h4 {
 .crm-master-panel,
 .crm-detail-panel {
     border: 1px solid var(--yl-border);
-    border-radius: 12px;
+    border-radius: 0;
     background: var(--yl-white);
     min-height: 0;
 }
@@ -1908,7 +1908,7 @@ h4 {
 
 .crm-customer-item {
     border: 1px solid var(--yl-border);
-    border-radius: 8px;
+    border-radius: 0;
     background: var(--yl-white);
     padding: 7px 12px;
     display: flex;
@@ -2026,7 +2026,7 @@ h4 {
 
 .crm-detail-summary div {
     border: 1px solid var(--yl-border);
-    border-radius: 10px;
+    border-radius: 0;
     padding: 10px 12px;
     min-width: 0;
 }
@@ -2117,50 +2117,83 @@ h4 {
 
 .crm-inline-empty {
     border: 1px dashed var(--yl-border);
-    border-radius: 10px;
+    border-radius: 0;
 }
 
 .crm-contact-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
 }
 
+/* === Kompakt kisi karti === */
 .crm-contact-card {
     border: 1px solid var(--yl-border);
-    border-radius: 12px;
-    padding: 14px;
+    border-radius: 0;
+    padding: 8px 12px 6px;
     background: #fbfcff;
 }
 
-.crm-contact-card-header {
+.crm-contact-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px 12px;
+    margin-bottom: 6px;
+}
+
+.ccf label {
+    display: block;
+    font-size: 0.63rem;
+    font-weight: 700;
+    color: var(--yl-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+}
+
+.ccf .form-input {
+    padding: 4px 7px;
+    font-size: 0.81rem;
+    height: 28px;
+}
+
+.crm-contact-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
+    gap: 8px;
+    border-top: 1px solid var(--yl-border);
+    padding-top: 5px;
+}
+
+.crm-contact-note-input {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 3px 7px !important;
+    height: 26px !important;
+    color: var(--yl-text-light);
 }
 
 .crm-contact-card-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .crm-inline-check {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     color: var(--yl-text-light);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
 }
 
+/* Eski stiller (geriye uyumluluk) */
 .crm-contact-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.crm-contact-note,
 .crm-notes-textarea {
     min-height: 120px;
 }
@@ -2205,6 +2238,8 @@ h4 {
     background: #1c2030;
     border-color: var(--yl-border);
 }
+.app-root.dark .ccf label { color: var(--yl-text-light); }
+.app-root.dark .crm-contact-footer { border-top-color: var(--yl-border); }
 
 .app-root.dark .crm-shell.standalone-window {
     background: #121520;
@@ -2279,7 +2314,7 @@ h4 {
     background: var(--yl-bg);
     color: var(--yl-text);
     border: 1px solid var(--yl-border);
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 0.82rem;
     font-weight: 400;
     cursor: pointer;
@@ -2295,7 +2330,7 @@ h4 {
     background: var(--yl-primary);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 0.82rem;
     font-weight: 500;
     cursor: pointer;
@@ -2316,7 +2351,7 @@ h4 {
     background: var(--yl-danger);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;

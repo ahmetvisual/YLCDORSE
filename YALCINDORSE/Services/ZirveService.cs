@@ -240,8 +240,8 @@ namespace YALCINDORSE.Services
                      @vd,@vdk,@il,@ilce,@ulke,
                      @a1,@a2,@tel,@cep,@email,@web,@yet,
                      CURRENT_TIMESTAMP)
-                    ON CONFLICT ("ZirveId") DO UPDATE SET
-                        "HesapKodu"        = EXCLUDED."HesapKodu",
+                    ON CONFLICT ("HesapKodu") DO UPDATE SET
+                        "ZirveId"          = EXCLUDED."ZirveId",
                         "CariAdi"          = EXCLUDED."CariAdi",
                         "Unvan"            = EXCLUDED."Unvan",
                         "VergiNo"          = EXCLUDED."VergiNo",

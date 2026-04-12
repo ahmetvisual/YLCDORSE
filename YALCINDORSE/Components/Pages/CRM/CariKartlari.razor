@@ -3,344 +3,350 @@
 @inject CustomerService CustomerSvc
 @inject IJSRuntime JS
 
-<div class="crm-shell @(StandaloneWindow ? "standalone-window" : "")">
-    <div class="crm-workspace-panel">
-        <div class="crm-header">
-            <div class="crm-header-copy">
-                <div class="panel-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon">
-                        <path d="M3 7h18" />
-                        <path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
-                        <path d="M8 11h8" />
-                        <path d="M8 15h5" />
-                    </svg>
-                    <div>
-                        <h3>Cari Kartlar</h3>
-                        <p class="crm-header-subtitle">Musteri ana kartlari, ilgili kisiler ve notlar tek ekranda yonetilir.</p>
-                    </div>
+<div class="rc-shell @(StandaloneWindow ? "standalone-window" : "")">
+    <!-- ═══ MAIN TABS ═══ -->
+    <div class="rc-main-tabs">
+        <button class="rc-main-tab @(_mainTab == "cariler" ? "active" : "")"
+                @onclick='() => _mainTab = "cariler"'>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px;">
+                <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/>
+                <line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/>
+            </svg>
+            Cariler
+        </button>
+        <button class="rc-main-tab @(_mainTab == "resmi" ? "active" : "")"
+                @onclick='() => _mainTab = "resmi"'>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px;">
+                <path d="M3 7h18"/><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
+                <path d="M9 12l2 2 4-4"/>
+            </svg>
+            Resmi Cariler
+            <span class="rc-main-tab-badge">Zirve</span>
+        </button>
+    </div>
+
+    @if (_mainTab == "cariler")
+    {
+        <!-- ═══ CARİLER HEADER ═══ -->
+        <div class="rc-header">
+            <div class="rc-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-header-icon">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                </svg>
+                <div>
+                    <h3>Cari Kartlar</h3>
+                    <p class="rc-header-sub">@customers.Count kayit</p>
                 </div>
             </div>
-
-            <div class="crm-header-actions">
-                <button type="button" class="btn-secondary" @onclick="ReloadAsync" disabled="@isLoadingList">
+            <div class="rc-header-actions">
+                <button class="rc-btn rc-btn-ghost" @onclick="ReloadAsync" disabled="@isLoadingList">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-btn-icon">
+                        <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                        <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                    </svg>
                     Yenile
                 </button>
-                <button type="button" class="btn-secondary crm-delete-button" @onclick="OpenDeleteConfirm" disabled="@(currentCustomer.Id == 0 || isDeleting)">
-                    Sil
-                </button>
-                <button type="button" class="btn-add" @onclick="CreateNewCustomer">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
+                <button class="rc-btn rc-btn-danger-sm" @onclick="OpenDeleteConfirm"
+                        disabled="@(currentCustomer.Id == 0 || isDeleting)">Sil</button>
+                <button class="rc-btn rc-btn-primary" @onclick="CreateNewCustomer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-btn-icon">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
-                    <span>Yeni Cari</span>
+                    Yeni Cari
                 </button>
             </div>
         </div>
 
         @if (!messageSuccess && message != null)
         {
-            <div class="alert alert-danger">
+            <div class="rc-toast is-err">
                 @message
-                <button class="alert-close" @onclick='() => message = null'>X</button>
+                <button class="rc-toast-close" @onclick='() => message = null'>&times;</button>
             </div>
         }
 
-        <div class="crm-layout">
-            <aside class="crm-master-panel" @onkeydown="HandleListKeyDown">
-                <div class="crm-master-toolbar">
-                    <div class="crm-search-box">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
-                        <input type="text" class="form-input" @bind="searchTerm" @bind:event="oninput" placeholder="Musteri ara..." />
-                    </div>
-                    <div class="crm-master-count">@FilteredCustomers.Count() kayit</div>
+        <!-- ═══ MASTER-DETAIL ═══ -->
+        <div class="rc-layout">
+            <!-- SOL: MÜŞTERİ LİSTESİ -->
+            <aside class="rc-list-panel" @onkeydown="HandleListKeyDown">
+                <div class="rc-search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-search-icon">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" class="rc-search-input" placeholder="Musteri ara..."
+                           @bind="searchTerm" @bind:event="oninput" />
+                    @if (!string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        <button class="rc-search-clear" @onclick='() => searchTerm = ""'>&times;</button>
+                    }
                 </div>
-
-                @if (isLoadingList)
-                {
-                    <div class="loading-state">Cari kartlar yukleniyor...</div>
-                }
-                else if (!FilteredCustomers.Any())
-                {
-                    <div class="empty-state">Aramaniza uygun cari kart bulunamadi.</div>
-                }
-                else
-                {
-                    <div class="crm-customer-list">
+                <div class="rc-list-count">@FilteredCustomers.Count() kayit</div>
+                <div class="rc-list-scroll">
+                    @if (isLoadingList)
+                    {
+                        @for (int i = 0; i < 8; i++)
+                        {
+                            <div class="rc-skel-item"><div class="rc-skel-line w60"></div><div class="rc-skel-line w40"></div></div>
+                        }
+                    }
+                    else
+                    {
                         @foreach (var item in FilteredCustomers)
                         {
-                            <button type="button" id="cari-@item.Id" class="crm-customer-item @(selectedCustomerId == item.Id ? "active" : "")" @onclick="() => SelectCustomerAsync(item.Id)">
-                                <div class="crm-customer-item-top">
-                                    <span class="crm-customer-code">@item.CustomerCode</span>
-                                    <span class="badge @(item.IsActive ? "badge-active" : "badge-inactive")">
-                                        @(item.IsActive ? "Aktif" : "Pasif")
+                            <button type="button" id="cari-@item.Id"
+                                    class="rc-list-item @(selectedCustomerId == item.Id ? "active" : "")"
+                                    @onclick="() => SelectCustomerAsync(item.Id)">
+                                <div class="rc-item-top">
+                                    <span class="rc-item-code">@item.CustomerCode</span>
+                                    <span class="rc-item-badge @(item.IsActive ? "rc-badge-ok" : "rc-badge-warn")">
+                                        @(item.IsActive ? "✓" : "✗")
                                     </span>
                                 </div>
-                                <div class="crm-customer-item-bottom">
-                                    <span class="crm-customer-title">@item.Title</span>
-                                    <strong class="crm-customer-balance">@item.CurrentBalance.ToString("N2") EUR</strong>
-                                </div>
+                                <div class="rc-item-name">@item.Title</div>
+                                <div class="rc-item-sub">@item.CurrentBalance.ToString("N2") EUR @(item.SalesRepName != null ? $"· {item.SalesRepName}" : "")</div>
                             </button>
                         }
-                    </div>
-                }
+                    }
+                </div>
             </aside>
 
-            <section class="crm-detail-panel">
+            <!-- SAĞ: MÜŞTERİ FORMU -->
+            <section class="rc-detail-panel">
                 @if (isLoadingDetail)
                 {
-                    <div class="loading-state">Musteri detaylari yukleniyor...</div>
+                    <div class="rc-detail-empty">
+                        <p>Musteri detaylari yukleniyor...</p>
+                    </div>
                 }
                 else
                 {
-                    <div class="crm-detail-header">
-                        <div>
-                            <div class="crm-detail-code">@(string.IsNullOrWhiteSpace(currentCustomer.CustomerCode) ? "Yeni cari kart" : currentCustomer.CustomerCode)</div>
-                            <h4>@(string.IsNullOrWhiteSpace(currentCustomer.Title) ? "Yeni musteri" : currentCustomer.Title)</h4>
-                            <p>@(currentCustomer.IsActive ? "Kayit aktif durumda." : "Kayit pasif durumda.")</p>
-                        </div>
-                        <div class="crm-detail-summary">
+                    <div class="rc-detail-scroll">
+                        <!-- DETAIL HEADER -->
+                        <div class="rc-detail-header">
                             <div>
-                                <span>Bakiye</span>
-                                <strong>@currentCustomer.CurrentBalance.ToString("N2") EUR</strong>
+                                <div class="rc-detail-code">@(string.IsNullOrWhiteSpace(currentCustomer.CustomerCode) ? "YENI" : currentCustomer.CustomerCode)</div>
+                                <div class="rc-detail-name">@(string.IsNullOrWhiteSpace(currentCustomer.Title) ? "Yeni musteri" : currentCustomer.Title)</div>
                             </div>
-                            <div>
-                                <span>Risk Limiti</span>
-                                <strong>@currentCustomer.RiskLimit.ToString("N2") EUR</strong>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div class="rc-detail-summary-item">
+                                    <span class="rc-lbl">Bakiye</span>
+                                    <strong>@currentCustomer.CurrentBalance.ToString("N2") EUR</strong>
+                                </div>
+                                <div class="rc-detail-summary-item">
+                                    <span class="rc-lbl">Risk</span>
+                                    <strong>@currentCustomer.RiskLimit.ToString("N2") EUR</strong>
+                                </div>
+                                <span class="rc-match-chip @(currentCustomer.IsActive ? "is-ok" : "is-warn")">
+                                    @(currentCustomer.IsActive ? "Aktif" : "Pasif")
+                                </span>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="crm-tabs">
-                        <button type="button" class="crm-tab @(activeTab == "general" ? "active" : "")" @onclick='() => activeTab = "general"'>Genel Bilgiler</button>
-                        <button type="button" class="crm-tab @(activeTab == "contacts" ? "active" : "")" @onclick='() => activeTab = "contacts"'>Ilgili Kisiler</button>
-                        <button type="button" class="crm-tab @(activeTab == "notes" ? "active" : "")" @onclick='() => activeTab = "notes"'>Notlar</button>
-                    </div>
+                        <!-- INNER TABS -->
+                        <div class="rc-filter-bar" style="padding:0;margin-bottom:16px;">
+                            <button class="rc-tab @(activeTab == "general" ? "active" : "")" @onclick='() => activeTab = "general"'>Genel Bilgiler</button>
+                            <button class="rc-tab @(activeTab == "contacts" ? "active" : "")" @onclick='() => activeTab = "contacts"'>Ilgili Kisiler</button>
+                            <button class="rc-tab @(activeTab == "notes" ? "active" : "")" @onclick='() => activeTab = "notes"'>Notlar</button>
+                        </div>
 
-                    <div class="crm-tab-body">
                         @if (activeTab == "general")
                         {
-                            <div class="crm-form-grid">
-                                <div class="form-col">
-                                    <label>Musteri Kodu</label>
-                                    <input type="text" class="form-input crm-readonly-input" value="@(string.IsNullOrWhiteSpace(currentCustomer.CustomerCode) ? "Kayit sonrasi olusur" : currentCustomer.CustomerCode)" readonly />
+                            <div class="rc-info-grid">
+                                <div class="rc-info-group">
+                                    <h4>Firma Bilgileri</h4>
+                                    <div class="rc-form-grid">
+                                        <div class="rc-form-field">
+                                            <label>Musteri Kodu</label>
+                                            <input class="rc-form-input" readonly value="@(string.IsNullOrWhiteSpace(currentCustomer.CustomerCode) ? "Kayit sonrasi olusur" : currentCustomer.CustomerCode)" />
+                                        </div>
+                                        <div class="rc-form-field rc-span-2">
+                                            <label>Unvan *</label>
+                                            <input class="rc-form-input" @bind="currentCustomer.Title" placeholder="Firma unvani" />
+                                        </div>
+                                        <div class="rc-form-field">
+                                            <label>Vergi No</label>
+                                            <input class="rc-form-input" @bind="currentCustomer.TaxNumber" placeholder="Vergi numarasi" />
+                                        </div>
+                                        <div class="rc-form-field">
+                                            <label>Vergi Dairesi</label>
+                                            <input class="rc-form-input" @bind="currentCustomer.TaxOffice" placeholder="Vergi dairesi" />
+                                        </div>
+                                        <div class="rc-form-field">
+                                            <label>Ulke</label>
+                                            <select class="rc-form-input" @bind="currentCustomer.Country">
+                                                @foreach (var country in CountryOptions)
+                                                {
+                                                    <option value="@country">@country</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-col crm-form-span-2">
-                                    <label>Unvan *</label>
-                                    <input type="text" class="form-input" @bind="currentCustomer.Title" placeholder="Firma unvani" />
-                                </div>
-                                <div class="form-col">
-                                    <label>Vergi No</label>
-                                    <input type="text" class="form-input" @bind="currentCustomer.TaxNumber" placeholder="Vergi numarasi" />
-                                </div>
-                                <div class="form-col">
-                                    <label>Vergi Dairesi</label>
-                                    <input type="text" class="form-input" @bind="currentCustomer.TaxOffice" placeholder="Vergi dairesi" />
-                                </div>
-                                <div class="form-col">
-                                    <label>Ulke</label>
-                                    <select class="form-input" @bind="currentCustomer.Country">
-                                        @foreach (var country in CountryOptions)
-                                        {
-                                            <option value="@country">@country</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div class="form-col crm-form-span-2">
-                                    <label>Adres</label>
-                                    <textarea class="form-input crm-textarea" @bind="currentCustomer.Address" rows="4" placeholder="Adres bilgisi"></textarea>
-                                </div>
-                                <div class="form-col">
-                                    <label>Risk Limiti (EUR)</label>
-                                    <input type="number" class="form-input" @bind="currentCustomer.RiskLimit" step="0.01" />
-                                </div>
-                                <div class="form-col">
-                                    <label>Cari Bakiye (EUR)</label>
-                                    <input type="number" class="form-input crm-readonly-input" @bind="currentCustomer.CurrentBalance" step="0.01" readonly />
-                                </div>
-                                <div class="form-col">
-                                    <label>Satis Temsilcisi</label>
-                                    <select class="form-input" @bind="currentCustomer.SalesRepId">
-                                        <option value="">Seciniz</option>
-                                        @foreach (var rep in salesReps)
-                                        {
-                                            <option value="@rep.Id">@rep.FullName</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div class="form-col">
-                                    <label>Durum</label>
-                                    <div class="toggle-wrapper">
-                                        <label class="toggle">
-                                            <input type="checkbox" @bind="currentCustomer.IsActive" />
-                                            <span class="toggle-slider"></span>
-                                        </label>
-                                        <span class="toggle-label">@(currentCustomer.IsActive ? "Aktif" : "Pasif")</span>
+
+                                <div class="rc-info-group">
+                                    <h4>Adres ve Finans</h4>
+                                    <div class="rc-form-grid">
+                                        <div class="rc-form-field rc-span-2">
+                                            <label>Adres</label>
+                                            <textarea class="rc-form-input rc-textarea" @bind="currentCustomer.Address" rows="3" placeholder="Adres bilgisi"></textarea>
+                                        </div>
+                                        <div class="rc-form-field">
+                                            <label>Risk Limiti (EUR)</label>
+                                            <input type="number" class="rc-form-input" @bind="currentCustomer.RiskLimit" step="0.01" />
+                                        </div>
+                                        <div class="rc-form-field">
+                                            <label>Cari Bakiye (EUR)</label>
+                                            <input type="number" class="rc-form-input" readonly @bind="currentCustomer.CurrentBalance" step="0.01" />
+                                        </div>
+                                        <div class="rc-form-field">
+                                            <label>Satis Temsilcisi</label>
+                                            <select class="rc-form-input" @bind="currentCustomer.SalesRepId">
+                                                <option value="">Seciniz</option>
+                                                @foreach (var rep in salesReps)
+                                                {
+                                                    <option value="@rep.Id">@rep.FullName</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="rc-form-field">
+                                            <label>Durum</label>
+                                            <div class="rc-toggle-wrap">
+                                                <label class="rc-toggle">
+                                                    <input type="checkbox" @bind="currentCustomer.IsActive" />
+                                                    <span class="rc-toggle-slider"></span>
+                                                </label>
+                                                <span class="rc-toggle-label">@(currentCustomer.IsActive ? "Aktif" : "Pasif")</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         }
                         else if (activeTab == "contacts")
                         {
-                            <div class="crm-contacts-header">
-                                <div>
-                                    <h5>Ilgili Kisiler</h5>
-                                    <p>Teklif, operasyon ve muhasebe ile iletisime gecilecek kisileri burada yonetin.</p>
-                                </div>
-                                <button type="button" class="btn-add" @onclick="AddContact">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <line x1="12" y1="5" x2="12" y2="19" />
-                                        <line x1="5" y1="12" x2="19" y2="12" />
-                                    </svg>
-                                    <span>Yeni Kisi</span>
-                                </button>
-                            </div>
+                            <div class="rc-info-group">
+                                <h4 style="display:flex;align-items:center;justify-content:space-between;">
+                                    Ilgili Kisiler
+                                    <button class="rc-btn rc-btn-primary" style="font-size:0.72rem;padding:4px 10px;" @onclick="AddContact">+ Yeni Kisi</button>
+                                </h4>
 
-                            @if (currentCustomer.Contacts.Count == 0)
-                            {
-                                <div class="empty-state crm-inline-empty">Henuz ilgili kisi eklenmedi.</div>
-                            }
-                            else
-                            {
-                                <div class="crm-contact-list">
+                                @if (currentCustomer.Contacts.Count == 0)
+                                {
+                                    <p style="color:var(--yl-text-light);font-size:0.82rem;padding:12px 0;">Henuz ilgili kisi eklenmedi.</p>
+                                }
+                                else
+                                {
                                     @for (var i = 0; i < currentCustomer.Contacts.Count; i++)
                                     {
                                         var contact = currentCustomer.Contacts[i];
-                                        <div class="crm-contact-card">
-                                            <!-- Satir 1: Ad/Email/Mobil  |  Satir 2: Unvan/Telefon/Departman -->
-                                            <div class="crm-contact-fields-grid">
-                                                <div class="ccf">
+                                        <div class="rc-contact-card @(i % 2 == 0 ? "even" : "odd")">
+                                            <div class="rc-form-grid rc-grid-3">
+                                                <div class="rc-form-field">
                                                     <label>Ad Soyad *</label>
-                                                    <input type="text" class="form-input" @bind="contact.ContactName" placeholder="Ad soyad" />
+                                                    <input class="rc-form-input" @bind="contact.ContactName" placeholder="Ad soyad" />
                                                 </div>
-                                                <div class="ccf">
+                                                <div class="rc-form-field">
                                                     <label>E-posta</label>
-                                                    <input type="email" class="form-input" @bind="contact.Email" placeholder="E-posta" />
+                                                    <input class="rc-form-input" @bind="contact.Email" placeholder="E-posta" />
                                                 </div>
-                                                <div class="ccf">
+                                                <div class="rc-form-field">
                                                     <label>Mobil</label>
-                                                    <input type="text" class="form-input" @bind="contact.Mobile" placeholder="Mobil" />
+                                                    <input class="rc-form-input" @bind="contact.Mobile" placeholder="Mobil" />
                                                 </div>
-                                                <div class="ccf">
+                                                <div class="rc-form-field">
                                                     <label>Unvan</label>
-                                                    <input type="text" class="form-input" @bind="contact.ContactTitle" placeholder="Unvan" />
+                                                    <input class="rc-form-input" @bind="contact.ContactTitle" placeholder="Unvan" />
                                                 </div>
-                                                <div class="ccf">
+                                                <div class="rc-form-field">
                                                     <label>Telefon</label>
-                                                    <input type="text" class="form-input" @bind="contact.Phone" placeholder="Telefon" />
+                                                    <input class="rc-form-input" @bind="contact.Phone" placeholder="Telefon" />
                                                 </div>
-                                                <div class="ccf">
+                                                <div class="rc-form-field">
                                                     <label>Departman</label>
-                                                    <input type="text" class="form-input" @bind="contact.Department" placeholder="Departman" />
+                                                    <input class="rc-form-input" @bind="contact.Department" placeholder="Departman" />
                                                 </div>
                                             </div>
-                                            <!-- Alt bar: Not | Primary | Sil -->
-                                            <div class="crm-contact-footer">
-                                                <input type="text" class="form-input crm-contact-note-input" @bind="contact.Notes" placeholder="Not (opsiyonel)" />
-                                                <div class="crm-contact-card-actions">
-                                                    <label class="crm-inline-check">
-                                                        <input type="checkbox" checked="@contact.IsPrimary" @onchange="args => TogglePrimaryContact(contact, args)" />
-                                                        <span>Primary</span>
-                                                    </label>
-                                                    <button type="button" class="btn-icon btn-delete" title="Kaldir" @onclick="() => RemoveContact(contact)">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <polyline points="3 6 5 6 21 6" />
-                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
+                                            <div class="rc-contact-footer">
+                                                <input class="rc-form-input" style="flex:1;" @bind="contact.Notes" placeholder="Not (opsiyonel)" />
+                                                <label class="rc-inline-check">
+                                                    <input type="checkbox" checked="@contact.IsPrimary" @onchange="args => TogglePrimaryContact(contact, args)" />
+                                                    <span>Primary</span>
+                                                </label>
+                                                <button class="rc-btn rc-btn-danger-sm" @onclick="() => RemoveContact(contact)">Kaldir</button>
                                             </div>
                                         </div>
                                     }
-                                </div>
-                            }
+                                }
+                            </div>
                         }
                         else
                         {
-                            <div class="crm-notes-panel">
-                                <label>Kart Notlari</label>
-                                <textarea class="form-input crm-textarea crm-notes-textarea" @bind="currentCustomer.Notes" rows="10" placeholder="Musteri ile ilgili genel notlar, odeme davranisi, operasyon aciklamalari vb."></textarea>
+                            <div class="rc-info-group">
+                                <h4>Kart Notlari</h4>
+                                <textarea class="rc-form-input rc-textarea" @bind="currentCustomer.Notes" rows="12"
+                                          placeholder="Musteri ile ilgili genel notlar, odeme davranisi, operasyon aciklamalari vb."></textarea>
                             </div>
                         }
-                    </div>
 
-                    <div class="crm-detail-footer">
-                        <div class="crm-audit-text">
-                            @if (currentCustomer.Id > 0)
-                            {
-                                <span>Olusturan: @currentCustomer.CreatedBy</span>
-                                <span>Kod: @currentCustomer.CustomerCode</span>
-                            }
-                        </div>
-                        <div class="crm-detail-actions">
-                            <button type="button" class="btn-secondary" @onclick="ResetCurrentAsync" disabled="@isSaving">
-                                Vazgec
-                            </button>
-                            <button type="button" class="btn-primary-action" @onclick="OpenSaveConfirm" disabled="@isSaving">
-                                @(isSaving ? "Kaydediliyor..." : "Kaydet")
-                            </button>
+                        <!-- FOOTER -->
+                        <div class="rc-form-footer">
+                            <div class="rc-form-audit">
+                                @if (currentCustomer.Id > 0)
+                                {
+                                    <span>Olusturan: @currentCustomer.CreatedBy</span>
+                                    <span>Kod: @currentCustomer.CustomerCode</span>
+                                }
+                            </div>
+                            <div class="rc-form-actions">
+                                <button class="rc-btn rc-btn-ghost" @onclick="ResetCurrentAsync" disabled="@isSaving">Vazgec</button>
+                                <button class="rc-btn rc-btn-primary" @onclick="OpenSaveConfirm" disabled="@isSaving">
+                                    @(isSaving ? "Kaydediliyor..." : "Kaydet")
+                                </button>
+                            </div>
                         </div>
                     </div>
                 }
             </section>
         </div>
-    </div>
+    }
+    else
+    {
+        <!-- ═══ RESMİ CARİLER SEKMESİ ═══ -->
+        <ResmiCariler />
+    }
 </div>
 
+@* ═══ TOAST ═══ *@
 @if (showToast)
 {
-    <div class="toast-overlay">
-        <div class="toast-card">
-            @if (toastIsSuccess)
-            {
-                <div class="toast-icon-success">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" opacity="0.15" fill="#059669" stroke="none" />
-                        <path class="check-path" d="M7 13l3 3 7-7" />
-                    </svg>
-                </div>
-                <div class="toast-title success">Basarili!</div>
-            }
-            else
-            {
-                <div class="toast-icon-error">
-                    <svg viewBox="0 0 24 24">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </div>
-                <div class="toast-title error">Hata!</div>
-            }
-            <div class="toast-message">@toastMessage</div>
+    <div class="rc-toast-overlay">
+        <div class="rc-toast-card @(toastIsSuccess ? "is-ok" : "is-err")">
+            <strong>@(toastIsSuccess ? "Basarili!" : "Hata!")</strong>
+            <span>@toastMessage</span>
         </div>
     </div>
 }
 
+@* ═══ ONAY MODALLARI ═══ *@
 @if (showSaveConfirm)
 {
-    <div class="modal-overlay" @onclick="CloseSaveConfirm">
-        <div class="modal-panel modal-sm" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h4>Kaydet</h4>
-            </div>
-            <div class="modal-body">
+    <div class="rc-modal-overlay" @onclick="CloseSaveConfirm">
+        <div class="rc-modal" @onclick:stopPropagation="true">
+            <div class="rc-modal-header">Kaydet</div>
+            <div class="rc-modal-body">
                 @if (currentCustomer.Id == 0)
                 {
                     <p>Yeni cari kart kaydedilecek. Onayliyor musunuz?</p>
                 }
                 else
                 {
-                    <p><strong>@currentCustomer.Title</strong> kartindaki degisiklikler kaydedilecek. Onayliyor musunuz?</p>
+                    <p><strong>@currentCustomer.Title</strong> kartindaki degisiklikler kaydedilecek.</p>
                 }
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="CloseSaveConfirm" disabled="@isSaving">Iptal</button>
-                <button class="btn-primary-action" @onclick="ConfirmSaveAsync" disabled="@isSaving">
-                    @(isSaving ? "Kaydediliyor..." : "Evet, Kaydet")
-                </button>
+            <div class="rc-modal-footer">
+                <button class="rc-btn rc-btn-ghost" @onclick="CloseSaveConfirm" disabled="@isSaving">Iptal</button>
+                <button class="rc-btn rc-btn-primary" @onclick="ConfirmSaveAsync" disabled="@isSaving">Evet, Kaydet</button>
             </div>
         </div>
     </div>
@@ -348,17 +354,15 @@
 
 @if (showDeleteConfirm)
 {
-    <div class="modal-overlay" @onclick="CloseDeleteConfirm">
-        <div class="modal-panel modal-sm" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h4>Cari Kart Sil</h4>
-            </div>
-            <div class="modal-body">
+    <div class="rc-modal-overlay" @onclick="CloseDeleteConfirm">
+        <div class="rc-modal" @onclick:stopPropagation="true">
+            <div class="rc-modal-header">Cari Kart Sil</div>
+            <div class="rc-modal-body">
                 <p><strong>@currentCustomer.Title</strong> kaydini silmek istediginize emin misiniz?</p>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="CloseDeleteConfirm">Iptal</button>
-                <button class="btn-danger-action" @onclick="DeleteCurrentAsync" disabled="@isDeleting">
+            <div class="rc-modal-footer">
+                <button class="rc-btn rc-btn-ghost" @onclick="CloseDeleteConfirm">Iptal</button>
+                <button class="rc-btn rc-btn-danger-sm" style="padding:7px 14px;font-size:0.8rem;" @onclick="DeleteCurrentAsync" disabled="@isDeleting">
                     @(isDeleting ? "Siliniyor..." : "Sil")
                 </button>
             </div>
@@ -368,6 +372,8 @@
 
 @code {
     [Parameter] public bool StandaloneWindow { get; set; }
+
+    private string _mainTab = "cariler";
 
     private static readonly string[] CountryOptions = new[]
     {
@@ -413,27 +419,22 @@
         {
             isLoadingList = false;
             isLoadingDetail = false;
-            message = $"Veritabani hatasi: {ex.Message} (Lutfen baglantiyi veya tablolari kontrol edin)";
+            message = $"Veritabani hatasi: {ex.Message}";
             messageSuccess = false;
         }
     }
-
-    private bool _arrowListenerAttached = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Yön tuşlarının liste panelinde sayfa scroll'u yapmasını engelle
             await JS.InvokeVoidAsync("eval", @"
                 (function() {
-                    var panel = document.querySelector('.crm-master-panel');
+                    var panel = document.querySelector('.rc-list-panel');
                     if (!panel || panel._arrowNavReady) return;
                     panel._arrowNavReady = true;
                     panel.addEventListener('keydown', function(e) {
-                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                            e.preventDefault();
-                        }
+                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') e.preventDefault();
                     }, { passive: false, capture: true });
                 })();
             ");
@@ -443,52 +444,31 @@
     private async Task HandleListKeyDown(KeyboardEventArgs e)
     {
         if (e.Key != "ArrowDown" && e.Key != "ArrowUp") return;
-
         var list = FilteredCustomers.ToList();
         if (list.Count == 0) return;
-
-        var idx = selectedCustomerId.HasValue
-            ? list.FindIndex(x => x.Id == selectedCustomerId.Value)
-            : -1;
-
-        var next = e.Key == "ArrowDown"
-            ? Math.Min(idx + 1, list.Count - 1)
-            : Math.Max(idx - 1, 0);
-
+        var idx = selectedCustomerId.HasValue ? list.FindIndex(x => x.Id == selectedCustomerId.Value) : -1;
+        var next = e.Key == "ArrowDown" ? Math.Min(idx + 1, list.Count - 1) : Math.Max(idx - 1, 0);
         if (next == idx && idx != -1) return;
-
         var targetId = list[Math.Max(next, 0)].Id;
         await SelectCustomerAsync(targetId);
-
-        // Seçili öğeyi listede görünür alana kaydır
         await JS.InvokeVoidAsync("eval",
             $"document.getElementById('cari-{targetId}')?.scrollIntoView({{block:'nearest',behavior:'smooth'}});");
     }
 
-    private async Task LoadSalesRepsAsync()
-    {
-        salesReps = await CustomerSvc.GetSalesRepsAsync();
-    }
+    private async Task LoadSalesRepsAsync() => salesReps = await CustomerSvc.GetSalesRepsAsync();
 
     private async Task LoadCustomersAsync(bool autoSelect)
     {
         isLoadingList = true;
         StateHasChanged();
-
         customers = await CustomerSvc.GetCustomersAsync();
         isLoadingList = false;
 
         if (selectedCustomerId.HasValue && customers.Any(x => x.Id == selectedCustomerId.Value))
-        {
-            await SelectCustomerAsync(selectedCustomerId.Value);
-            return;
-        }
+        { await SelectCustomerAsync(selectedCustomerId.Value); return; }
 
         if (autoSelect && customers.Count > 0)
-        {
-            await SelectCustomerAsync(customers[0].Id);
-            return;
-        }
+        { await SelectCustomerAsync(customers[0].Id); return; }
 
         if (!selectedCustomerId.HasValue)
             currentCustomer = CustomerSvc.CreateDraft();
@@ -496,162 +476,79 @@
 
     private async Task ReloadAsync()
     {
-        try
-        {
-            await LoadSalesRepsAsync();
-            await LoadCustomersAsync(selectedCustomerId == null);
-        }
-        catch (Exception ex)
-        {
-            isLoadingList = false;
-            isLoadingDetail = false;
-            message = $"Yenileme sirasinda hata: {ex.Message}";
-            messageSuccess = false;
-        }
+        try { await LoadSalesRepsAsync(); await LoadCustomersAsync(selectedCustomerId == null); }
+        catch (Exception ex) { isLoadingList = false; message = $"Yenileme hatasi: {ex.Message}"; messageSuccess = false; }
     }
 
     private void CreateNewCustomer()
     {
-        selectedCustomerId = null;
-        activeTab = "general";
-        currentCustomer = CustomerSvc.CreateDraft();
-        message = null;
+        selectedCustomerId = null; activeTab = "general";
+        currentCustomer = CustomerSvc.CreateDraft(); message = null;
     }
 
     private async Task SelectCustomerAsync(int id)
     {
-        if (selectedCustomerId == id && currentCustomer.Id == id)
-            return;
-
-        isLoadingDetail = true;
-        StateHasChanged();
-
+        if (selectedCustomerId == id && currentCustomer.Id == id) return;
+        isLoadingDetail = true; StateHasChanged();
         var customer = await CustomerSvc.GetCustomerByIdAsync(id);
-        if (customer != null)
-        {
-            currentCustomer = customer;
-            selectedCustomerId = id;
-            activeTab = "general";
-            message = null;
-        }
-
+        if (customer != null) { currentCustomer = customer; selectedCustomerId = id; activeTab = "general"; message = null; }
         isLoadingDetail = false;
     }
 
     private async Task ResetCurrentAsync()
     {
         message = null;
-
-        if (currentCustomer.Id == 0)
-        {
-            CreateNewCustomer();
-            return;
-        }
-
+        if (currentCustomer.Id == 0) { CreateNewCustomer(); return; }
         await SelectCustomerAsync(currentCustomer.Id);
     }
 
-    private void OpenSaveConfirm()
-    {
-        showSaveConfirm = true;
-    }
-
-    private void CloseSaveConfirm()
-    {
-        showSaveConfirm = false;
-    }
-
-    private async Task ConfirmSaveAsync()
-    {
-        showSaveConfirm = false;
-        await SaveCurrentAsync();
-    }
+    private void OpenSaveConfirm() => showSaveConfirm = true;
+    private void CloseSaveConfirm() => showSaveConfirm = false;
+    private async Task ConfirmSaveAsync() { showSaveConfirm = false; await SaveCurrentAsync(); }
 
     private async Task SaveCurrentAsync()
     {
-        isSaving = true;
-        message = null;
-
+        isSaving = true; message = null;
         var (success, resultMessage, customerId) = await CustomerSvc.SaveCustomerAsync(currentCustomer);
         isSaving = false;
 
         if (success)
         {
-            toastIsSuccess = true;
-            toastMessage = resultMessage;
-            showToast = true;
-            StateHasChanged();
-            await Task.Delay(1800);
-            showToast = false;
-            StateHasChanged();
-
+            toastIsSuccess = true; toastMessage = resultMessage; showToast = true;
+            StateHasChanged(); await Task.Delay(1800); showToast = false; StateHasChanged();
             await LoadCustomersAsync(false);
-            if (customerId > 0)
-                await SelectCustomerAsync(customerId);
+            if (customerId > 0) await SelectCustomerAsync(customerId);
         }
-        else
-        {
-            message = resultMessage;
-            messageSuccess = false;
-        }
+        else { message = resultMessage; messageSuccess = false; }
     }
 
-    private void OpenDeleteConfirm()
-    {
-        if (currentCustomer.Id == 0)
-            return;
-
-        showDeleteConfirm = true;
-    }
-
-    private void CloseDeleteConfirm()
-    {
-        showDeleteConfirm = false;
-    }
+    private void OpenDeleteConfirm() { if (currentCustomer.Id > 0) showDeleteConfirm = true; }
+    private void CloseDeleteConfirm() => showDeleteConfirm = false;
 
     private async Task DeleteCurrentAsync()
     {
-        if (currentCustomer.Id == 0)
-            return;
-
+        if (currentCustomer.Id == 0) return;
         isDeleting = true;
         var (success, resultMessage) = await CustomerSvc.DeleteCustomerAsync(currentCustomer.Id);
-        isDeleting = false;
-        showDeleteConfirm = false;
-
-        message = resultMessage;
-        messageSuccess = success;
-
-        if (!success)
-            return;
-
-        selectedCustomerId = null;
-        currentCustomer = CustomerSvc.CreateDraft();
+        isDeleting = false; showDeleteConfirm = false;
+        message = resultMessage; messageSuccess = success;
+        if (!success) return;
+        selectedCustomerId = null; currentCustomer = CustomerSvc.CreateDraft();
         await LoadCustomersAsync(true);
     }
 
     private void AddContact()
     {
-        currentCustomer.Contacts.Add(new CustomerContactModel
-        {
-            IsActive = true
-        });
-
+        currentCustomer.Contacts.Add(new CustomerContactModel { IsActive = true });
         activeTab = "contacts";
     }
 
-    private void RemoveContact(CustomerContactModel contact)
-    {
-        currentCustomer.Contacts.Remove(contact);
-    }
+    private void RemoveContact(CustomerContactModel contact) => currentCustomer.Contacts.Remove(contact);
 
     private void TogglePrimaryContact(CustomerContactModel target, ChangeEventArgs args)
     {
-        var isChecked = args.Value is bool value && value;
-
-        foreach (var contact in currentCustomer.Contacts)
-            contact.IsPrimary = false;
-
+        var isChecked = args.Value is bool v && v;
+        foreach (var c in currentCustomer.Contacts) c.IsPrimary = false;
         target.IsPrimary = isChecked;
     }
 }

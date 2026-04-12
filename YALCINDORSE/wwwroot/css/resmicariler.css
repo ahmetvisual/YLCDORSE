@@ -6,6 +6,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    flex: 1;
     overflow: hidden;
     background: var(--yl-bg);
     font-family: 'Segoe UI', system-ui, sans-serif;
@@ -728,3 +729,399 @@
     background: linear-gradient(90deg, #21262d 25%, #30363d 50%, #21262d 75%);
     background-size: 200% 100%;
 }
+
+/* ============================================================
+   CARİ KARTLAR — UNIFIED TAB UI (rc-main-tabs)
+   ============================================================ */
+
+/* ─── MAIN PAGE TABS ────────────────────────── */
+.rc-main-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--yl-border);
+    background: var(--yl-white);
+    flex-shrink: 0;
+}
+.rc-main-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 22px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--yl-text-light);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    margin-bottom: -2px;
+}
+.rc-main-tab:hover { color: var(--yl-text); background: rgba(55,99,170,0.04); }
+.rc-main-tab.active {
+    color: var(--yl-primary);
+    border-bottom-color: var(--yl-primary);
+    background: rgba(55,99,170,0.06);
+}
+.rc-main-tab-badge {
+    font-size: 0.58rem;
+    font-weight: 700;
+    background: var(--yl-primary);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 0;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* ─── FORM GRID ─────────────────────────────── */
+.rc-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+.rc-form-grid.rc-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+.rc-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.rc-form-field label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--yl-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.rc-span-2 {
+    grid-column: span 2;
+}
+.rc-form-input {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    font-size: 0.82rem;
+    outline: none;
+    background: var(--yl-white);
+    color: var(--yl-text);
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+.rc-form-input:focus { border-color: var(--yl-primary); }
+.rc-form-input[readonly] {
+    background: #f9fafb;
+    color: var(--yl-text-light);
+    cursor: default;
+}
+select.rc-form-input {
+    appearance: auto;
+    cursor: pointer;
+}
+.rc-textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+/* ─── TOGGLE ────────────────────────────────── */
+.rc-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 2px;
+}
+.rc-toggle {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.rc-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+.rc-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #d1d5db;
+    border-radius: 0;
+    transition: background 0.2s;
+}
+.rc-toggle-slider::before {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 2px;
+    bottom: 2px;
+    background: #fff;
+    border-radius: 0;
+    transition: transform 0.2s;
+}
+.rc-toggle input:checked + .rc-toggle-slider {
+    background: #16a34a;
+}
+.rc-toggle input:checked + .rc-toggle-slider::before {
+    transform: translateX(16px);
+}
+.rc-toggle-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--yl-text);
+}
+
+/* ─── CONTACT CARD ──────────────────────────── */
+.rc-contact-card {
+    background: var(--yl-bg);
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+.rc-contact-card.even { background: var(--yl-bg); }
+.rc-contact-card.odd  { background: var(--yl-white); }
+.rc-contact-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--yl-border);
+}
+.rc-inline-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--yl-text-light);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.rc-inline-check input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--yl-primary);
+    cursor: pointer;
+}
+
+/* ─── DETAIL SUMMARY ITEM ───────────────────── */
+.rc-detail-summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    padding: 4px 10px;
+    background: var(--yl-bg);
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+}
+.rc-detail-summary-item .rc-lbl {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+}
+.rc-detail-summary-item strong {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--yl-text);
+}
+
+/* ─── FORM FOOTER ───────────────────────────── */
+.rc-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--yl-border);
+}
+.rc-form-audit {
+    display: flex;
+    gap: 14px;
+    font-size: 0.72rem;
+    color: var(--yl-text-light);
+}
+.rc-form-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ─── TOAST OVERLAY ─────────────────────────── */
+.rc-toast-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 30px;
+    z-index: 9999;
+    pointer-events: none;
+}
+.rc-toast-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    pointer-events: auto;
+    animation: rcToastIn 0.3s ease-out;
+}
+.rc-toast-card.is-ok {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+.rc-toast-card.is-err {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+@keyframes rcToastIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── MODAL ─────────────────────────────────── */
+.rc-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: rcFadeIn 0.15s ease-out;
+}
+.rc-modal {
+    background: var(--yl-white);
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    min-width: 380px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.rc-modal-header {
+    padding: 14px 18px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--yl-text);
+    border-bottom: 1px solid var(--yl-border);
+}
+.rc-modal-body {
+    padding: 18px;
+    font-size: 0.85rem;
+    color: var(--yl-text);
+    line-height: 1.5;
+}
+.rc-modal-body p { margin: 0; }
+.rc-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--yl-border);
+}
+@keyframes rcFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ─── RESPONSIVE (CariKartlar) ──────────────── */
+@media (max-width: 900px) {
+    .rc-main-tab { padding: 10px 14px; font-size: 0.82rem; }
+    .rc-form-grid { grid-template-columns: 1fr; }
+    .rc-form-grid.rc-grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .rc-span-2 { grid-column: auto; }
+    .rc-detail-header { flex-direction: column; gap: 8px; }
+    .rc-form-footer { flex-direction: column; gap: 8px; }
+    .rc-form-actions { width: 100%; justify-content: flex-end; }
+}
+@media (max-width: 600px) {
+    .rc-main-tabs { overflow-x: auto; }
+    .rc-main-tab { padding: 8px 12px; font-size: 0.78rem; white-space: nowrap; }
+    .rc-form-grid.rc-grid-3 { grid-template-columns: 1fr; }
+    .rc-contact-footer { flex-wrap: wrap; }
+    .rc-detail-summary-item { padding: 3px 6px; }
+    .rc-modal { min-width: auto; max-width: 95%; }
+}
+
+/* ============================================================
+   DARK MODE — CARİ KARTLAR EXTENSIONS
+   ============================================================ */
+.app-root.dark .rc-main-tabs { background: var(--yl-white); border-bottom-color: var(--yl-border); }
+.app-root.dark .rc-main-tab { color: #8b949e; }
+.app-root.dark .rc-main-tab:hover { color: var(--yl-text); background: rgba(88,166,255,0.04); }
+.app-root.dark .rc-main-tab.active {
+    color: var(--yl-accent);
+    border-bottom-color: var(--yl-accent);
+    background: rgba(88,166,255,0.06);
+}
+.app-root.dark .rc-main-tab-badge { background: var(--yl-accent); color: #0d1117; }
+
+.app-root.dark .rc-form-input {
+    background: var(--yl-bg);
+    border-color: var(--yl-border);
+    color: var(--yl-text);
+}
+.app-root.dark .rc-form-input:focus { border-color: var(--yl-accent); }
+.app-root.dark .rc-form-input[readonly] {
+    background: #161b22;
+    color: #8b949e;
+}
+.app-root.dark select.rc-form-input { background: var(--yl-bg); }
+
+.app-root.dark .rc-form-field label { color: #8b949e; }
+
+.app-root.dark .rc-toggle-slider { background: #30363d; }
+.app-root.dark .rc-toggle-slider::before { background: #8b949e; }
+.app-root.dark .rc-toggle input:checked + .rc-toggle-slider { background: #238636; }
+.app-root.dark .rc-toggle input:checked + .rc-toggle-slider::before { background: #fff; }
+.app-root.dark .rc-toggle-label { color: var(--yl-text); }
+
+.app-root.dark .rc-contact-card { border-color: var(--yl-border); }
+.app-root.dark .rc-contact-card.even { background: #0d1117; }
+.app-root.dark .rc-contact-card.odd  { background: var(--yl-white); }
+.app-root.dark .rc-contact-footer { border-top-color: var(--yl-border); }
+.app-root.dark .rc-inline-check { color: #8b949e; }
+
+.app-root.dark .rc-detail-summary-item {
+    background: #161b22;
+    border-color: var(--yl-border);
+}
+.app-root.dark .rc-detail-summary-item strong { color: var(--yl-text); }
+
+.app-root.dark .rc-form-footer { border-top-color: var(--yl-border); }
+.app-root.dark .rc-form-audit { color: #8b949e; }
+
+.app-root.dark .rc-toast-card.is-ok {
+    background: rgba(74,222,128,0.1);
+    color: #4ade80;
+    border-color: rgba(74,222,128,0.3);
+}
+.app-root.dark .rc-toast-card.is-err {
+    background: rgba(248,113,113,0.1);
+    color: #f87171;
+    border-color: rgba(248,113,113,0.3);
+}
+
+.app-root.dark .rc-modal-overlay { background: rgba(0,0,0,0.65); }
+.app-root.dark .rc-modal {
+    background: var(--yl-white);
+    border-color: var(--yl-border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.app-root.dark .rc-modal-header { color: var(--yl-text); border-bottom-color: var(--yl-border); }
+.app-root.dark .rc-modal-body { color: var(--yl-text); }
+.app-root.dark .rc-modal-footer { border-top-color: var(--yl-border); }

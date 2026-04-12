@@ -101,10 +101,6 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="7" y1="8" x2="17" y2="8" /><line x1="7" y1="12" x2="17" y2="12" /><line x1="7" y1="16" x2="13" y2="16" /></svg>
                         <span>Cari Kartlar</span>
                     </button>
-                    <button class="sidebar-item" @onclick="OpenResmiCariler">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h18"/><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 12l2 2 4-4"/></svg>
-                        <span>Resmi Cariler</span>
-                    </button>
                 </div>
                 <!-- Collapsed flyout menu -->
                 @if (sidebarCollapsed && flyoutMenu == "crm")
@@ -114,10 +110,6 @@
                         <button class="sidebar-flyout-item" @onclick="OpenCustomerCards">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="7" y1="8" x2="17" y2="8" /><line x1="7" y1="12" x2="17" y2="12" /><line x1="7" y1="16" x2="13" y2="16" /></svg>
                             Cari Kartlar
-                        </button>
-                        <button class="sidebar-flyout-item" @onclick="OpenResmiCariler">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h18"/><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 12l2 2 4-4"/></svg>
-                            Resmi Cariler
                         </button>
                     </div>
                 }
@@ -306,14 +298,6 @@
         flyoutMenu = null;
         if (!WindowService.OpenCustomerCardsWindow())
             Nav.NavigateTo("/crm/cari-kartlar");
-    }
-
-    private void OpenResmiCariler()
-    {
-        mobileMenuOpen = false;
-        flyoutMenu = null;
-        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.CRM.ResmiCariler>("Resmi Cariler", 1200, 750))
-            Nav.NavigateTo("/crm/resmi-cariler");
     }
 
     private void OpenTeklifOlustur()
