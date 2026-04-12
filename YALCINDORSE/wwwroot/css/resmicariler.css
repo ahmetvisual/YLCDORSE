@@ -277,8 +277,8 @@
     border-radius: 0;
     flex-shrink: 0;
 }
-.rc-badge-ok   { background: #dcfce7; color: #16a34a; }
-.rc-badge-warn { background: #fef3c7; color: #d97706; }
+.rc-badge-ok   { background: #1e3a6e; color: #fff; }
+.rc-badge-warn { background: #1e3a6e; color: #fff; }
 .rc-badge-svg  { width: 13px; height: 13px; display: block; }
 .rc-item-name {
     font-size: 0.82rem;
@@ -662,8 +662,8 @@
 }
 .app-root.dark .rc-item-code { color: var(--yl-accent); }
 .app-root.dark .rc-item-name { color: var(--yl-text); }
-.app-root.dark .rc-badge-ok   { background: rgba(74,222,128,0.15); color: #4ade80; }
-.app-root.dark .rc-badge-warn { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.app-root.dark .rc-badge-ok   { background: #2a4a8a; color: #fff; }
+.app-root.dark .rc-badge-warn { background: #2a4a8a; color: #fff; }
 
 .app-root.dark .rc-detail-panel { background: var(--yl-bg); }
 .app-root.dark .rc-detail-code { color: var(--yl-accent); }
