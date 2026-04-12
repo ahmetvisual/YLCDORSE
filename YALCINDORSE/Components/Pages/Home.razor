@@ -69,7 +69,42 @@
 
     @if (_loading && _kpi is null)
     {
-        <div class="dash-loading">Veriler yukleniyor...</div>
+        <div class="dash-layout">
+            <div class="dash-main">
+                <div class="dash-kpi-row">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <div class="dash-kpi-card dash-skeleton-card">
+                            <div class="dash-skeleton dash-skeleton-text" style="width:60%"></div>
+                            <div class="dash-skeleton dash-skeleton-value"></div>
+                            <div class="dash-skeleton dash-skeleton-text" style="width:40%"></div>
+                        </div>
+                    }
+                </div>
+                <div class="dash-pie-row">
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="dash-pie-card dash-skeleton-card">
+                            <div class="dash-skeleton dash-skeleton-text" style="width:50%"></div>
+                            <div class="dash-skeleton dash-skeleton-circle"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <aside class="dash-side">
+                <div class="dash-timeline dash-skeleton-card" style="min-height:400px">
+                    <div class="dash-skeleton dash-skeleton-text" style="width:70%;margin:16px"></div>
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <div style="padding:12px 16px">
+                            <div class="dash-skeleton dash-skeleton-text" style="width:45%"></div>
+                            <div class="dash-skeleton dash-skeleton-text" style="width:80%;margin-top:8px"></div>
+                            <div class="dash-skeleton dash-skeleton-text" style="width:60%;margin-top:6px"></div>
+                        </div>
+                    }
+                </div>
+            </aside>
+        </div>
     }
     else
     {
@@ -604,17 +639,34 @@
         _loading = true;
         StateHasChanged();
 
-        // Her veri kaynagini izole et - biri patlasa digerleri calissin
-        try { _kpi         = await TouchSvc.GetDashboardKpisAsync();     } catch { _kpi         = new DashboardKpiModel(); }
-        try { _performance = await TouchSvc.GetPersonPerformanceAsync(); } catch { _performance = new List<PersonPerformanceModel>(); }
-        try { _stale       = await TouchSvc.GetStaleTouchesAsync(30);    } catch { _stale       = new List<TouchReminderModel>(); }
-        try { _overdue     = await TouchSvc.GetOverdueTouchesAsync();    } catch { _overdue     = new List<TouchReminderModel>(); }
-        try { _today       = await TouchSvc.GetTodayTouchesAsync();      } catch { _today       = new List<TouchReminderModel>(); }
-        try { _week        = await TouchSvc.GetWeekTouchesAsync();       } catch { _week        = new List<TouchReminderModel>(); }
-        try { _recent      = await TouchSvc.GetRecentTouchesAsync(12);   } catch { _recent      = new List<TouchActivityModel>(); }
+        // Tum sorguları PARALEL calistir — WinForms gibi aninda gelsin
+        var tKpi   = SafeAsync(() => TouchSvc.GetDashboardKpisAsync());
+        var tPerf  = SafeAsync(() => TouchSvc.GetPersonPerformanceAsync());
+        var tStale = SafeAsync(() => TouchSvc.GetStaleTouchesAsync(30));
+        var tOver  = SafeAsync(() => TouchSvc.GetOverdueTouchesAsync());
+        var tTod   = SafeAsync(() => TouchSvc.GetTodayTouchesAsync());
+        var tWeek  = SafeAsync(() => TouchSvc.GetWeekTouchesAsync());
+        var tRec   = SafeAsync(() => TouchSvc.GetRecentTouchesAsync(12));
+
+        await Task.WhenAll(tKpi, tPerf, tStale, tOver, tTod, tWeek, tRec);
+
+        _kpi         = tKpi.Result   ?? new DashboardKpiModel();
+        _performance = tPerf.Result  ?? new List<PersonPerformanceModel>();
+        _stale       = tStale.Result ?? new List<TouchReminderModel>();
+        _overdue     = tOver.Result  ?? new List<TouchReminderModel>();
+        _today       = tTod.Result   ?? new List<TouchReminderModel>();
+        _week        = tWeek.Result  ?? new List<TouchReminderModel>();
+        _recent      = tRec.Result   ?? new List<TouchActivityModel>();
 
         _loading = false;
         StateHasChanged();
+    }
+
+    // Hata durumunda null doner, WhenAll'i patlatmaz
+    private static async Task<T?> SafeAsync<T>(Func<Task<T>> factory) where T : class
+    {
+        try { return await factory(); }
+        catch { return null; }
     }
 
     // ── Computed KPI values ───────────────────────
