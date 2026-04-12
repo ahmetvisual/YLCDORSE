@@ -161,9 +161,7 @@
                                             </td>
                                             <!-- 6. Durum -->
                                             <td class="qt-hide-sm">
-                                                <span class="yl-chip @GetStatusChipClass(quote.Durum)">
-                                                    @GetStatusName(quote.Durum)
-                                                </span>
+                                                <span class="qt-status-text">@GetStatusName(quote.Durum)</span>
                                             </td>
                                             <!-- 7. Puan -->
                                             <td class="qt-hide-sm">
@@ -257,7 +255,7 @@
                         <div style="display:flex; align-items:center; gap:6px;">
                             @if (sel != null)
                             {
-                                <span class="yl-chip @GetStatusChipClass(sel.Durum)">@GetStatusName(sel.Durum)</span>
+                                <span class="qt-status-text">@GetStatusName(sel.Durum)</span>
                                 <span class="yl-chip @GetStandingChipClass(sel.Puan)">@sel.Puan</span>
                             }
                             <button class="btn-expand" title="Kapat" @onclick="CloseDetail">
