@@ -10,7 +10,7 @@
     gap: 0;
     overflow: hidden;
     border: 1px solid var(--yl-border);
-    border-radius: var(--yl-radius-lg);
+    border-radius: 0;
     background: var(--yl-white);
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
@@ -40,7 +40,7 @@
     gap: 6px;
     background: var(--yl-white);
     border: 1px solid var(--yl-border);
-    border-radius: var(--yl-radius-md);
+    border-radius: 0;
     padding: 0 8px;
     height: 32px;
 }
@@ -98,7 +98,7 @@
     padding: 1px 6px;
     background: rgba(59,125,221,0.1);
     color: var(--yl-primary);
-    border-radius: 3px;
+    border-radius: 0;
     font-size: 0.62rem;
     font-weight: 600;
     letter-spacing: 0.3px;
@@ -166,8 +166,10 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px 12px;
-    padding: 12px 14px;
-    border-bottom: 1px solid #eef0f3;
+    padding: 14px 16px 16px;
+    border-bottom: 2px solid var(--yl-border);
+    background: linear-gradient(135deg, #f0f5fb 0%, #f6f8fc 100%);
+    border-left: 3px solid var(--yl-primary);
 }
 
 .ab-field {
@@ -188,7 +190,7 @@
 .ab-field select {
     padding: 6px 9px;
     border: 1px solid var(--yl-border);
-    border-radius: var(--yl-radius-md);
+    border-radius: 0;
     font-size: 0.8rem;
     color: var(--yl-text);
     background: var(--yl-white);
@@ -250,8 +252,12 @@
     border-bottom: 1px solid #eef0f3;
 }
 
+/* Zebra desen */
+.ab-detail-table tbody tr:nth-child(odd)  { background: #f4f7fb; }
+.ab-detail-table tbody tr:nth-child(even) { background: #ffffff; }
+
 .ab-detail-table tbody tr:hover {
-    background: #f8f9fb;
+    background: #e8f0fe !important;
 }
 
 .ab-row-num {
@@ -266,7 +272,7 @@
     width: 100%;
     padding: 5px 7px;
     border: 1px solid transparent;
-    border-radius: 3px;
+    border-radius: 0;
     font-size: 0.78rem;
     color: var(--yl-text);
     background: transparent;
@@ -300,7 +306,7 @@
     gap: 4px;
     padding: 5px 12px;
     border: 1px solid var(--yl-border);
-    border-radius: var(--yl-radius-md);
+    border-radius: 0;
     background: var(--yl-white);
     color: var(--yl-text);
     font-size: 0.74rem;
@@ -354,7 +360,7 @@
     width: 26px;
     height: 26px;
     border: none;
-    border-radius: 4px;
+    border-radius: 0;
     background: transparent;
     cursor: pointer;
     transition: background 0.12s;
@@ -420,7 +426,9 @@
 }
 
 .app-root.dark .ab-lang-grid {
-    border-bottom-color: rgba(255,255,255,0.04);
+    background: linear-gradient(135deg, #0d1a2a 0%, #0f1823 100%);
+    border-bottom-color: rgba(255,255,255,0.08);
+    border-left-color: var(--yl-accent);
 }
 
 .app-root.dark .ab-field input,
@@ -446,8 +454,12 @@
     border-bottom-color: rgba(255,255,255,0.04);
 }
 
+/* Dark zebra */
+.app-root.dark .ab-detail-table tbody tr:nth-child(odd)  { background: #161d27; }
+.app-root.dark .ab-detail-table tbody tr:nth-child(even) { background: #0d1117; }
+
 .app-root.dark .ab-detail-table tbody tr:hover {
-    background: rgba(59,125,221,0.04);
+    background: rgba(59,125,221,0.08) !important;
 }
 
 .app-root.dark .ab-cell-input {
