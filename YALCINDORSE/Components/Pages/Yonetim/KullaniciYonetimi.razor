@@ -1,78 +1,117 @@
 @page "/yonetim/kullanicilar"
 @using YALCINDORSE.Services
 @inject UserService UserSvc
+@inject AuthService Auth
 
-<div class="page-panel">
-    <div class="panel-header">
-        <div class="panel-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon">
+@* ── ERİŞİM KONTROLÜ ─────────────────────────────────────────── *@
+@if (!Auth.IsAdmin)
+{
+    <div class="um-denied">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="um-denied-icon">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+        </svg>
+        <h3>Yetkisiz Erişim</h3>
+        <p>Bu sayfaya yalnızca <strong>Admin</strong> rolündeki kullanıcılar erişebilir.</p>
+    </div>
+}
+else
+{
+
+<div class="um-shell">
+
+    <!-- HEADER -->
+    <div class="rc-header">
+        <div class="rc-header-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-header-icon">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            <h3>Kullanici Yonetimi</h3>
+            <div>
+                <h3>Kullanici Yonetimi</h3>
+                <p class="rc-header-sub">@users.Count kullanici</p>
+            </div>
         </div>
-        <button class="btn-add" @onclick="OpenAddModal">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            <span>Yeni Kullanici</span>
-        </button>
+        <div class="rc-header-actions">
+            <button class="rc-btn rc-btn-primary" @onclick="OpenAddModal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rc-btn-icon">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Yeni Kullanici
+            </button>
+        </div>
     </div>
 
     @if (message != null)
     {
-        <div class="alert @(messageSuccess ? "alert-success" : "alert-danger")">
+        <div class="rc-toast @(messageSuccess ? "is-ok" : "is-err")">
             @message
-            <button class="alert-close" @onclick='() => message = null'>X</button>
+            <button class="rc-toast-close" @onclick='() => message = null'>&times;</button>
         </div>
     }
 
+    <!-- TABLO -->
     @if (isLoading)
     {
-        <div class="loading-state">Yukleniyor...</div>
+        <div class="um-loading">
+            @for (int i = 0; i < 5; i++)
+            {
+                <div class="rc-skel-item"><div class="rc-skel-line w60"></div><div class="rc-skel-line w40"></div></div>
+            }
+        </div>
     }
     else if (users.Count == 0)
     {
-        <div class="empty-state">Henuz kullanici bulunmuyor.</div>
+        <div class="rc-detail-empty" style="padding:40px;">
+            <p>Henuz kullanici bulunamadi.</p>
+        </div>
     }
     else
     {
-        <div class="table-container">
-            <table class="data-table">
+        <div class="um-table-wrap">
+            <table class="um-table">
                 <thead>
                     <tr>
                         <th>Ad Soyad</th>
                         <th>Kullanici Adi</th>
-                        <th class="hide-mobile">E-posta</th>
-                        <th class="hide-mobile">Telefon</th>
+                        <th class="um-hide-sm">Departman</th>
+                        <th>Sistem Rolu</th>
+                        <th class="um-hide-sm">E-posta</th>
                         <th>Durum</th>
-                        <th>Islemler</th>
+                        <th style="width:80px">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var user in users)
                     {
                         <tr>
-                            <td class="td-name">@user.FullName</td>
-                            <td><code>@user.Username</code></td>
-                            <td class="hide-mobile">@(user.Email ?? "-")</td>
-                            <td class="hide-mobile">@(user.Phone ?? "-")</td>
+                            <td class="um-td-name">@user.FullName</td>
+                            <td><code class="um-code">@user.Username</code></td>
+                            <td class="um-hide-sm">@(user.Departman ?? "—")</td>
                             <td>
-                                <span class="badge @(user.IsActive ? "badge-active" : "badge-inactive")">
+                                <span class="um-rol-badge @(user.Rol == "admin" ? "is-admin" : "is-user")">
+                                    @(user.Rol == "admin" ? "Admin" : "Kullanici")
+                                </span>
+                            </td>
+                            <td class="um-hide-sm">@(user.Email ?? "—")</td>
+                            <td>
+                                <span class="um-status-badge @(user.IsActive ? "is-ok" : "is-off")">
                                     @(user.IsActive ? "Aktif" : "Pasif")
                                 </span>
                             </td>
-                            <td class="td-actions">
-                                <button class="btn-icon btn-edit" title="Duzenle" @onclick="() => OpenEditModal(user)">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <td class="um-td-actions">
+                                <button class="um-btn-icon" title="Duzenle" @onclick="() => OpenEditModal(user)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                     </svg>
                                 </button>
-                                <button class="btn-icon btn-delete" title="Sil" @onclick="() => ConfirmDelete(user)">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <button class="um-btn-icon um-btn-danger" title="Sil"
+                                        @onclick="() => ConfirmDelete(user)"
+                                        disabled="@(user.Id == Auth.CurrentUserId)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
                                         <polyline points="3 6 5 6 21 6"/>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                                     </svg>
@@ -86,65 +125,72 @@
     }
 </div>
 
-<!-- Modal -->
+<!-- ═══ KULLANICI EKLE / DÜZENLE MODAL ═══ -->
 @if (showModal)
 {
-    <div class="modal-overlay" @onclick="CloseModal">
-        <div class="modal-panel" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h4>@(isEditing ? "Kullanici Duzenle" : "Yeni Kullanici")</h4>
-                <button class="modal-close" @onclick="CloseModal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
+    <div class="rc-modal-overlay" @onclick="CloseModal">
+        <div class="rc-modal" style="min-width:460px;max-width:580px;" @onclick:stopPropagation="true">
+            <div class="rc-modal-header">
+                @(isEditing ? "Kullanici Duzenle" : "Yeni Kullanici")
             </div>
-            <div class="modal-body">
-                <div class="form-row">
-                    <div class="form-col">
+            <div class="rc-modal-body">
+                <div class="rc-form-grid">
+                    <div class="rc-form-field">
                         <label>Ad Soyad *</label>
-                        <input type="text" class="form-input" @bind="editUser.FullName" placeholder="Ad Soyad" />
+                        <input class="rc-form-input" @bind="editUser.FullName" placeholder="Ad soyad" />
                     </div>
-                    <div class="form-col">
+                    <div class="rc-form-field">
                         <label>Kullanici Adi *</label>
-                        <input type="text" class="form-input" @bind="editUser.Username" placeholder="Kullanici adi" />
+                        <input class="rc-form-input" @bind="editUser.Username" placeholder="Kullanici adi" autocomplete="off" />
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label>@(isEditing ? "Sifre (bos birakirsaniz degismez)" : "Sifre *")</label>
-                        <input type="password" class="form-input" @bind="editUser.Password" placeholder="Sifre" />
+                    <div class="rc-form-field">
+                        <label>@(isEditing ? "Sifre (bos = degismez)" : "Sifre *")</label>
+                        <input type="password" class="rc-form-input" @bind="editUser.Password" placeholder="Sifre" autocomplete="new-password" />
                     </div>
-                    <div class="form-col">
+                    <div class="rc-form-field">
                         <label>E-posta</label>
-                        <input type="email" class="form-input" @bind="editUser.Email" placeholder="E-posta" />
+                        <input type="email" class="rc-form-input" @bind="editUser.Email" placeholder="E-posta" />
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
+                    <div class="rc-form-field">
+                        <label>Departman</label>
+                        <select class="rc-form-input" @bind="editUser.Departman">
+                            <option value="">— Seciniz —</option>
+                            @foreach (var dep in Departmanlar.Liste)
+                            {
+                                <option value="@dep">@dep</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="rc-form-field">
+                        <label>Sistem Rolu</label>
+                        <select class="rc-form-input" @bind="editUser.Rol">
+                            <option value="user">Kullanici</option>
+                            <option value="admin">Admin (Yonetici)</option>
+                        </select>
+                    </div>
+                    <div class="rc-form-field">
                         <label>Telefon</label>
-                        <input type="tel" class="form-input" @bind="editUser.Phone" placeholder="Telefon" />
+                        <input type="tel" class="rc-form-input" @bind="editUser.Phone" placeholder="Telefon" />
                     </div>
-                    <div class="form-col">
+                    <div class="rc-form-field">
                         <label>Durum</label>
-                        <div class="toggle-wrapper">
-                            <label class="toggle">
+                        <div class="rc-toggle-wrap">
+                            <label class="rc-toggle">
                                 <input type="checkbox" @bind="editUser.IsActive" />
-                                <span class="toggle-slider"></span>
+                                <span class="rc-toggle-slider"></span>
                             </label>
-                            <span class="toggle-label">@(editUser.IsActive ? "Aktif" : "Pasif")</span>
+                            <span class="rc-toggle-label">@(editUser.IsActive ? "Aktif" : "Pasif")</span>
                         </div>
                     </div>
                 </div>
-
                 @if (modalError != null)
                 {
-                    <div class="alert alert-danger" style="margin-top:12px;">@modalError</div>
+                    <div class="rc-toast is-err" style="margin-top:12px;">@modalError</div>
                 }
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="CloseModal">Iptal</button>
-                <button class="btn-primary-action" @onclick="SaveUser" disabled="@isSaving">
+            <div class="rc-modal-footer">
+                <button class="rc-btn rc-btn-ghost" @onclick="CloseModal">Iptal</button>
+                <button class="rc-btn rc-btn-primary" @onclick="SaveUser" disabled="@isSaving">
                     @(isSaving ? "Kaydediliyor..." : "Kaydet")
                 </button>
             </div>
@@ -152,28 +198,28 @@
     </div>
 }
 
-<!-- Delete Confirm -->
+<!-- ═══ SİL ONAY MODAL ═══ -->
 @if (showDeleteConfirm)
 {
-    <div class="modal-overlay" @onclick="() => showDeleteConfirm = false">
-        <div class="modal-panel modal-sm" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h4>Kullanici Sil</h4>
-            </div>
-            <div class="modal-body">
+    <div class="rc-modal-overlay" @onclick='() => showDeleteConfirm = false'>
+        <div class="rc-modal" @onclick:stopPropagation="true">
+            <div class="rc-modal-header">Kullanici Sil</div>
+            <div class="rc-modal-body">
                 <p><strong>@deleteTarget?.FullName</strong> adli kullaniciyi silmek istediginize emin misiniz?</p>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="() => showDeleteConfirm = false">Iptal</button>
-                <button class="btn-danger-action" @onclick="DoDelete">Sil</button>
+            <div class="rc-modal-footer">
+                <button class="rc-btn rc-btn-ghost" @onclick='() => showDeleteConfirm = false'>Iptal</button>
+                <button class="rc-btn rc-btn-danger-sm" style="padding:7px 14px;font-size:0.8rem;" @onclick="DoDelete">Sil</button>
             </div>
         </div>
     </div>
 }
 
+} @* end IsAdmin *@
+
 @code {
     private List<UserModel> users = new();
-    private UserModel editUser = new();
+    private UserModel editUser   = new();
     private UserModel? deleteTarget;
     private bool showModal, showDeleteConfirm, isEditing, isLoading, isSaving;
     private string? message, modalError;
@@ -181,39 +227,41 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadUsers();
+        if (Auth.IsAdmin) await LoadUsers();
     }
 
     private async Task LoadUsers()
     {
         isLoading = true;
-        try { users = await UserSvc.GetAllUsersAsync(); }
+        try   { users = await UserSvc.GetAllUsersAsync(); }
         catch (Exception ex) { message = $"Yuklenirken hata: {ex.Message}"; messageSuccess = false; }
         isLoading = false;
     }
 
     private void OpenAddModal()
     {
-        editUser = new UserModel { IsActive = true };
-        isEditing = false;
+        editUser   = new UserModel { IsActive = true, Rol = "user" };
+        isEditing  = false;
         modalError = null;
-        showModal = true;
+        showModal  = true;
     }
 
     private void OpenEditModal(UserModel user)
     {
         editUser = new UserModel
         {
-            Id = user.Id,
-            Username = user.Username,
-            FullName = user.FullName,
-            Email = user.Email,
-            Phone = user.Phone,
-            IsActive = user.IsActive
+            Id        = user.Id,
+            Username  = user.Username,
+            FullName  = user.FullName,
+            Email     = user.Email,
+            Phone     = user.Phone,
+            Departman = user.Departman,
+            Rol       = user.Rol,
+            IsActive  = user.IsActive
         };
-        isEditing = true;
+        isEditing  = true;
         modalError = null;
-        showModal = true;
+        showModal  = true;
     }
 
     private void CloseModal() => showModal = false;
@@ -231,7 +279,7 @@
             return;
         }
 
-        isSaving = true;
+        isSaving   = true;
         modalError = null;
 
         var (success, msg) = isEditing
@@ -240,8 +288,8 @@
 
         if (success)
         {
-            showModal = false;
-            message = msg;
+            showModal      = false;
+            message        = msg;
             messageSuccess = true;
             await LoadUsers();
         }
@@ -254,7 +302,7 @@
 
     private void ConfirmDelete(UserModel user)
     {
-        deleteTarget = user;
+        deleteTarget      = user;
         showDeleteConfirm = true;
     }
 
@@ -262,9 +310,9 @@
     {
         if (deleteTarget == null) return;
         var (success, msg) = await UserSvc.DeleteUserAsync(deleteTarget.Id);
-        showDeleteConfirm = false;
-        message = msg;
-        messageSuccess = success;
+        showDeleteConfirm  = false;
+        message            = msg;
+        messageSuccess     = success;
         if (success) await LoadUsers();
     }
 }

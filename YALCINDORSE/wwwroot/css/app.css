@@ -2696,3 +2696,118 @@ a, .btn-link {
         height: 20px;
     }
 }
+
+/* ============================================================
+   KULLANICI YÖNETİMİ (KullaniciYonetimi.razor)
+   ============================================================ */
+.um-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: var(--yl-bg);
+}
+.um-loading { padding: 8px 0; }
+
+/* Erişim Reddi */
+.um-denied {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--yl-text-light);
+    text-align: center;
+    padding: 40px;
+}
+.um-denied-icon { width: 48px; height: 48px; color: #dc2626; }
+.um-denied h3   { margin: 0; font-size: 1.1rem; color: var(--yl-text); }
+.um-denied p    { margin: 0; font-size: 0.85rem; }
+
+/* Tablo */
+.um-table-wrap {
+    flex: 1;
+    overflow: auto;
+    padding: 16px 20px;
+}
+.um-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+.um-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--yl-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 2px solid var(--yl-border);
+    background: var(--yl-white);
+    white-space: nowrap;
+}
+.um-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--yl-border);
+    color: var(--yl-text);
+    vertical-align: middle;
+}
+.um-table tr:hover td { background: rgba(55,99,170,0.04); }
+.um-td-name   { font-weight: 600; }
+.um-code      { font-family: 'Cascadia Code','Consolas',monospace; font-size: 0.78rem; color: var(--yl-primary); }
+.um-td-actions { display: flex; gap: 6px; align-items: center; }
+.um-hide-sm   { }
+
+.um-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    cursor: pointer;
+    color: var(--yl-text-light);
+    transition: background 0.12s, color 0.12s;
+}
+.um-btn-icon:hover:not(:disabled) { background: #eef2ff; color: var(--yl-primary); }
+.um-btn-icon.um-btn-danger:hover:not(:disabled) { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+.um-btn-icon:disabled { opacity: 0.35; cursor: default; }
+
+/* Rol ve Durum badge */
+.um-rol-badge, .um-status-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 0;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+.um-rol-badge.is-admin  { background: #1e3a6e; color: #fff; }
+.um-rol-badge.is-user   { background: #e5e7eb; color: #374151; }
+.um-status-badge.is-ok  { background: #dcfce7; color: #15803d; }
+.um-status-badge.is-off { background: #f3f4f6; color: #9ca3af; }
+
+/* Responsive */
+@media (max-width: 700px) {
+    .um-hide-sm { display: none; }
+    .um-table-wrap { padding: 8px 10px; }
+}
+
+/* Dark mode */
+.app-root.dark .um-shell     { background: var(--yl-bg); }
+.app-root.dark .um-table th  { background: var(--yl-white); border-bottom-color: var(--yl-border); }
+.app-root.dark .um-table td  { border-bottom-color: var(--yl-border); color: var(--yl-text); }
+.app-root.dark .um-table tr:hover td { background: rgba(88,166,255,0.04); }
+.app-root.dark .um-code      { color: var(--yl-accent); }
+.app-root.dark .um-btn-icon  { border-color: var(--yl-border); color: #8b949e; }
+.app-root.dark .um-btn-icon:hover:not(:disabled) { background: #161b22; color: var(--yl-accent); }
+.app-root.dark .um-btn-icon.um-btn-danger:hover:not(:disabled) { background: rgba(218,54,51,0.1); color: #f85149; }
+.app-root.dark .um-rol-badge.is-admin  { background: #2a4a8a; }
+.app-root.dark .um-rol-badge.is-user   { background: #21262d; color: #8b949e; }
+.app-root.dark .um-status-badge.is-ok  { background: rgba(74,222,128,0.15); color: #4ade80; }
+.app-root.dark .um-status-badge.is-off { background: #21262d; color: #6b7280; }
