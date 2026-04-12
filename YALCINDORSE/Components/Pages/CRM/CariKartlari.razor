@@ -99,8 +99,21 @@
                                     @onclick="() => SelectCustomerAsync(item.Id)">
                                 <div class="rc-item-top">
                                     <span class="rc-item-code">@item.CustomerCode</span>
-                                    <span class="rc-item-badge @(item.IsActive ? "rc-badge-ok" : "rc-badge-warn")">
-                                        @(item.IsActive ? "✓" : "✗")
+                                    <span class="rc-item-badge @(item.IsActive ? "rc-badge-ok" : "rc-badge-warn")"
+                                          title="@(item.IsActive ? "Aktif" : "Pasif")">
+                                        @if (item.IsActive)
+                                        {
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="rc-badge-svg">
+                                                <path d="M20 6L9 17l-5-5"/>
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="rc-badge-svg">
+                                                <circle cx="12" cy="12" r="9"/>
+                                                <line x1="8" y1="12" x2="16" y2="12"/>
+                                            </svg>
+                                        }
                                     </span>
                                 </div>
                                 <div class="rc-item-name">@item.Title</div>

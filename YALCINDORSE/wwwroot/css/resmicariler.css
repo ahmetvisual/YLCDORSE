@@ -269,10 +269,8 @@
     font-family: 'Cascadia Code', 'Consolas', monospace;
 }
 .rc-item-badge {
-    font-size: 0.7rem;
-    font-weight: 700;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -281,6 +279,7 @@
 }
 .rc-badge-ok   { background: #dcfce7; color: #16a34a; }
 .rc-badge-warn { background: #fef3c7; color: #d97706; }
+.rc-badge-svg  { width: 13px; height: 13px; display: block; }
 .rc-item-name {
     font-size: 0.82rem;
     font-weight: 600;
