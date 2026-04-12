@@ -507,15 +507,15 @@
     letter-spacing: 0.04em;
 }
 
-/* Status Chips — düz arka plan */
-.chip-draft        { background: rgba(60,90,140,0.13);  color: #3C5A8C; }
-.chip-sent         { background: rgba(0,120,180,0.13);  color: #0078B4; }
-.chip-waiting      { background: rgba(160,110,0,0.13);  color: #A06E00; }
-.chip-approved     { background: rgba(30,130,60,0.13);  color: #1E823C; }
-.chip-rejected     { background: rgba(180,30,30,0.13);  color: #B41E1E; }
-.chip-order        { background: rgba(30,130,60,0.15);  color: #166534; }
-.chip-open         { background: rgba(109,40,217,0.12); color: #6D28D9; }
-.chip-closed       { background: rgba(75,85,99,0.13);   color: #4b5563; }
+/* DURUM chip'leri — notr/renksiz; renk kargasasi olmasin */
+.chip-draft,
+.chip-sent,
+.chip-waiting,
+.chip-approved,
+.chip-rejected,
+.chip-order,
+.chip-open,
+.chip-closed    { background: #f1f3f5; color: #374151; border: 1px solid #d1d5db; }
 
 /* Standing Chips */
 .chip-hot          { background: rgba(185,28,28,0.13);  color: #B91C1C; }
@@ -724,15 +724,19 @@
 .app-root.dark .btn-ts-closed { background: rgba(100,100,100,0.15); color: #aaa; border-color: rgba(100,100,100,0.3); }
 .app-root.dark .btn-revize { background: rgba(180,83,9,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.3); }
 
-/* Dark Chips */
-.app-root.dark .chip-hot { background: rgba(220,40,40,0.2); color: #FCA5A5; }
-.app-root.dark .chip-warm { background: rgba(220,130,0,0.2); color: #FCD34D; }
-.app-root.dark .chip-cold { background: rgba(60,130,200,0.2); color: #93C5FD; }
-.app-root.dark .chip-draft { background: rgba(60,90,140,0.2); color: #93A8CC; }
-.app-root.dark .chip-sent { background: rgba(0,120,180,0.2); color: #7DD3FC; }
-.app-root.dark .chip-waiting { background: rgba(160,110,0,0.2); color: #FDE68A; }
-.app-root.dark .chip-approved { background: rgba(30,130,60,0.2); color: #86EFAC; }
-.app-root.dark .chip-rejected { background: rgba(180,30,30,0.2); color: #FCA5A5; }
+/* Dark Chips — sadece puan renkli, durum notr */
+.app-root.dark .chip-hot  { background: rgba(220,40,40,0.2);   color: #FCA5A5; }
+.app-root.dark .chip-warm { background: rgba(220,130,0,0.2);   color: #FCD34D; }
+.app-root.dark .chip-cold { background: rgba(60,130,200,0.2);  color: #93C5FD; }
+
+.app-root.dark .chip-draft,
+.app-root.dark .chip-sent,
+.app-root.dark .chip-waiting,
+.app-root.dark .chip-approved,
+.app-root.dark .chip-rejected,
+.app-root.dark .chip-order,
+.app-root.dark .chip-open,
+.app-root.dark .chip-closed { background: #21262d; color: #8b949e; border-color: #30363d; }
 
 .app-root.dark .modal-footer {
     background: #161b22;

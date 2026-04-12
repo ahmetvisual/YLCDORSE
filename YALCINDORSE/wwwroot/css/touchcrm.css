@@ -628,10 +628,10 @@
     margin-top: 12px;
 }
 
-/* -- STATUS CHIPS (extends quotes.css) -- */
-.chip-open   { background: #EEEDFE; color: #534AB7; }   /* mor   */
-.chip-order  { background: #EAF3DE; color: #3B6D11; }   /* yesil */
-.chip-closed { background: #F0F0F0; color: #888; border: 1px solid #ddd; } /* nötr gri - Taslak'tan farklı */
+/* -- STATUS CHIPS (extends quotes.css) — notr/renksiz */
+.chip-open,
+.chip-order,
+.chip-closed { background: #f1f3f5; color: #374151; border: 1px solid #d1d5db; }
 /* -- DARK MODE (Touch CRM) -- */
 .app-root.dark .touch-grid-container { box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
 .app-root.dark .touch-table-wrap { background: var(--yl-bg); }
