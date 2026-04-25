@@ -308,7 +308,13 @@
         StateHasChanged();
         try
         {
-            gruplar = await ArabaslikSvc.GetGruplarAsync(searchQuery);
+            var raw = await ArabaslikSvc.GetGruplarAsync(searchQuery);
+            // Tablo tipindekiler (TablTipi=1) her zaman uste, sonra Liste (TablTipi=2)
+            gruplar = raw
+                .OrderBy(g => g.TablTipi)
+                .ThenBy(g => g.SortOrder)
+                .ThenBy(g => g.GrupAdi)
+                .ToList();
         }
         catch (Exception ex)
         {
