@@ -130,8 +130,6 @@
                             <button class="item-action-btn @(item.BaslikMi ? "item-bold-active" : "")"
                                     title="@(item.BaslikMi ? "Kalin (PDF'de bold)" : "Normal (PDF'de thin)")"
                                     @onclick="() => ToggleBold(item)"><b>B</b></button>
-                            <button class="item-action-btn" title="Alt kalem ekle" @onclick="() => AddSubItem(item)">&#8627;</button>
-                            <button class="item-action-btn" title="Opsiyon ekle" @onclick="() => AddOption(item)">&#9733;</button>
                         }
                         <button class="item-action-btn delete" title="Sil" @onclick="() => RemoveItem(item)">&#10005;</button>
                     </div>
@@ -265,13 +263,22 @@
                                              @ondragend="OnDragEnd">
                                             <span class="detail-bullet">›</span>
                                             <span class="detail-text">@GetDetayLocalizedText(dt)</span>
-                                            @if (g.TablTipi == 1 && !string.IsNullOrEmpty(dt.Deger))
+                                            @if (g.TablTipi == 1)
                                             {
-                                                <span class="detail-value">@dt.Deger</span>
+                                                <input type="text" class="detail-value-edit"
+                                                       value="@dt.Deger" draggable="false"
+                                                       @onchange="(e) => UpdateDetayDeger(dt, e.Value?.ToString())"
+                                                       @onclick:stopPropagation="true"
+                                                       placeholder="Değer" />
                                             }
-                                            else if (dt.Fiyat.HasValue)
+                                            else
                                             {
-                                                <span class="detail-price">@dt.Fiyat.Value.ToString("N0")</span>
+                                                <input type="number" class="detail-price-edit"
+                                                       value="@dt.Fiyat" draggable="false"
+                                                       step="0.01"
+                                                       @onchange="(e) => UpdateDetayFiyat(dt, e.Value?.ToString())"
+                                                       @onclick:stopPropagation="true"
+                                                       placeholder="Fiyat" />
                                             }
                                             <button class="detail-add-btn" @onclick="() => AddDetayAsItem(g, dt)" title="Bu kalemi ekle">+</button>
                                         </div>
@@ -450,35 +457,6 @@
         NotifyChanged();
     }
 
-    private void AddSubItem(QuoteItemModel parent)
-    {
-        var maxSira = Items.Where(i => i.UstKalemId == parent.Id && i.KalemTipi == "SUB_ITEM").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
-        Items.Add(new QuoteItemModel
-        {
-            Id = nextTempId--,
-            KalemTipi = "SUB_ITEM",
-            UstKalemId = parent.Id,
-            SiraNo = maxSira + 10,
-            Aciklama = ""
-        });
-        NotifyChanged();
-    }
-
-    private void AddOption(QuoteItemModel parent)
-    {
-        var maxSira = Items.Where(i => i.UstKalemId == parent.Id && i.KalemTipi == "OPTION").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
-        Items.Add(new QuoteItemModel
-        {
-            Id = nextTempId--,
-            KalemTipi = "OPTION",
-            OpsiyonMu = true,
-            UstKalemId = parent.Id,
-            SiraNo = maxSira + 10,
-            Aciklama = ""
-        });
-        NotifyChanged();
-    }
-
     private void ToggleBold(QuoteItemModel item)
     {
         item.BaslikMi = !item.BaslikMi;
@@ -621,6 +599,29 @@
     }
 
     private void ClearSearch() => abSearchQuery = string.Empty;
+
+    // ─── ŞABLON DETAY INLINE EDIT (Fiyat / Deger) ────────────
+
+    private async Task UpdateDetayFiyat(ArabaslikDetayModel d, string? raw)
+    {
+        decimal? newPrice = null;
+        if (!string.IsNullOrWhiteSpace(raw) && decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var v))
+            newPrice = v;
+        else if (!string.IsNullOrWhiteSpace(raw) && decimal.TryParse(raw, out var v2))
+            newPrice = v2;
+
+        d.Fiyat = newPrice;
+        try { await ArabaslikSvc.UpdateDetayFiyatAsync(d.Id, newPrice); }
+        catch { /* sessiz: kullanici yenilediginde mevcut deger geri yuklenir */ }
+    }
+
+    private async Task UpdateDetayDeger(ArabaslikDetayModel d, string? raw)
+    {
+        d.Deger = raw ?? "";
+        try { await ArabaslikSvc.UpdateDetayDegerAsync(d.Id, d.Deger); }
+        catch { }
+    }
 
     // ─── EKLE: Grup veya Tek Kalem ──────────────────────────
 

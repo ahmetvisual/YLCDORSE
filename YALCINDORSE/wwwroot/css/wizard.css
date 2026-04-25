@@ -1061,19 +1061,45 @@
     white-space: nowrap;
 }
 
-.items-editor.v2 .detail-value {
-    font-weight: 600;
-    color: var(--yl-primary);
+.items-editor.v2 .detail-value-edit,
+.items-editor.v2 .detail-price-edit {
+    width: 90px;
+    border: 1px solid transparent;
+    background: transparent;
     font-size: 0.74rem;
+    text-align: right;
+    padding: 2px 4px;
+    border-radius: 0;
+    outline: none;
     flex-shrink: 0;
+    font-family: inherit;
 }
+.items-editor.v2 .detail-value-edit { color: var(--yl-primary); font-weight: 600; }
+.items-editor.v2 .detail-price-edit { color: #1e6c38; font-weight: 700; }
 
-.items-editor.v2 .detail-price {
-    font-weight: 700;
-    color: #1e6c38;
-    font-size: 0.74rem;
-    flex-shrink: 0;
+.items-editor.v2 .detail-node:hover .detail-value-edit,
+.items-editor.v2 .detail-node:hover .detail-price-edit {
+    border-color: rgba(59,125,221,0.18);
+    background: #fff;
 }
+.items-editor.v2 .detail-value-edit:focus,
+.items-editor.v2 .detail-price-edit:focus {
+    border-color: var(--yl-primary);
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(24,95,165,0.1);
+}
+.items-editor.v2 .detail-value-edit::placeholder,
+.items-editor.v2 .detail-price-edit::placeholder {
+    color: #b0b6c1;
+    font-weight: 500;
+}
+/* Number input spinner'larini gizle */
+.items-editor.v2 .detail-price-edit::-webkit-outer-spin-button,
+.items-editor.v2 .detail-price-edit::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.items-editor.v2 .detail-price-edit { -moz-appearance: textfield; }
 
 .items-editor.v2 .detail-loading,
 .items-editor.v2 .detail-empty {
@@ -1164,6 +1190,17 @@
 }
 .app-root.dark .items-editor.v2 .items-list.drop-target {
     background: rgba(59,125,221,0.1);
+}
+.app-root.dark .items-editor.v2 .detail-value-edit { color: #7db4f5; }
+.app-root.dark .items-editor.v2 .detail-price-edit { color: #4ade80; }
+.app-root.dark .items-editor.v2 .detail-node:hover .detail-value-edit,
+.app-root.dark .items-editor.v2 .detail-node:hover .detail-price-edit {
+    border-color: rgba(59,125,221,0.25);
+    background: #161b22;
+}
+.app-root.dark .items-editor.v2 .detail-value-edit:focus,
+.app-root.dark .items-editor.v2 .detail-price-edit:focus {
+    background: #161b22;
 }
 
 /* ============================================================

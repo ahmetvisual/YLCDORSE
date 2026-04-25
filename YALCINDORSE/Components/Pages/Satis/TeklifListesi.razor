@@ -699,14 +699,14 @@
 
     private void GoToNewQuote()
     {
-        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Olustur", 860, 870))
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Olustur", 1400, 900))
             Nav.NavigateTo("/satis/teklif-olustur");
     }
 
     private void EditQuote(int quoteId)
     {
         var p = new Dictionary<string, object> { { "QuoteId", quoteId } };
-        WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Duzenle", 860, 870, p);
+        WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Duzenle", 1400, 900, p);
     }
 
     private async Task GenerateDocumentAsync(int quoteId)
@@ -756,7 +756,7 @@
     private void CopyQuote(int quoteId)
     {
         var p = new Dictionary<string, object> { { "CopyFromQuoteId", quoteId } };
-        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Kopyala", 860, 870, p))
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.QuoteWizard>("Teklif Kopyala", 1400, 900, p))
             Nav.NavigateTo("/satis/teklif-olustur");
     }
 

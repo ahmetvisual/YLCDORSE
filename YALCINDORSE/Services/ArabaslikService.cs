@@ -314,6 +314,50 @@ namespace YALCINDORSE.Services
         }
 
         /// <summary>
+        /// Tek bir detay satirinin Fiyat (ve opsiyonel ParaBirimi) alanini gunceller.
+        /// Quote editor icindeki sablon panelinden hizli fiyat duzenleme icin kullanilir.
+        /// </summary>
+        public async Task UpdateDetayFiyatAsync(int detayId, decimal? fiyat, string? paraBirimi = null)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+
+            const string sql = """
+                UPDATE "YLArabaslikDetaylar"
+                SET "Fiyat" = @fiyat,
+                    "ParaBirimi" = COALESCE(@para, "ParaBirimi")
+                WHERE "Id" = @id;
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("id", detayId);
+            cmd.Parameters.AddWithValue("fiyat", (object?)fiyat ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("para", (object?)paraBirimi ?? DBNull.Value);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        /// <summary>
+        /// Tek bir detay satirinin Deger alanini (TablTipi=1 icin "9.500 mm" gibi)
+        /// gunceller. Deger property'si ParaBirimi kolonu uzerinde duruyor.
+        /// </summary>
+        public async Task UpdateDetayDegerAsync(int detayId, string? deger)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+
+            const string sql = """
+                UPDATE "YLArabaslikDetaylar"
+                SET "ParaBirimi" = @deger
+                WHERE "Id" = @id;
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("id", detayId);
+            cmd.Parameters.AddWithValue("deger", (object?)deger ?? DBNull.Value);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        /// <summary>
         /// Transaction-safe save: grup header + tum detaylar (delete & re-insert)
         /// </summary>
         public async Task SaveGrupWithDetaylarAsync(ArabaslikGrupModel grup, List<ArabaslikDetayModel> detaylar)
