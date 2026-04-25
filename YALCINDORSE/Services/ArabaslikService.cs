@@ -257,18 +257,6 @@ namespace YALCINDORSE.Services
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task DeleteGrupAsync(int id)
-        {
-            using var conn = _db.GetConnection();
-            await conn.OpenAsync();
-
-            // Soft delete (IsActive = false)
-            const string sql = """UPDATE "YLArabaslikGruplar" SET "IsActive" = FALSE WHERE "Id" = @id;""";
-            using var cmd = new NpgsqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("id", id);
-            await cmd.ExecuteNonQueryAsync();
-        }
-
         // ─── DETAY CRUD ─────────────────────────────────────
 
         public async Task<List<ArabaslikDetayModel>> GetDetaylarAsync(int grupId)
@@ -311,6 +299,153 @@ namespace YALCINDORSE.Services
                 });
             }
             return items;
+        }
+
+        // ─── SINGLE-ROW CRUD (Quote editor sag panelinden inline yonetim icin) ─
+
+        /// <summary>Tek bir grup header'ini olusturur veya gunceller (detaylara dokunmaz).</summary>
+        public async Task SaveGrupAsync(ArabaslikGrupModel grup)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+
+            if (grup.Id > 0)
+            {
+                const string sql = """
+                    UPDATE "YLArabaslikGruplar" SET
+                        "GrupAdi" = @grupAdi, "GrupAdi_EN" = @en, "GrupAdi_FR" = @fr,
+                        "GrupAdi_DE" = @de, "GrupAdi_RO" = @ro, "GrupAdi_AR" = @ar, "GrupAdi_RU" = @ru,
+                        "TablTipi" = @tablTipi, "SortOrder" = @sortOrder
+                    WHERE "Id" = @id;
+                    """;
+                using var cmd = new NpgsqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("id", grup.Id);
+                cmd.Parameters.AddWithValue("grupAdi", grup.GrupAdi);
+                cmd.Parameters.AddWithValue("en", grup.GrupAdi_EN ?? "");
+                cmd.Parameters.AddWithValue("fr", grup.GrupAdi_FR ?? "");
+                cmd.Parameters.AddWithValue("de", grup.GrupAdi_DE ?? "");
+                cmd.Parameters.AddWithValue("ro", grup.GrupAdi_RO ?? "");
+                cmd.Parameters.AddWithValue("ar", grup.GrupAdi_AR ?? "");
+                cmd.Parameters.AddWithValue("ru", grup.GrupAdi_RU ?? "");
+                cmd.Parameters.AddWithValue("tablTipi", grup.TablTipi);
+                cmd.Parameters.AddWithValue("sortOrder", grup.SortOrder);
+                await cmd.ExecuteNonQueryAsync();
+            }
+            else
+            {
+                const string sql = """
+                    INSERT INTO "YLArabaslikGruplar"
+                        ("GrupAdi","GrupAdi_EN","GrupAdi_FR","GrupAdi_DE","GrupAdi_RO","GrupAdi_AR","GrupAdi_RU",
+                         "TablTipi","SortOrder","IsActive","CreatedDate","CreatedBy")
+                    VALUES (@grupAdi, @en, @fr, @de, @ro, @ar, @ru, @tablTipi, @sortOrder, TRUE, NOW(), @createdBy)
+                    RETURNING "Id";
+                    """;
+                using var cmd = new NpgsqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("grupAdi", grup.GrupAdi);
+                cmd.Parameters.AddWithValue("en", grup.GrupAdi_EN ?? "");
+                cmd.Parameters.AddWithValue("fr", grup.GrupAdi_FR ?? "");
+                cmd.Parameters.AddWithValue("de", grup.GrupAdi_DE ?? "");
+                cmd.Parameters.AddWithValue("ro", grup.GrupAdi_RO ?? "");
+                cmd.Parameters.AddWithValue("ar", grup.GrupAdi_AR ?? "");
+                cmd.Parameters.AddWithValue("ru", grup.GrupAdi_RU ?? "");
+                cmd.Parameters.AddWithValue("tablTipi", grup.TablTipi);
+                cmd.Parameters.AddWithValue("sortOrder", grup.SortOrder);
+                cmd.Parameters.AddWithValue("createdBy", _auth.FullName ?? "");
+                var result = await cmd.ExecuteScalarAsync();
+                grup.Id = Convert.ToInt32(result);
+            }
+        }
+
+        /// <summary>Bir grubu ve tum detaylarini kalici olarak siler.</summary>
+        public async Task DeleteGrupAsync(int grupId)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            using var tx = await conn.BeginTransactionAsync();
+            try
+            {
+                using (var cmd1 = new NpgsqlCommand("""DELETE FROM "YLArabaslikDetaylar" WHERE "GrupId" = @id;""", conn, tx))
+                {
+                    cmd1.Parameters.AddWithValue("id", grupId);
+                    await cmd1.ExecuteNonQueryAsync();
+                }
+                using (var cmd2 = new NpgsqlCommand("""DELETE FROM "YLArabaslikGruplar" WHERE "Id" = @id;""", conn, tx))
+                {
+                    cmd2.Parameters.AddWithValue("id", grupId);
+                    await cmd2.ExecuteNonQueryAsync();
+                }
+                await tx.CommitAsync();
+            }
+            catch { await tx.RollbackAsync(); throw; }
+        }
+
+        /// <summary>Yeni bir detay satiri ekler ve uretilen Id'yi doner.</summary>
+        public async Task<int> AddDetayAsync(ArabaslikDetayModel d)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+            const string sql = """
+                INSERT INTO "YLArabaslikDetaylar"
+                    ("GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
+                     "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
+                VALUES (@grupId, @tr, @en, @fr, @de, @ro, @ar, @ru, @fiyat, @para, @sort)
+                RETURNING "Id";
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("grupId", d.GrupId);
+            cmd.Parameters.AddWithValue("tr", d.SatirMetni ?? "");
+            cmd.Parameters.AddWithValue("en", d.SatirMetni_EN ?? "");
+            cmd.Parameters.AddWithValue("fr", d.SatirMetni_FR ?? "");
+            cmd.Parameters.AddWithValue("de", d.SatirMetni_DE ?? "");
+            cmd.Parameters.AddWithValue("ro", d.SatirMetni_RO ?? "");
+            cmd.Parameters.AddWithValue("ar", d.SatirMetni_AR ?? "");
+            cmd.Parameters.AddWithValue("ru", d.SatirMetni_RU ?? "");
+            cmd.Parameters.AddWithValue("fiyat", (object?)d.Fiyat ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("para", (object?)d.ParaBirimi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("sort", d.SortOrder);
+            var result = await cmd.ExecuteScalarAsync();
+            d.Id = Convert.ToInt32(result);
+            return d.Id;
+        }
+
+        /// <summary>Mevcut bir detay satirinin tum alanlarini gunceller (multi-lang dahil).</summary>
+        public async Task UpdateDetayAsync(ArabaslikDetayModel d)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+            const string sql = """
+                UPDATE "YLArabaslikDetaylar" SET
+                    "SatirMetni" = @tr, "SatirMetni_EN" = @en, "SatirMetni_FR" = @fr,
+                    "SatirMetni_DE" = @de, "SatirMetni_RO" = @ro, "SatirMetni_AR" = @ar, "SatirMetni_RU" = @ru,
+                    "Fiyat" = @fiyat, "ParaBirimi" = @para, "SortOrder" = @sort
+                WHERE "Id" = @id;
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("id", d.Id);
+            cmd.Parameters.AddWithValue("tr", d.SatirMetni ?? "");
+            cmd.Parameters.AddWithValue("en", d.SatirMetni_EN ?? "");
+            cmd.Parameters.AddWithValue("fr", d.SatirMetni_FR ?? "");
+            cmd.Parameters.AddWithValue("de", d.SatirMetni_DE ?? "");
+            cmd.Parameters.AddWithValue("ro", d.SatirMetni_RO ?? "");
+            cmd.Parameters.AddWithValue("ar", d.SatirMetni_AR ?? "");
+            cmd.Parameters.AddWithValue("ru", d.SatirMetni_RU ?? "");
+            cmd.Parameters.AddWithValue("fiyat", (object?)d.Fiyat ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("para", (object?)d.ParaBirimi ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("sort", d.SortOrder);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        /// <summary>Tek bir detay satirini siler.</summary>
+        public async Task DeleteDetayAsync(int detayId)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            using var cmd = new NpgsqlCommand("""DELETE FROM "YLArabaslikDetaylar" WHERE "Id" = @id;""", conn);
+            cmd.Parameters.AddWithValue("id", detayId);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         /// <summary>

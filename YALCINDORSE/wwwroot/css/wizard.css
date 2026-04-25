@@ -1071,6 +1071,142 @@
     transition: all 0.12s;
 }
 
+/* Grup ve detay icin duzenle/sil ikonu */
+.items-editor.v2 .group-tool-btn,
+.items-editor.v2 .detail-tool-btn {
+    width: 20px;
+    height: 20px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--yl-text-light);
+    cursor: pointer;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: all 0.12s;
+}
+.items-editor.v2 .group-header:hover .group-tool-btn,
+.items-editor.v2 .detail-node:hover .detail-tool-btn {
+    opacity: 1;
+}
+.items-editor.v2 .group-tool-btn:hover {
+    border-color: var(--yl-primary);
+    color: var(--yl-primary);
+    background: rgba(59,125,221,0.08);
+}
+.items-editor.v2 .detail-tool-btn:hover {
+    border-color: var(--yl-primary);
+    color: var(--yl-primary);
+    background: rgba(59,125,221,0.08);
+}
+.items-editor.v2 .group-tool-btn.delete:hover,
+.items-editor.v2 .detail-tool-btn.delete:hover {
+    border-color: #dc2626;
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+/* Inline yeni kalem satiri (genisletilmis grubun altinda) */
+.items-editor.v2 .add-kalem-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px 4px 22px;
+    border-top: 1px dashed rgba(59,125,221,0.2);
+    background: rgba(59,125,221,0.03);
+}
+.items-editor.v2 .add-kalem-bullet {
+    color: var(--yl-primary);
+    font-weight: 700;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+}
+.items-editor.v2 .add-kalem-row input {
+    flex: 1;
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: 0.78rem;
+    color: var(--yl-text);
+    padding: 3px 6px;
+    outline: none;
+    border-radius: 0;
+}
+.items-editor.v2 .add-kalem-row input:focus {
+    border-color: var(--yl-primary);
+    background: #fff;
+}
+.items-editor.v2 .add-kalem-row input::placeholder {
+    color: var(--yl-text-light);
+    font-style: italic;
+}
+.items-editor.v2 .kalem-add-confirm {
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--yl-primary);
+    background: var(--yl-primary);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 0;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.items-editor.v2 .kalem-add-confirm:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: transparent;
+    color: var(--yl-text-light);
+    border-color: var(--yl-border);
+}
+
+/* Multi-lang grid (modal icinde dil alanlari) */
+.lang-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+}
+.lang-grid.wide {
+    grid-template-columns: 1fr;
+}
+.lang-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--yl-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.lang-grid label input {
+    border: 1px solid var(--yl-border);
+    background: #fff;
+    border-radius: 0;
+    padding: 5px 8px;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--yl-text);
+    text-transform: none;
+    letter-spacing: normal;
+    outline: none;
+}
+.lang-grid label input:focus {
+    border-color: var(--yl-primary);
+    box-shadow: 0 0 0 2px rgba(24,95,165,0.1);
+}
+
+/* Dark mode */
+.app-root.dark .items-editor.v2 .add-kalem-row {
+    background: rgba(59,125,221,0.06);
+    border-top-color: rgba(59,125,221,0.3);
+}
+.app-root.dark .lang-grid label input {
+    background: #161b22;
+    border-color: var(--yl-border);
+}
+
 .items-editor.v2 .group-header:hover .group-add-btn,
 .items-editor.v2 .detail-node:hover .detail-add-btn {
     border-color: var(--yl-primary);
