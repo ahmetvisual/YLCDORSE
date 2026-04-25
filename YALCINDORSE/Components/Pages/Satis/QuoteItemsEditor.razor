@@ -256,7 +256,29 @@
                                 }
                                 else
                                 {
-                                    @foreach (var dt in details)
+                                    @if (details.Count >= 6)
+                                    {
+                                        var gq = groupQueries.TryGetValue(g.Id, out var qv) ? qv : "";
+                                        <div class="group-detail-search">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                 style="width:11px;height:11px;opacity:0.45;flex-shrink:0">
+                                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                            </svg>
+                                            <input type="text" placeholder="Bu grupta ara..."
+                                                   value="@gq"
+                                                   @oninput="(e) => SetGroupQuery(g.Id, e.Value?.ToString() ?? string.Empty)" />
+                                            @if (!string.IsNullOrEmpty(gq))
+                                            {
+                                                <button class="search-clear" @onclick="() => SetGroupQuery(g.Id, string.Empty)" title="Temizle">×</button>
+                                            }
+                                        </div>
+                                    }
+                                    var visibleDetails = FilterGroupDetails(g.Id, details);
+                                    @if (!visibleDetails.Any())
+                                    {
+                                        <div class="detail-empty">Eşleşen kayıt yok.</div>
+                                    }
+                                    @foreach (var dt in visibleDetails)
                                     {
                                         <div class="detail-node"
                                              draggable="true"
@@ -323,6 +345,8 @@
     private List<ArabaslikGrupModel>? allGruplar;
     private HashSet<int> expandedGroupIds = new();
     private Dictionary<int, List<ArabaslikDetayModel>> groupDetailsCache = new();
+    // Grup-bazli arama: her grubun kendi icinde detay filtresi
+    private Dictionary<int, string> groupQueries = new();
 
     // Yeni grup formu
     private bool showNewGroupForm = false;
@@ -636,6 +660,26 @@
     }
 
     private void ClearSearch() => abSearchQuery = string.Empty;
+
+    // ─── GRUP-BAZLI DETAY ARAMA ─────────────────────────────
+
+    private void SetGroupQuery(int grupId, string q)
+    {
+        if (string.IsNullOrWhiteSpace(q)) groupQueries.Remove(grupId);
+        else groupQueries[grupId] = q;
+    }
+
+    private List<ArabaslikDetayModel> FilterGroupDetails(int grupId, List<ArabaslikDetayModel> details)
+    {
+        if (!groupQueries.TryGetValue(grupId, out var q) || string.IsNullOrWhiteSpace(q))
+            return details;
+        var qq = q.Trim();
+        return details.Where(d =>
+            (d.SatirMetni ?? "").Contains(qq, StringComparison.OrdinalIgnoreCase) ||
+            (d.SatirMetni_EN ?? "").Contains(qq, StringComparison.OrdinalIgnoreCase) ||
+            (d.Deger ?? "").Contains(qq, StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+    }
 
     // ─── ŞABLON DETAY INLINE EDIT (Fiyat / Deger) ────────────
 

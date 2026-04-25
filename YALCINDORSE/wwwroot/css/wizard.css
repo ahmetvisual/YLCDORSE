@@ -1176,6 +1176,36 @@
     font-style: italic;
 }
 
+/* Grup içi arama kutusu (expanded grupta detay filtresi) */
+.items-editor.v2 .group-detail-search {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 4px 8px 4px 22px;
+    padding: 0 7px;
+    height: 24px;
+    background: #fff;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+}
+.items-editor.v2 .group-detail-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.76rem;
+    color: var(--yl-text);
+    padding: 0;
+}
+.items-editor.v2 .group-detail-search input::placeholder {
+    color: #b0b6c1;
+    font-weight: 500;
+}
+.app-root.dark .items-editor.v2 .group-detail-search {
+    background: #161b22;
+    border-color: var(--yl-border);
+}
+
 /* — Mobil / tablet: dikey istif — */
 @media (max-width: 900px) {
     .items-editor.v2 {
