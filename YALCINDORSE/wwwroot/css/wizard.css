@@ -304,6 +304,29 @@
 }
 .wizard-btn-success:hover { background: #2d5a0d; }
 
+/* Ara-kayit butonu (Adim 1-3'te footer'da) */
+.wizard-btn-save-progress {
+    background: #f0f5ff;
+    color: var(--yl-primary);
+    border-color: rgba(59,125,221,0.35);
+    display: inline-flex;
+    align-items: center;
+}
+.wizard-btn-save-progress:hover {
+    background: var(--yl-primary);
+    color: #fff;
+    border-color: var(--yl-primary);
+}
+.app-root.dark .wizard-btn-save-progress {
+    background: rgba(59,125,221,0.1);
+    color: #7db4f5;
+    border-color: rgba(59,125,221,0.3);
+}
+.app-root.dark .wizard-btn-save-progress:hover {
+    background: rgba(59,125,221,0.25);
+    color: #fff;
+}
+
 /* Items Editor - Kompakt */
 .items-editor {
     border: 1px solid var(--yl-border);

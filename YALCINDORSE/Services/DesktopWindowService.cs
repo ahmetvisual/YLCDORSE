@@ -8,6 +8,23 @@ namespace YALCINDORSE.Services
     {
         private readonly ConcurrentDictionary<Type, Window> _openWindows = new();
 
+        // Close-guard: bir Blazor component pencerenin kapanmasini engelleyebilir.
+        // ShouldBlock = true donerse, pencere kapanmaz; OnBlocked geri cagrilarak
+        // component'in (ornegin "kaydedilmemis degisiklikler" dialogu gostermesi) tetiklenir.
+        private readonly ConcurrentDictionary<Type, (Func<bool> ShouldBlock, Func<Task>? OnBlocked)> _closeGuards = new();
+
+        public void RegisterCloseGuard<TComponent>(Func<bool> shouldBlock, Func<Task>? onBlocked = null)
+            where TComponent : Microsoft.AspNetCore.Components.IComponent
+        {
+            _closeGuards[typeof(TComponent)] = (shouldBlock, onBlocked);
+        }
+
+        public void UnregisterCloseGuard<TComponent>()
+            where TComponent : Microsoft.AspNetCore.Components.IComponent
+        {
+            _closeGuards.TryRemove(typeof(TComponent), out _);
+        }
+
         public bool OpenWindow<TComponent>(string title, int width = 1200, int height = 800, Dictionary<string, object>? parameters = null)
             where TComponent : Microsoft.AspNetCore.Components.IComponent
         {
@@ -45,6 +62,7 @@ namespace YALCINDORSE.Services
                 newWindow.Destroying += (s, e) =>
                 {
                     _openWindows.TryRemove(componentType, out _);
+                    _closeGuards.TryRemove(componentType, out _);
                 };
 
                 newWindow.Created += (s, e) =>
@@ -56,6 +74,20 @@ namespace YALCINDORSE.Services
                         var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(uiWindow);
                         var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
                         var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+
+                        // Close-guard: kayit edilmemis degisikliklerde component dialog gosterebilsin
+                        appWindow.Closing += (sender, args) =>
+                        {
+                            try
+                            {
+                                if (_closeGuards.TryGetValue(componentType, out var guard) && guard.ShouldBlock())
+                                {
+                                    args.Cancel = true;
+                                    if (guard.OnBlocked != null) _ = guard.OnBlocked();
+                                }
+                            }
+                            catch { /* guard hatasi pencereyi kilitlemesin */ }
+                        };
 
                         // Title bar rengini degistir (koyu mavi)
                         appWindow.TitleBar.BackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 15, 37, 72);

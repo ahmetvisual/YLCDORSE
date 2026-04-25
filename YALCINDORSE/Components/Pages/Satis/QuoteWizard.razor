@@ -9,8 +9,10 @@
 @inject DesktopWindowService WindowSvc
 @inject QuoteLookupService LookupSvc
 @inject ZirveService ZirveSvc
+@implements IDisposable
 
-<div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow:hidden;">
+<div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow:hidden;"
+     @oninput="MarkDirty" @onchange="MarkDirty">
     <div class="wizard-container">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
             <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--yl-primary)">@(isEditMode ? $"Teklif Duzenle - {quote.TeklifNo}" : isCopyMode ? "Teklif Kopyala" : "Teklif Olustur")</h3>
@@ -471,7 +473,7 @@
                 <p style="font-size:0.8rem;color:var(--yl-text-light);margin:0 0 10px">
                     Baslik ekleyip altina kalemler ekleyin veya "Arabasliktan Ekle" ile hazir sablonlari aktarin.
                 </p>
-                <QuoteItemsEditor @bind-Items="quoteItems" Dil="@quote.Dil" ParaBirimi="@quote.ParaBirimi" />
+                <QuoteItemsEditor Items="quoteItems" ItemsChanged="OnQuoteItemsChanged" Dil="@quote.Dil" ParaBirimi="@quote.ParaBirimi" />
             </div>
         }
 
@@ -601,6 +603,18 @@
                 <button class="wizard-btn" @onclick="Cancel">Iptal</button>
             </div>
             <div class="wizard-footer-right">
+                @if (currentStep < 4)
+                {
+                    <button class="wizard-btn wizard-btn-save-progress" @onclick="SaveProgress" disabled="@isSaving"
+                            title="Suankini kaydet, pencerede kalmaya devam et">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             style="width:13px;height:13px;margin-right:4px;vertical-align:text-bottom;">
+                            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        @(isSaving && !showConfirmDialog ? "Kaydediliyor..." : "Kaydet")
+                    </button>
+                }
                 @if (currentStep > 1)
                 {
                     <button class="wizard-btn" @onclick="PrevStep">Geri</button>
@@ -619,6 +633,42 @@
             </div>
         </div>
     </div>
+
+    <!-- Kaydedilmemis Degisiklik Uyarisi -->
+    @if (showUnsavedDialog)
+    {
+        <div class="modal-overlay" @onclick="() => showUnsavedDialog = false">
+            <div class="quick-modal-content" style="max-width:440px" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h4 style="display:flex;align-items:center;gap:6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        Kaydedilmemis Degisiklikler
+                    </h4>
+                    <button class="btn-close" @onclick="() => showUnsavedDialog = false">&#10005;</button>
+                </div>
+                <div class="modal-body" style="padding:16px">
+                    <p style="margin:0 0 6px;font-size:0.88rem">
+                        Bu teklif uzerinde henuz kaydedilmemis degisiklikler var.
+                    </p>
+                    <p style="margin:0;font-size:0.8rem;color:var(--yl-text-light)">
+                        Cikmadan once kaydetmek ister misiniz?
+                    </p>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--yl-border)">
+                    <button class="wizard-btn" @onclick="() => showUnsavedDialog = false" disabled="@isSaving">Vazgec</button>
+                    <button class="wizard-btn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca" @onclick="DiscardAndClose" disabled="@isSaving">
+                        Kaydetmeden Cik
+                    </button>
+                    <button class="wizard-btn wizard-btn-success" @onclick="SaveAndCloseFromDialog" disabled="@isSaving">
+                        @(isSaving ? "Kaydediliyor..." : "Kaydet ve Cik")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Onay Dialogu -->
     @if (showConfirmDialog)
@@ -722,8 +772,10 @@
     // Edit mode
     [Parameter] public int QuoteId { get; set; }
     [Parameter] public int CopyFromQuoteId { get; set; }
-    private bool isEditMode => QuoteId > 0;
-    private bool isCopyMode => CopyFromQuoteId > 0 && QuoteId == 0;
+    // QuoteId parametresi 0 olsa bile ara-kaydetten sonra quote.Id > 0 olur:
+    // sonraki kayitlar dogru sekilde guncelleme olarak gitsin
+    private bool isEditMode => QuoteId > 0 || quote.Id > 0;
+    private bool isCopyMode => CopyFromQuoteId > 0 && QuoteId == 0 && quote.Id == 0;
 
     // Sabit secim listesi (birden fazla adimda kullanilir)
     private static readonly (string, string)[] odemeSistemiOpts =
@@ -732,6 +784,12 @@
     // Onay dialogu
     private bool showConfirmDialog = false;
     private string pendingDurum = "";
+
+    // Dirty / kaydedilmemis degisiklik takibi
+    private bool isDirty = false;
+    private bool isLoaded = false;          // ilk yukleme bittikten sonra true; yukleme @oninput'leri dirty saymasin
+    private bool showUnsavedDialog = false; // X tiklayinca veya Iptal'de dirty ise gosterilir
+    private bool guardRegistered = false;
 
     // Custom dropdown state
     private string? openDropdown;
@@ -836,6 +894,50 @@
             quote.TalepTarihi = DateTime.Today;
             quote.GecerlilikTarihi = AddBusinessDays(DateTime.Today, 15);
         }
+
+        // Yukleme tamamlandi: bundan sonraki @oninput / @onchange "dirty" sayilsin
+        isLoaded = true;
+        isDirty = false;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && !guardRegistered)
+        {
+            // Pencerenin X butonuna basildiginda kaydedilmemis degisiklik varsa
+            // pencereyi kapatmayi engelle ve dialog'u goster
+            WindowSvc.RegisterCloseGuard<QuoteWizard>(
+                shouldBlock: () => isDirty,
+                onBlocked: async () =>
+                {
+                    await InvokeAsync(() =>
+                    {
+                        showUnsavedDialog = true;
+                        StateHasChanged();
+                    });
+                });
+            guardRegistered = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (guardRegistered)
+        {
+            WindowSvc.UnregisterCloseGuard<QuoteWizard>();
+            guardRegistered = false;
+        }
+    }
+
+    private void MarkDirty()
+    {
+        if (isLoaded) isDirty = true;
+    }
+
+    private void OnQuoteItemsChanged(List<QuoteItemModel> items)
+    {
+        quoteItems = items;
+        MarkDirty();
     }
 
     private DateTime AddBusinessDays(DateTime start, int days)
@@ -999,8 +1101,38 @@
 
     private void Cancel()
     {
+        if (isDirty)
+        {
+            showUnsavedDialog = true;
+            return;
+        }
+        DiscardAndClose();
+    }
+
+    private void DiscardAndClose()
+    {
+        // Guard'i devre disi birak, sonra kapat
+        isDirty = false;
+        showUnsavedDialog = false;
         WindowSvc.CloseWindow<QuoteWizard>();
         Nav.NavigateTo("/satis/teklif-listesi");
+    }
+
+    private async Task SaveAndCloseFromDialog()
+    {
+        showUnsavedDialog = false;
+        // Mevcut "Taslak Kaydet" akisini kullan: SaveQuote sonunda zaten pencere kapaniyor
+        await SaveQuoteAsync(closeAfter: true, durum: isEditMode ? quote.Durum : "Draft");
+    }
+
+    /// <summary>
+    /// Adim 4'e gitmeden ara kayit yapar. SaveQuote ile ayni mantik fakat pencereyi kapatmaz,
+    /// boylece kullanici duzenlemeye devam edebilir. Sonraki kayitlar guncelleme olarak gider.
+    /// </summary>
+    private async Task SaveProgress()
+    {
+        if (isSaving) return;
+        await SaveQuoteAsync(closeAfter: false, durum: string.IsNullOrEmpty(quote.Durum) ? "Draft" : quote.Durum);
     }
 
     private void ToggleLookupManager(string type)
@@ -1057,10 +1189,14 @@
         if (isSaving) return;   // çift tıklama / çoklu kayıt koruması
         isSaving = true;
         showConfirmDialog = false;
-        await SaveQuote(pendingDurum);
+        await SaveQuoteAsync(closeAfter: true, durum: pendingDurum);
     }
 
-    private async Task SaveQuote(string durum)
+    /// <summary>
+    /// Teklifi (varsa kalemleriyle birlikte) kaydeder. closeAfter=true ise pencereyi kapatip
+    /// listeye doner; false ise toast gosterip ekranda kalir (ara kayit).
+    /// </summary>
+    private async Task SaveQuoteAsync(bool closeAfter, string durum)
     {
         if (quote.MusteriId <= 0)
         {
@@ -1071,6 +1207,7 @@
         }
 
         errorMessage = null; successMessage = null;
+        isSaving = true;
 
         try
         {
@@ -1079,17 +1216,14 @@
 
             if (isEditMode)
             {
-                // Mevcut teklifi guncelle
                 quoteId = quote.Id;
                 await QuoteSvc.UpdateQuoteWithRevisionAsync(quote);
-
-                // Eski kalemleri sil, yeniden kaydet
                 await QuoteSvc.DeleteQuoteItemsByQuoteIdAsync(quoteId);
             }
             else
             {
-                // Yeni teklif olustur
                 quoteId = await QuoteSvc.CreateDraftQuoteAsync(quote);
+                quote.Id = quoteId; // sonraki ara-kayitlar guncelleme olarak gitsin
             }
 
             // Kalemleri kaydet - once header'lar, sonra alt kalemler (UstKalemId mapping)
@@ -1112,17 +1246,26 @@
                 idMap[oldId] = item.Id;
             }
 
-            // Toast goster
+            // Yeni ID'lerle quoteItems senkronize: sonraki ara kayit dogru kalemleri silsin
+            // (DeleteQuoteItemsByQuoteIdAsync TeklifId uzerinden calisir, kalem Id'leri onemli degil)
+
+            isDirty = false; // basarili kayit: dirty bayragini sifirla
+
             toastIsSuccess = true;
-            toastMessage = isEditMode ? "Teklif basariyla guncellendi." : "Teklif basariyla kaydedildi.";
+            toastMessage = closeAfter
+                ? (isEditMode ? "Teklif basariyla guncellendi." : "Teklif basariyla kaydedildi.")
+                : "Degisiklikler kaydedildi.";
             showToast = true;
             errorMessage = null;
             StateHasChanged();
-            await Task.Delay(1200);
+            await Task.Delay(closeAfter ? 1200 : 900);
             showToast = false;
-            // Pencereyi kapat (ayri penceredeyse) ve listeye don
-            WindowSvc.CloseWindow<QuoteWizard>();
-            Nav.NavigateTo("/satis/teklif-listesi");
+
+            if (closeAfter)
+            {
+                WindowSvc.CloseWindow<QuoteWizard>();
+                Nav.NavigateTo("/satis/teklif-listesi");
+            }
         }
         catch (Exception ex)
         {
