@@ -1,5 +1,7 @@
 @using YALCINDORSE.Services
 @inject ArabaslikService ArabaslikSvc
+@inject IJSRuntime JS
+@implements IDisposable
 
 <div class="items-editor v2 @(dragInProgress ? "drag-active" : "")">
 
@@ -52,17 +54,14 @@
                 var isDragging = draggingQuoteItemId == item.Id;
 
                 <div class="@rowClass @(isDropTarget ? "drop-target-row" : "") @(isDragging ? "dragging" : "")"
+                     data-item-id="@item.Id"
                      @ondragover:preventDefault="true"
                      @ondragenter="() => OnDragEnterItem(item)"
                      @ondragleave="() => OnDragLeaveItem(item)"
                      @ondrop:stopPropagation="true"
                      @ondrop="() => OnDropOnItem(item)">
 
-                    <div class="item-drag-grip"
-                         draggable="true"
-                         @ondragstart="() => OnDragStartQuoteItem(item)"
-                         @ondragend="OnDragEnd"
-                         title="Sürükleyerek sırayı değiştirin">
+                    <div class="item-drag-grip" title="Sürükleyerek sırayı değiştirin">
                         <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;pointer-events:none;">
                             <circle cx="9" cy="5" r="1.6"/><circle cx="15" cy="5" r="1.6"/>
                             <circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/>
@@ -340,9 +339,49 @@
     private bool dragOverLeftPane;
     private bool dragInProgress;
 
+    private DotNetObjectReference<QuoteItemsEditor>? dotNetRef;
+    private bool jsHookInstalled = false;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadGruplarAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !jsHookInstalled)
+        {
+            try
+            {
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("YLDragReorder.setRef", dotNetRef);
+                jsHookInstalled = true;
+            }
+            catch { /* JS yuklenmemisse drag-reorder calismaz, diger seyler etkilenmesin */ }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (jsHookInstalled)
+        {
+            try { _ = JS.InvokeVoidAsync("YLDragReorder.clearRef"); } catch { }
+            jsHookInstalled = false;
+        }
+        dotNetRef?.Dispose();
+    }
+
+    /// <summary>JS pointer-drag bittiginde cagirilir: kaynak ve hedef satir id'leri ile reorder yapar.</summary>
+    [JSInvokable]
+    public void OnPointerReorder(int srcId, int targetId)
+    {
+        if (srcId == targetId) return;
+        var src = Items.FirstOrDefault(i => i.Id == srcId);
+        var target = Items.FirstOrDefault(i => i.Id == targetId);
+        if (src == null || target == null) return;
+
+        ReorderQuoteItems(src, target);
+        StateHasChanged();
     }
 
     private async Task LoadGruplarAsync()
