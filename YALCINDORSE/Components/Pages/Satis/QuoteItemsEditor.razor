@@ -274,11 +274,12 @@
                                             else
                                             {
                                                 <input type="number" class="detail-price-edit"
-                                                       value="@dt.Fiyat" draggable="false"
+                                                       value="@(dt.Fiyat?.ToString("0.##", InvCulture))" draggable="false"
                                                        step="0.01"
                                                        @onchange="(e) => UpdateDetayFiyat(dt, e.Value?.ToString())"
                                                        @onclick:stopPropagation="true"
                                                        placeholder="Fiyat" />
+                                                <span class="detail-price-cur">@CurrencySymbol</span>
                                             }
                                             <button class="detail-add-btn" @onclick="() => AddDetayAsItem(g, dt)" title="Bu kalemi ekle">+</button>
                                         </div>
@@ -298,6 +299,20 @@
     [Parameter] public List<QuoteItemModel> Items { get; set; } = new();
     [Parameter] public EventCallback<List<QuoteItemModel>> ItemsChanged { get; set; }
     [Parameter] public string Dil { get; set; } = "TR";
+    [Parameter] public string ParaBirimi { get; set; } = "EUR";
+
+    /// <summary>Para birimi kodunu kisa sembole cevirir (sag panel detay fiyat etiketi).</summary>
+    private string CurrencySymbol => (ParaBirimi ?? "").ToUpperInvariant() switch
+    {
+        "EUR" => "€",
+        "USD" => "$",
+        "TRY" or "TL" => "₺",
+        "GBP" => "£",
+        "RUB" => "₽",
+        _     => ParaBirimi ?? ""
+    };
+
+    private static readonly System.Globalization.CultureInfo InvCulture = System.Globalization.CultureInfo.InvariantCulture;
 
     private int nextTempId = -1;
 
