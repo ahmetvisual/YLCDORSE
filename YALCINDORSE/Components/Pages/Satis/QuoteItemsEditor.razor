@@ -371,16 +371,17 @@
         dotNetRef?.Dispose();
     }
 
-    /// <summary>JS pointer-drag bittiginde cagirilir: kaynak ve hedef satir id'leri ile reorder yapar.</summary>
+    /// <summary>JS pointer-drag bittiginde cagirilir: kaynak ve hedef satir id'leri ile reorder yapar.
+    /// insertBefore=true ise src hedefin ustune, false ise altina yerlestirilir.</summary>
     [JSInvokable]
-    public void OnPointerReorder(int srcId, int targetId)
+    public void OnPointerReorder(int srcId, int targetId, bool insertBefore)
     {
         if (srcId == targetId) return;
         var src = Items.FirstOrDefault(i => i.Id == srcId);
         var target = Items.FirstOrDefault(i => i.Id == targetId);
         if (src == null || target == null) return;
 
-        ReorderQuoteItems(src, target);
+        ReorderQuoteItems(src, target, insertBefore);
         StateHasChanged();
     }
 
@@ -887,8 +888,9 @@
         await Task.CompletedTask;
     }
 
-    /// <summary>Aynı seviye/kardeş kalemler arasında sürükle-bırak ile yeniden sıralama.</summary>
-    private void ReorderQuoteItems(QuoteItemModel src, QuoteItemModel dest)
+    /// <summary>Aynı seviye/kardeş kalemler arasında sürükle-bırak ile yeniden sıralama.
+    /// insertBefore=true ise src dest'in ustune, false ise altina yerlestirilir.</summary>
+    private void ReorderQuoteItems(QuoteItemModel src, QuoteItemModel dest, bool insertBefore = true)
     {
         // Sadece aynı UstKalemId altında ve uyumlu tipte ise (HEADER<->HEADER, ITEM/SPEC<->ITEM/SPEC, SUB_ITEM/OPTION<->SUB_ITEM/OPTION)
         bool sameLevel = src.UstKalemId == dest.UstKalemId;
@@ -923,7 +925,7 @@
         siblings.Remove(src);
         var destIdx = siblings.IndexOf(dest);
         if (destIdx < 0) return;
-        siblings.Insert(destIdx, src);
+        siblings.Insert(insertBefore ? destIdx : destIdx + 1, src);
 
         // SiraNo'ları yeniden ata
         for (int i = 0; i < siblings.Count; i++)

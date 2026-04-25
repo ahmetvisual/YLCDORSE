@@ -889,8 +889,13 @@
     background: rgba(59,125,221,0.04) !important;
 }
 .items-editor.v2 .item-row.drop-target-row {
-    box-shadow: inset 0 3px 0 0 var(--yl-primary);
     background: rgba(59,125,221,0.06) !important;
+}
+.items-editor.v2 .item-row.drop-target-row.drop-above {
+    box-shadow: inset 0 3px 0 0 var(--yl-primary);
+}
+.items-editor.v2 .item-row.drop-target-row.drop-below {
+    box-shadow: inset 0 -3px 0 0 var(--yl-primary);
 }
 
 /* Drop zone vurgusu — sol panel boş alana sürüklenirken */

@@ -33,6 +33,7 @@
     let srcId = null;
     let srcEl = null;
     let targetEl = null;
+    let dropAbove = true; // true: hedefin ustune, false: altina
     let startX = 0, startY = 0;
     let dragStarted = false;
     const DRAG_THRESHOLD = 5; // px — kucuk hareketleri click sayma
@@ -44,7 +45,7 @@
 
     function clearVisuals() {
         if (srcEl) srcEl.classList.remove('dragging');
-        if (targetEl) targetEl.classList.remove('drop-target-row');
+        if (targetEl) targetEl.classList.remove('drop-target-row', 'drop-above', 'drop-below');
         document.body.style.userSelect = '';
         document.body.style.cursor = '';
     }
@@ -93,12 +94,21 @@
         const newTarget = el && el.closest ? el.closest('[data-item-id]') : null;
 
         if (targetEl && targetEl !== newTarget) {
-            targetEl.classList.remove('drop-target-row');
+            targetEl.classList.remove('drop-target-row', 'drop-above', 'drop-below');
             targetEl = null;
         }
-        if (newTarget && newTarget !== srcEl && newTarget !== targetEl) {
-            newTarget.classList.add('drop-target-row');
-            targetEl = newTarget;
+        if (newTarget && newTarget !== srcEl) {
+            const rect = newTarget.getBoundingClientRect();
+            const upper = e.clientY < (rect.top + rect.height / 2);
+
+            // Hedef veya yon degistiyse class'lari guncelle
+            if (newTarget !== targetEl || upper !== dropAbove) {
+                if (targetEl) targetEl.classList.remove('drop-target-row', 'drop-above', 'drop-below');
+                newTarget.classList.add('drop-target-row');
+                newTarget.classList.add(upper ? 'drop-above' : 'drop-below');
+                targetEl = newTarget;
+                dropAbove = upper;
+            }
         }
     });
 
@@ -109,12 +119,13 @@
         const finalTargetId = (dragStarted && targetEl)
             ? parseInt(targetEl.getAttribute('data-item-id'))
             : null;
+        const finalDropAbove = dropAbove;
 
         clearVisuals();
         reset();
 
         if (finalSrcId != null && finalTargetId != null && finalSrcId !== finalTargetId && dotnetRef) {
-            try { await dotnetRef.invokeMethodAsync('OnPointerReorder', finalSrcId, finalTargetId); }
+            try { await dotnetRef.invokeMethodAsync('OnPointerReorder', finalSrcId, finalTargetId, finalDropAbove); }
             catch { }
         }
     });
