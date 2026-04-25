@@ -15,12 +15,13 @@
                 <span>Eklenen Kalemler</span>
                 <span class="pane-count">@Items.Count</span>
             </div>
-            <div class="pane-actions">
-                <button class="pane-btn" @onclick="AddHeader" title="Yeni başlık">+ Başlık</button>
-                @if (Items.Any(i => i.KalemTipi == "HEADER"))
-                {
-                    <button class="pane-btn" @onclick="AddItem" title="Son başlığa kalem ekle">+ Kalem</button>
-                }
+            <div class="pane-hint" title="Sürükle-bırak ile sırayı değiştirin">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;opacity:0.55">
+                    <circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/>
+                    <circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/>
+                    <circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/>
+                </svg>
+                <span>Sürükle-bırak ile sırayı değiştirin</span>
             </div>
         </div>
 
@@ -33,7 +34,7 @@
             @if (Items.Count == 0)
             {
                 <div class="items-empty">
-                    Sağdaki şablonlardan sürükleyip bırakın veya <b>+ Başlık</b> ile başlayın.
+                    Sağdaki şablonlardan grup veya kalem sürükleyip buraya bırakın.
                 </div>
             }
 
@@ -60,11 +61,11 @@
                      @ondrop:stopPropagation="true"
                      @ondrop="() => OnDropOnItem(item)">
 
-                    <div class="item-drag-grip" title="Sürükle">
-                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:10px;height:10px;opacity:0.45">
-                            <circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/>
-                            <circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/>
-                            <circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/>
+                    <div class="item-drag-grip" title="Sürükleyerek sırayı değiştirin">
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;">
+                            <circle cx="9" cy="5" r="1.6"/><circle cx="15" cy="5" r="1.6"/>
+                            <circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/>
+                            <circle cx="9" cy="19" r="1.6"/><circle cx="15" cy="19" r="1.6"/>
                         </svg>
                     </div>
 
@@ -437,26 +438,6 @@
     }
 
     // ─── ITEM CRUD ───────────────────────────────────────────
-
-    private void AddHeader()
-    {
-        var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
-        Items.Add(new QuoteItemModel
-        {
-            Id = nextTempId--,
-            KalemTipi = "HEADER",
-            BaslikMi = true,
-            SiraNo = maxSira + 10,
-            Aciklama = ""
-        });
-        NotifyChanged();
-    }
-
-    private void AddItem()
-    {
-        var lastHeader = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).LastOrDefault();
-        if (lastHeader != null) AddItemUnder(lastHeader);
-    }
 
     private void AddItemUnder(QuoteItemModel header)
     {
