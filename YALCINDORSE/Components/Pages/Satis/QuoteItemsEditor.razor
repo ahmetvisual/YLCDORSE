@@ -1,184 +1,290 @@
 @using YALCINDORSE.Services
 @inject ArabaslikService ArabaslikSvc
 
-<div class="items-editor">
-    <div class="items-toolbar">
-        <button class="wizard-btn wizard-btn-primary" style="padding:5px 12px;font-size:0.78rem" @onclick="AddHeader">+ Yeni Urun Basligi</button>
-        @if (Items.Any(i => i.KalemTipi == "HEADER"))
-        {
-            <button class="wizard-btn" style="padding:5px 12px;font-size:0.78rem" @onclick="AddItem">+ Kalem Ekle</button>
-        }
-        <div style="flex:1"></div>
-        <button class="wizard-btn ab-import-btn" style="padding:5px 12px;font-size:0.78rem" @onclick="ToggleArabaslikPanel">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:3px;vertical-align:text-bottom;">
-                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-            </svg>
-            Arabasliktan Ekle
-        </button>
-    </div>
+<div class="items-editor v2 @(dragInProgress ? "drag-active" : "")">
 
-    @* === ARABASLIK SECIM PANELI === *@
-    @if (showArabaslikPanel)
-    {
-        <div class="ab-import-panel">
-            <div class="ab-import-header">
-                <div class="ab-import-search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;opacity:0.4;flex-shrink:0;">
-                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                    </svg>
-                    <input type="text" placeholder="Arabaslik grubu ara..." @bind="abSearchQuery" @bind:event="oninput" />
-                </div>
-                <button class="ab-import-close" @onclick="() => showArabaslikPanel = false" title="Kapat">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
+    @* ════════════════════════════════════════════════════════════
+       SOL PANEL — Teklife Eklenen Kalemler
+       ════════════════════════════════════════════════════════════ *@
+    <div class="pane pane-left">
+        <div class="pane-header">
+            <div class="pane-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                    <path d="M3 6h18M3 12h18M3 18h12"/>
+                </svg>
+                <span>Eklenen Kalemler</span>
+                <span class="pane-count">@Items.Count</span>
             </div>
+            <div class="pane-actions">
+                <button class="pane-btn" @onclick="AddHeader" title="Yeni başlık">+ Başlık</button>
+                @if (Items.Any(i => i.KalemTipi == "HEADER"))
+                {
+                    <button class="pane-btn" @onclick="AddItem" title="Son başlığa kalem ekle">+ Kalem</button>
+                }
+            </div>
+        </div>
 
-            <div class="ab-import-list">
-                @if (isLoadingAb)
+        <div class="pane-body items-list @(dragOverLeftPane ? "drop-target" : "")"
+             @ondragover:preventDefault="true"
+             @ondragenter="OnDragEnterLeftPane"
+             @ondragleave="OnDragLeaveLeftPane"
+             @ondrop="OnDropOnLeftPane">
+
+            @if (Items.Count == 0)
+            {
+                <div class="items-empty">
+                    Sağdaki şablonlardan sürükleyip bırakın veya <b>+ Başlık</b> ile başlayın.
+                </div>
+            }
+
+            @foreach (var item in GetOrderedItems())
+            {
+                var rowClass = item.KalemTipi switch
                 {
-                    <div class="ab-import-empty">Yukleniyor...</div>
-                }
-                else if (filteredGruplar == null || !filteredGruplar.Any())
-                {
-                    <div class="ab-import-empty">Arabaslik grubu bulunamadi.</div>
-                }
-                else
-                {
-                    @foreach (var g in filteredGruplar)
+                    "HEADER"   => "item-row item-row-header",
+                    "SUB_ITEM" => "item-row item-row-subitem",
+                    "OPTION"   => "item-row item-row-option",
+                    "SPEC"     => "item-row item-row-spec",
+                    _          => "item-row"
+                };
+                var isDropTarget = dragOverItemId == item.Id;
+                var isDragging = draggingQuoteItemId == item.Id;
+
+                <div class="@rowClass @(isDropTarget ? "drop-target-row" : "") @(isDragging ? "dragging" : "")"
+                     draggable="true"
+                     @ondragstart="() => OnDragStartQuoteItem(item)"
+                     @ondragend="OnDragEnd"
+                     @ondragover:preventDefault="true"
+                     @ondragenter="() => OnDragEnterItem(item)"
+                     @ondragleave="() => OnDragLeaveItem(item)"
+                     @ondrop:stopPropagation="true"
+                     @ondrop="() => OnDropOnItem(item)">
+
+                    <div class="item-drag-grip" title="Sürükle">
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:10px;height:10px;opacity:0.45">
+                            <circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/>
+                            <circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/>
+                            <circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/>
+                        </svg>
+                    </div>
+
+                    <div class="item-sira">@GetSiraLabel(item)</div>
+
+                    <div class="item-desc">
+                        <input type="text" value="@item.Aciklama"
+                               @onchange="(e) => UpdateField(item, nameof(item.Aciklama), e.Value?.ToString())"
+                               placeholder="@(item.KalemTipi == "HEADER" ? "Urun adi (orn: Deveboynu)" : item.KalemTipi == "SPEC" ? "Ozellik adi" : item.KalemTipi == "OPTION" ? "Opsiyon aciklamasi" : "Kalem aciklamasi")" />
+                    </div>
+
+                    @if (item.KalemTipi == "SPEC")
                     {
-                        var isSelected = selectedAbIds.Contains(g.Id);
-                        <div class="ab-import-item @(isSelected ? "selected" : "")" @onclick="() => ToggleAbSelection(g.Id)">
-                            <div class="ab-import-check">
-                                @if (isSelected)
-                                {
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;color:#059669;"><path d="M20 6L9 17l-5-5"/></svg>
-                                }
-                                else
-                                {
-                                    <div class="ab-import-checkbox-empty"></div>
-                                }
-                            </div>
-                            <div style="flex:1;min-width:0;">
-                                <div class="ab-import-name">@g.GrupAdi</div>
-                                @{ var enText = GetGrupLocalizedName(g); }
-                                @if (!string.IsNullOrEmpty(enText) && enText != g.GrupAdi)
-                                {
-                                    <div class="ab-import-sub">@enText</div>
-                                }
-                            </div>
-                            <span class="ab-import-badge">@(g.TablTipi == 1 ? "Tablo" : "Liste")</span>
+                        <div class="item-spec-val">
+                            <span class="spec-colon">:</span>
+                            <input type="text" value="@item.Birim"
+                                   @onchange="(e) => UpdateField(item, nameof(item.Birim), e.Value?.ToString())"
+                                   placeholder="9.500 mm" />
+                        </div>
+                        <div class="item-price"></div>
+                        <div class="item-total"></div>
+                    }
+                    else if (item.KalemTipi != "HEADER")
+                    {
+                        <div class="item-qty">
+                            <input type="number" value="@item.Miktar"
+                                   @onchange="(e) => UpdateNumericField(item, nameof(item.Miktar), e.Value?.ToString())"
+                                   placeholder="Mkt" />
+                        </div>
+                        <div class="item-unit">
+                            <input type="text" value="@item.Birim"
+                                   @onchange="(e) => UpdateField(item, nameof(item.Birim), e.Value?.ToString())"
+                                   placeholder="Brm" />
+                        </div>
+                        <div class="item-price">
+                            <input type="number" value="@item.BirimFiyat"
+                                   @onchange="(e) => UpdatePriceField(item, e.Value?.ToString())"
+                                   placeholder="Fiyat" />
+                        </div>
+                        <div class="item-total">
+                            <input type="text" value="@($"{item.Tutar:N2}")" disabled />
                         </div>
                     }
-                }
-            </div>
+                    else
+                    {
+                        <div class="item-qty"></div>
+                        <div class="item-unit">
+                            <input type="text" value="@item.UrunKodu"
+                                   @onchange="(e) => UpdateField(item, nameof(item.UrunKodu), e.Value?.ToString())"
+                                   placeholder="Urun Kodu" style="text-align:left" />
+                        </div>
+                        <div class="item-price"></div>
+                        <div class="item-total"></div>
+                    }
 
-            @if (selectedAbIds.Count > 0)
-            {
-                <div class="ab-import-footer">
-                    <span class="ab-import-count">@selectedAbIds.Count grup secildi</span>
-                    <button class="wizard-btn wizard-btn-primary" style="padding:5px 14px;font-size:0.76rem;" @onclick="ImportSelectedArabasliklar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:3px;">
-                            <polyline points="22 2 13.5 15.5 8.5 10.5 2 22"/><polyline points="16 2 22 2 22 8"/>
-                        </svg>
-                        Kaleme Aktar
-                    </button>
+                    <div class="item-actions">
+                        @if (item.KalemTipi == "HEADER")
+                        {
+                            <button class="item-action-btn" title="Kalem ekle" @onclick="() => AddItemUnder(item)">+</button>
+                        }
+                        @if (item.KalemTipi == "ITEM")
+                        {
+                            <button class="item-action-btn @(item.BaslikMi ? "item-bold-active" : "")"
+                                    title="@(item.BaslikMi ? "Kalin (PDF'de bold)" : "Normal (PDF'de thin)")"
+                                    @onclick="() => ToggleBold(item)"><b>B</b></button>
+                            <button class="item-action-btn" title="Alt kalem ekle" @onclick="() => AddSubItem(item)">&#8627;</button>
+                            <button class="item-action-btn" title="Opsiyon ekle" @onclick="() => AddOption(item)">&#9733;</button>
+                        }
+                        <button class="item-action-btn delete" title="Sil" @onclick="() => RemoveItem(item)">&#10005;</button>
+                    </div>
                 </div>
             }
         </div>
-    }
-
-    <div class="items-list">
-        @if (Items.Count == 0)
-        {
-            <div class="items-empty">
-                Henuz kalem eklenmedi. "Yeni Urun Basligi" ile baslayın.
-            </div>
-        }
-
-        @foreach (var item in GetOrderedItems())
-        {
-            var rowClass = item.KalemTipi switch
-            {
-                "HEADER"   => "item-row item-row-header",
-                "SUB_ITEM" => "item-row item-row-subitem",
-                "OPTION"   => "item-row item-row-option",
-                "SPEC"     => "item-row item-row-spec",
-                _          => "item-row"
-            };
-
-            <div class="@rowClass">
-                <div class="item-sira">@GetSiraLabel(item)</div>
-
-                <div class="item-desc">
-                    <input type="text" value="@item.Aciklama"
-                           @onchange="(e) => UpdateField(item, nameof(item.Aciklama), e.Value?.ToString())"
-                           placeholder="@(item.KalemTipi == "HEADER" ? "Urun adi (orn: Deveboynu)" : item.KalemTipi == "SPEC" ? "Ozellik adi (orn: Yukleme platformu uzunlugu)" : item.KalemTipi == "OPTION" ? "Opsiyon aciklamasi" : "Kalem aciklamasi")" />
-                </div>
-
-                @if (item.KalemTipi == "SPEC")
-                {
-                    @* Iki kolon tablo satirlari: Ozellik Adi : Deger — Mkt/Brm/Fiyat yok *@
-                    <div class="item-spec-val">
-                        <span class="spec-colon">:</span>
-                        <input type="text" value="@item.Birim"
-                               @onchange="(e) => UpdateField(item, nameof(item.Birim), e.Value?.ToString())"
-                               placeholder="9.500 mm" />
-                    </div>
-                    <div class="item-price"></div>
-                    <div class="item-total"></div>
-                }
-                else if (item.KalemTipi != "HEADER")
-                {
-                    <div class="item-qty">
-                        <input type="number" value="@item.Miktar"
-                               @onchange="(e) => UpdateNumericField(item, nameof(item.Miktar), e.Value?.ToString())"
-                               placeholder="Mkt" />
-                    </div>
-                    <div class="item-unit">
-                        <input type="text" value="@item.Birim"
-                               @onchange="(e) => UpdateField(item, nameof(item.Birim), e.Value?.ToString())"
-                               placeholder="Brm" />
-                    </div>
-                    <div class="item-price">
-                        <input type="number" value="@item.BirimFiyat"
-                               @onchange="(e) => UpdatePriceField(item, e.Value?.ToString())"
-                               placeholder="Fiyat" />
-                    </div>
-                    <div class="item-total">
-                        <input type="text" value="@($"{item.Tutar:N2}")" disabled />
-                    </div>
-                }
-                else
-                {
-                    <div class="item-qty"></div>
-                    <div class="item-unit">
-                        <input type="text" value="@item.UrunKodu"
-                               @onchange="(e) => UpdateField(item, nameof(item.UrunKodu), e.Value?.ToString())"
-                               placeholder="Urun Kodu" style="text-align:left" />
-                    </div>
-                    <div class="item-price"></div>
-                    <div class="item-total"></div>
-                }
-
-                <div class="item-actions">
-                    @if (item.KalemTipi == "HEADER")
-                    {
-                        <button class="item-action-btn" title="Kalem ekle" @onclick="() => AddItemUnder(item)">+</button>
-                    }
-                    @if (item.KalemTipi == "ITEM")
-                    {
-                        <button class="item-action-btn @(item.BaslikMi ? "item-bold-active" : "")"
-                                title="@(item.BaslikMi ? "Kalin (PDF'de bold)" : "Normal (PDF'de thin)")"
-                                @onclick="() => ToggleBold(item)"><b>B</b></button>
-                        <button class="item-action-btn" title="Alt kalem ekle" @onclick="() => AddSubItem(item)">&#8627;</button>
-                        <button class="item-action-btn" title="Opsiyon ekle" @onclick="() => AddOption(item)">&#9733;</button>
-                    }
-                    <button class="item-action-btn delete" title="Sil" @onclick="() => RemoveItem(item)">&#10005;</button>
-                </div>
-            </div>
-        }
     </div>
+
+    @* ════════════════════════════════════════════════════════════
+       SAĞ PANEL — Şablonlar / Tanımlar (Klasör Ağacı)
+       ════════════════════════════════════════════════════════════ *@
+    <div class="pane pane-right">
+        <div class="pane-header">
+            <div class="pane-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                </svg>
+                <span>Şablonlar</span>
+                @if (allGruplar != null)
+                {
+                    <span class="pane-count">@allGruplar.Count</span>
+                }
+            </div>
+            <div class="pane-actions">
+                <button class="pane-btn" @onclick="ToggleNewGroupForm" title="Yeni şablon grubu">+ Yeni</button>
+                <button class="pane-btn" @onclick="RefreshGruplar" title="Yenile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;">
+                        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="pane-search-wrap">
+            <div class="pane-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;opacity:0.45;flex-shrink:0">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" placeholder="Grup veya kalem ara..." value="@abSearchQuery" @oninput="OnSearchInput" />
+                @if (!string.IsNullOrEmpty(abSearchQuery))
+                {
+                    <button class="search-clear" @onclick="ClearSearch" title="Temizle">×</button>
+                }
+            </div>
+        </div>
+
+        @if (showNewGroupForm)
+        {
+            <div class="new-group-form">
+                <input type="text" placeholder="Grup adı (örn: AKS GRUBU)"
+                       @bind="newGroupName" @bind:event="oninput"
+                       @onkeydown="OnNewGroupKeyDown" />
+                <div class="new-group-row">
+                    <label class="radio-inline">
+                        <input type="radio" name="newGroupTip" value="1" checked="@(newGroupTablTipi == 1)"
+                               @onchange="() => newGroupTablTipi = 1" /> Tablo
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="newGroupTip" value="2" checked="@(newGroupTablTipi == 2)"
+                               @onchange="() => newGroupTablTipi = 2" /> Liste
+                    </label>
+                    <div style="flex:1"></div>
+                    <button class="pane-btn ghost" @onclick="() => showNewGroupForm = false">İptal</button>
+                    <button class="pane-btn primary" @onclick="SaveNewGroup" disabled="@string.IsNullOrWhiteSpace(newGroupName)">Kaydet</button>
+                </div>
+            </div>
+        }
+
+        <div class="pane-body groups-tree">
+            @if (isLoadingAb)
+            {
+                <div class="items-empty">Yükleniyor...</div>
+            }
+            else if (allGruplar == null || !filteredGruplar.Any())
+            {
+                <div class="items-empty">
+                    @(string.IsNullOrEmpty(abSearchQuery) ? "Henüz şablon yok. + Yeni ile başlayın." : "Eşleşen kayıt yok.")
+                </div>
+            }
+            else
+            {
+                @foreach (var g in filteredGruplar)
+                {
+                    var isExpanded = IsExpandedView(g);
+                    var details = isExpanded && groupDetailsCache.TryGetValue(g.Id, out var d) ? d : null;
+
+                    <div class="group-node">
+                        <div class="group-header @(isExpanded ? "expanded" : "")"
+                             draggable="true"
+                             @ondragstart="() => OnDragStartGroup(g)"
+                             @ondragend="OnDragEnd">
+                            <button class="chevron-btn" @onclick="() => ToggleGroup(g.Id)" title="Aç/Kapat">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                     style="width:11px;height:11px;transition:transform 0.15s;@(isExpanded ? "transform:rotate(90deg)" : "")">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </button>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                 style="width:13px;height:13px;color:#0c447c;flex-shrink:0">
+                                <path d="@(isExpanded ? "M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" : "M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z")"/>
+                            </svg>
+                            <span class="group-name">@g.GrupAdi</span>
+                            @{ var localized = GetGrupLocalizedName(g); }
+                            @if (!string.IsNullOrEmpty(localized) && localized != g.GrupAdi)
+                            {
+                                <span class="group-sub">@localized</span>
+                            }
+                            <span class="group-badge">@(g.TablTipi == 1 ? "Tablo" : "Liste")</span>
+                            <button class="group-add-btn" @onclick="() => AddGroupAsHeader(g)" title="Tüm grubu teklife ekle">+</button>
+                        </div>
+
+                        @if (isExpanded)
+                        {
+                            <div class="group-details">
+                                @if (details == null)
+                                {
+                                    <div class="detail-loading">Yükleniyor...</div>
+                                }
+                                else if (!details.Any())
+                                {
+                                    <div class="detail-empty">Bu grupta kayıt yok.</div>
+                                }
+                                else
+                                {
+                                    @foreach (var dt in details)
+                                    {
+                                        <div class="detail-node"
+                                             draggable="true"
+                                             @ondragstart="() => OnDragStartDetay(g, dt)"
+                                             @ondragend="OnDragEnd">
+                                            <span class="detail-bullet">›</span>
+                                            <span class="detail-text">@GetDetayLocalizedText(dt)</span>
+                                            @if (g.TablTipi == 1 && !string.IsNullOrEmpty(dt.Deger))
+                                            {
+                                                <span class="detail-value">@dt.Deger</span>
+                                            }
+                                            else if (dt.Fiyat.HasValue)
+                                            {
+                                                <span class="detail-price">@dt.Fiyat.Value.ToString("N0")</span>
+                                            }
+                                            <button class="detail-add-btn" @onclick="() => AddDetayAsItem(g, dt)" title="Bu kalemi ekle">+</button>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
 </div>
 
 @code {
@@ -188,12 +294,48 @@
 
     private int nextTempId = -1;
 
-    // === Arabaslik Import State ===
-    private bool showArabaslikPanel = false;
+    // Şablon (sağ panel) state
     private bool isLoadingAb = false;
     private string abSearchQuery = "";
     private List<ArabaslikGrupModel>? allGruplar;
-    private HashSet<int> selectedAbIds = new();
+    private HashSet<int> expandedGroupIds = new();
+    private Dictionary<int, List<ArabaslikDetayModel>> groupDetailsCache = new();
+
+    // Yeni grup formu
+    private bool showNewGroupForm = false;
+    private string newGroupName = "";
+    private short newGroupTablTipi = 1;
+
+    // Drag & drop state
+    private string? dragType;            // "group" | "detay" | "quote-item"
+    private ArabaslikGrupModel? dragGroup;
+    private ArabaslikDetayModel? dragDetay;
+    private QuoteItemModel? dragQuoteItem;
+    private int? draggingQuoteItemId;
+    private int? dragOverItemId;
+    private bool dragOverLeftPane;
+    private bool dragInProgress;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGruplarAsync();
+    }
+
+    private async Task LoadGruplarAsync()
+    {
+        isLoadingAb = true;
+        try { allGruplar = await ArabaslikSvc.GetGruplarAsync(); }
+        catch { allGruplar = new(); }
+        finally { isLoadingAb = false; }
+    }
+
+    private async Task RefreshGruplar()
+    {
+        groupDetailsCache.Clear();
+        await LoadGruplarAsync();
+    }
+
+    // ─── ORDER HELPERS (mevcut mantık korunur) ──────────────────
 
     private List<QuoteItemModel> GetOrderedItems()
     {
@@ -203,44 +345,36 @@
         foreach (var header in headers)
         {
             result.Add(header);
-            // SPEC (iki kolon tablo) ve ITEM tipindeki satirlari dahil et
             var children = Items.Where(i => i.UstKalemId == header.Id &&
                                             (i.KalemTipi == "ITEM" || i.KalemTipi == "SPEC"))
                                .OrderBy(i => i.SiraNo).ToList();
             foreach (var child in children)
             {
                 result.Add(child);
-                // Alt satirlar ve opsiyonlar yalnizca ITEM icin gosterilir
                 if (child.KalemTipi == "ITEM")
                 {
                     var subs = Items.Where(i => i.UstKalemId == child.Id)
                                    .OrderBy(i => i.SiraNo).ToList();
-                    foreach (var sub in subs)
-                    {
-                        result.Add(sub);
-                    }
+                    foreach (var sub in subs) result.Add(sub);
                 }
             }
         }
 
-        // Basligi olmayan kalemler (eski veri)
         var orphans = Items.Where(i => !result.Contains(i)).OrderBy(i => i.SiraNo).ToList();
         result.AddRange(orphans);
-
         return result;
     }
 
-    /// <summary>TablTipi=1 grubuna ait bir HEADER mi? (tum cocuklari SPEC ise evet)</summary>
     private bool IsSpecHeader(QuoteItemModel header) =>
         Items.Any(i => i.UstKalemId == header.Id && i.KalemTipi == "SPEC");
 
     private string GetSiraLabel(QuoteItemModel item)
     {
-        if (item.KalemTipi == "SPEC") return "";  // TablTipi=1: satir numarasi yok
+        if (item.KalemTipi == "SPEC") return "";
 
         if (item.KalemTipi == "HEADER")
         {
-            if (IsSpecHeader(item)) return "";  // TablTipi=1 grubunun basliginda numara yok
+            if (IsSpecHeader(item)) return "";
             var headers = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
             var idx = headers.IndexOf(item) + 1;
             return $"{idx}.0";
@@ -280,6 +414,8 @@
         return $"{item.SiraNo}";
     }
 
+    // ─── ITEM CRUD ───────────────────────────────────────────
+
     private void AddHeader()
     {
         var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
@@ -297,8 +433,7 @@
     private void AddItem()
     {
         var lastHeader = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).LastOrDefault();
-        if (lastHeader != null)
-            AddItemUnder(lastHeader);
+        if (lastHeader != null) AddItemUnder(lastHeader);
     }
 
     private void AddItemUnder(QuoteItemModel header)
@@ -352,7 +487,6 @@
 
     private void RemoveItem(QuoteItemModel item)
     {
-        // Cocuklari da sil
         var childIds = Items.Where(i => i.UstKalemId == item.Id).Select(i => i.Id).ToList();
         foreach (var childId in childIds)
         {
@@ -395,42 +529,26 @@
         NotifyChanged();
     }
 
-    private void NotifyChanged()
+    private void NotifyChanged() => ItemsChanged.InvokeAsync(Items);
+
+    // ─── ŞABLON FİLTRE & LOKALİZASYON ──────────────────────────
+
+    private List<ArabaslikGrupModel> filteredGruplar
     {
-        ItemsChanged.InvokeAsync(Items);
-    }
-
-    // ═══ ARABASLIK IMPORT ═══════════════════════════════════
-
-    private List<ArabaslikGrupModel> filteredGruplar =>
-        allGruplar == null ? new() :
-        string.IsNullOrWhiteSpace(abSearchQuery) ? allGruplar :
-        allGruplar.Where(g =>
-            g.GrupAdi.Contains(abSearchQuery, StringComparison.OrdinalIgnoreCase) ||
-            g.GrupAdi_EN.Contains(abSearchQuery, StringComparison.OrdinalIgnoreCase)
-        ).ToList();
-
-    private async Task ToggleArabaslikPanel()
-    {
-        showArabaslikPanel = !showArabaslikPanel;
-        if (showArabaslikPanel && allGruplar == null)
+        get
         {
-            isLoadingAb = true;
-            StateHasChanged();
-            try
-            {
-                allGruplar = await ArabaslikSvc.GetGruplarAsync();
-            }
-            catch { allGruplar = new(); }
-            finally { isLoadingAb = false; }
+            if (allGruplar == null) return new();
+            if (string.IsNullOrWhiteSpace(abSearchQuery)) return allGruplar;
+            var q = abSearchQuery.Trim();
+            // Hem grup adı hem de cache'lenmiş detay metinleri üzerinde arama
+            return allGruplar.Where(g =>
+                g.GrupAdi.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (g.GrupAdi_EN ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (groupDetailsCache.TryGetValue(g.Id, out var dl) &&
+                    dl.Any(d => (d.SatirMetni ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                                (d.SatirMetni_EN ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)))
+            ).ToList();
         }
-        selectedAbIds.Clear();
-    }
-
-    private void ToggleAbSelection(int id)
-    {
-        if (!selectedAbIds.Remove(id))
-            selectedAbIds.Add(id);
     }
 
     private string GetGrupLocalizedName(ArabaslikGrupModel g) => Dil switch
@@ -455,85 +573,371 @@
         _ => d.SatirMetni
     };
 
-    private async Task ImportSelectedArabasliklar()
+    // ─── KLASÖR / EXPAND ────────────────────────────────────
+
+    /// <summary>Görünüm açısından genişletilmiş mi? Manuel expand + arama eşleşmesi otomatik açar.</summary>
+    private bool IsExpandedView(ArabaslikGrupModel g)
     {
-        if (selectedAbIds.Count == 0) return;
+        if (expandedGroupIds.Contains(g.Id)) return true;
+        if (string.IsNullOrWhiteSpace(abSearchQuery)) return false;
+        var q = abSearchQuery.Trim();
+        return g.GrupAdi.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+               (g.GrupAdi_EN ?? "").Contains(q, StringComparison.OrdinalIgnoreCase);
+    }
 
-        var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
-
-        foreach (var grupId in selectedAbIds.OrderBy(id => allGruplar?.FindIndex(g => g.Id == id) ?? 0))
+    private async Task ToggleGroup(int grupId)
+    {
+        if (expandedGroupIds.Contains(grupId))
         {
-            var grup = allGruplar?.FirstOrDefault(g => g.Id == grupId);
-            if (grup == null) continue;
+            expandedGroupIds.Remove(grupId);
+        }
+        else
+        {
+            expandedGroupIds.Add(grupId);
+            await EnsureDetailsLoadedAsync(grupId);
+        }
+    }
 
-            maxSira += 10;
+    private async Task EnsureDetailsLoadedAsync(int grupId)
+    {
+        if (groupDetailsCache.ContainsKey(grupId)) return;
+        try { groupDetailsCache[grupId] = await ArabaslikSvc.GetDetaylarAsync(grupId); }
+        catch { groupDetailsCache[grupId] = new(); }
+    }
 
-            // Lokalize baslik
-            var headerText = Dil != "TR" ? GetGrupLocalizedName(grup) : "";
-            var displayName = !string.IsNullOrEmpty(headerText) ? headerText : grup.GrupAdi;
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        abSearchQuery = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(abSearchQuery) || allGruplar == null) return;
 
-            // HEADER olustur
-            var headerId = nextTempId--;
-            Items.Add(new QuoteItemModel
+        // Eşleşen grupların detaylarını arka planda yükle: arama metni başlık altındaki
+        // satırlarda da görünebilsin
+        var q = abSearchQuery.Trim();
+        var matching = allGruplar.Where(g =>
+            g.GrupAdi.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+            (g.GrupAdi_EN ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+        foreach (var g in matching) await EnsureDetailsLoadedAsync(g.Id);
+    }
+
+    private void ClearSearch() => abSearchQuery = string.Empty;
+
+    // ─── EKLE: Grup veya Tek Kalem ──────────────────────────
+
+    private async Task AddGroupAsHeader(ArabaslikGrupModel g)
+    {
+        if (!groupDetailsCache.TryGetValue(g.Id, out var detaylar))
+        {
+            try { detaylar = await ArabaslikSvc.GetDetaylarAsync(g.Id); groupDetailsCache[g.Id] = detaylar; }
+            catch { detaylar = new(); }
+        }
+        ImportGroupInternal(g, detaylar);
+        NotifyChanged();
+    }
+
+    private void ImportGroupInternal(ArabaslikGrupModel g, List<ArabaslikDetayModel> detaylar)
+    {
+        var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
+        var headerText = Dil != "TR" ? GetGrupLocalizedName(g) : "";
+        var displayName = !string.IsNullOrEmpty(headerText) ? headerText : g.GrupAdi;
+
+        var headerId = nextTempId--;
+        Items.Add(new QuoteItemModel
+        {
+            Id = headerId,
+            KalemTipi = "HEADER",
+            BaslikMi = true,
+            SiraNo = maxSira + 10,
+            Aciklama = displayName
+        });
+
+        int childSira = 0;
+        foreach (var d in detaylar)
+        {
+            childSira += 10;
+            var itemText = GetDetayLocalizedText(d);
+            if (g.TablTipi == 1)
             {
-                Id = headerId,
-                KalemTipi = "HEADER",
-                BaslikMi = true,
-                SiraNo = maxSira,
-                Aciklama = displayName
-            });
-
-            // Detaylari yukle ve kalem olarak ekle
-            try
-            {
-                var detaylar = await ArabaslikSvc.GetDetaylarAsync(grupId);
-                int childSira = 0;
-
-                if (grup.TablTipi == 1)
+                Items.Add(new QuoteItemModel
                 {
-                    // Iki kolon tablo: her satir bir "Ozellik : Deger" cifti — fiyat yok
-                    foreach (var d in detaylar)
-                    {
-                        childSira += 10;
-                        var itemText = GetDetayLocalizedText(d);
-                        Items.Add(new QuoteItemModel
-                        {
-                            Id = nextTempId--,
-                            KalemTipi = "SPEC",
-                            UstKalemId = headerId,
-                            SiraNo = childSira,
-                            Aciklama = itemText,   // ozellik adi (lokalize)
-                            Birim = d.Deger        // evrensel deger ("9.500 mm" gibi)
-                        });
-                    }
-                }
-                else
-                {
-                    // Numarali liste (TablTipi=2): klasik fiyatli satirlar
-                    foreach (var d in detaylar)
-                    {
-                        childSira += 10;
-                        var itemText = GetDetayLocalizedText(d);
-                        Items.Add(new QuoteItemModel
-                        {
-                            Id = nextTempId--,
-                            KalemTipi = "ITEM",
-                            UstKalemId = headerId,
-                            SiraNo = childSira,
-                            Aciklama = itemText,
-                            BirimFiyat = d.Fiyat,
-                            Miktar = d.Fiyat.HasValue ? 1 : null,
-                            Tutar = d.Fiyat,
-                            Birim = d.Fiyat.HasValue ? "AD" : null
-                        });
-                    }
-                }
+                    Id = nextTempId--,
+                    KalemTipi = "SPEC",
+                    UstKalemId = headerId,
+                    SiraNo = childSira,
+                    Aciklama = itemText,
+                    Birim = d.Deger
+                });
             }
-            catch { /* detaylar yuklenemezse sadece baslik kalir */ }
+            else
+            {
+                Items.Add(new QuoteItemModel
+                {
+                    Id = nextTempId--,
+                    KalemTipi = "ITEM",
+                    UstKalemId = headerId,
+                    SiraNo = childSira,
+                    Aciklama = itemText,
+                    BirimFiyat = d.Fiyat,
+                    Miktar = d.Fiyat.HasValue ? 1 : null,
+                    Tutar = d.Fiyat,
+                    Birim = d.Fiyat.HasValue ? "AD" : null
+                });
+            }
+        }
+    }
+
+    /// <summary>Tek bir detay satırını kalem olarak ekler. parentHeader verilmezse uygun başlık seçilir/oluşturulur.</summary>
+    private void AddDetayAsItem(ArabaslikGrupModel g, ArabaslikDetayModel d, QuoteItemModel? parentHeader = null)
+    {
+        // Hedef başlığı bul: verilen, son uygun olan veya yeni oluşturulan
+        QuoteItemModel? header = parentHeader;
+        if (header == null)
+        {
+            // Aynı grup adında zaten bir HEADER varsa onu kullan, yoksa yeni oluştur
+            var displayName = Dil != "TR" && !string.IsNullOrEmpty(GetGrupLocalizedName(g)) ? GetGrupLocalizedName(g) : g.GrupAdi;
+            header = Items.FirstOrDefault(i => i.KalemTipi == "HEADER" &&
+                                              string.Equals(i.Aciklama, displayName, StringComparison.OrdinalIgnoreCase));
+            if (header == null)
+            {
+                var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
+                header = new QuoteItemModel
+                {
+                    Id = nextTempId--,
+                    KalemTipi = "HEADER",
+                    BaslikMi = true,
+                    SiraNo = maxSira + 10,
+                    Aciklama = displayName
+                };
+                Items.Add(header);
+            }
         }
 
+        var childSira = Items.Where(i => i.UstKalemId == header.Id &&
+                                         (i.KalemTipi == "ITEM" || i.KalemTipi == "SPEC"))
+                             .Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
+        var itemText = GetDetayLocalizedText(d);
+
+        if (g.TablTipi == 1)
+        {
+            Items.Add(new QuoteItemModel
+            {
+                Id = nextTempId--,
+                KalemTipi = "SPEC",
+                UstKalemId = header.Id,
+                SiraNo = childSira + 10,
+                Aciklama = itemText,
+                Birim = d.Deger
+            });
+        }
+        else
+        {
+            Items.Add(new QuoteItemModel
+            {
+                Id = nextTempId--,
+                KalemTipi = "ITEM",
+                UstKalemId = header.Id,
+                SiraNo = childSira + 10,
+                Aciklama = itemText,
+                BirimFiyat = d.Fiyat,
+                Miktar = d.Fiyat.HasValue ? 1 : null,
+                Tutar = d.Fiyat,
+                Birim = d.Fiyat.HasValue ? "AD" : null
+            });
+        }
         NotifyChanged();
-        showArabaslikPanel = false;
-        selectedAbIds.Clear();
+    }
+
+    // ─── DRAG & DROP ───────────────────────────────────────
+
+    private void OnDragStartGroup(ArabaslikGrupModel g)
+    {
+        dragType = "group";
+        dragGroup = g;
+        dragInProgress = true;
+    }
+
+    private void OnDragStartDetay(ArabaslikGrupModel g, ArabaslikDetayModel d)
+    {
+        dragType = "detay";
+        dragGroup = g;
+        dragDetay = d;
+        dragInProgress = true;
+    }
+
+    private void OnDragStartQuoteItem(QuoteItemModel item)
+    {
+        dragType = "quote-item";
+        dragQuoteItem = item;
+        draggingQuoteItemId = item.Id;
+        dragInProgress = true;
+    }
+
+    private void OnDragEnd()
+    {
+        dragType = null;
+        dragGroup = null;
+        dragDetay = null;
+        dragQuoteItem = null;
+        draggingQuoteItemId = null;
+        dragOverItemId = null;
+        dragOverLeftPane = false;
+        dragInProgress = false;
+    }
+
+    private void OnDragEnterLeftPane()
+    {
+        if (dragType == "group" || dragType == "detay") dragOverLeftPane = true;
+    }
+
+    private void OnDragLeaveLeftPane()
+    {
+        dragOverLeftPane = false;
+    }
+
+    private void OnDragEnterItem(QuoteItemModel item)
+    {
+        dragOverItemId = item.Id;
+    }
+
+    private void OnDragLeaveItem(QuoteItemModel item)
+    {
+        if (dragOverItemId == item.Id) dragOverItemId = null;
+    }
+
+    private async Task OnDropOnLeftPane()
+    {
+        // Belirli bir hedef satıra düşmediyse: panele genel ekleme
+        if (dragType == "group" && dragGroup != null)
+        {
+            await AddGroupAsHeader(dragGroup);
+        }
+        else if (dragType == "detay" && dragGroup != null && dragDetay != null)
+        {
+            AddDetayAsItem(dragGroup, dragDetay);
+        }
+        OnDragEnd();
+    }
+
+    private async Task OnDropOnItem(QuoteItemModel target)
+    {
+        if (dragType == "group" && dragGroup != null)
+        {
+            await AddGroupAsHeader(dragGroup);
+        }
+        else if (dragType == "detay" && dragGroup != null && dragDetay != null)
+        {
+            // HEADER üzerine düştüyse: bu başlığın altına ekle
+            // ITEM/SPEC üzerine düştüyse: o satırın başlığına ekle
+            QuoteItemModel? header = null;
+            if (target.KalemTipi == "HEADER") header = target;
+            else if (target.UstKalemId.HasValue)
+            {
+                header = Items.FirstOrDefault(i => i.Id == target.UstKalemId && i.KalemTipi == "HEADER");
+                if (header == null && target.UstKalemId.HasValue)
+                {
+                    var p = Items.FirstOrDefault(i => i.Id == target.UstKalemId);
+                    if (p?.UstKalemId.HasValue == true)
+                        header = Items.FirstOrDefault(i => i.Id == p.UstKalemId && i.KalemTipi == "HEADER");
+                }
+            }
+            AddDetayAsItem(dragGroup, dragDetay, header);
+        }
+        else if (dragType == "quote-item" && dragQuoteItem != null && dragQuoteItem.Id != target.Id)
+        {
+            ReorderQuoteItems(dragQuoteItem, target);
+        }
+        OnDragEnd();
+        await Task.CompletedTask;
+    }
+
+    /// <summary>Aynı seviye/kardeş kalemler arasında sürükle-bırak ile yeniden sıralama.</summary>
+    private void ReorderQuoteItems(QuoteItemModel src, QuoteItemModel dest)
+    {
+        // Sadece aynı UstKalemId altında ve uyumlu tipte ise (HEADER<->HEADER, ITEM/SPEC<->ITEM/SPEC, SUB_ITEM/OPTION<->SUB_ITEM/OPTION)
+        bool sameLevel = src.UstKalemId == dest.UstKalemId;
+        bool compatibleHeaders = src.KalemTipi == "HEADER" && dest.KalemTipi == "HEADER";
+        bool compatibleChildren =
+            (src.KalemTipi == "ITEM" || src.KalemTipi == "SPEC") &&
+            (dest.KalemTipi == "ITEM" || dest.KalemTipi == "SPEC");
+        bool compatibleSubs =
+            (src.KalemTipi == "SUB_ITEM" || src.KalemTipi == "OPTION") &&
+            (dest.KalemTipi == "SUB_ITEM" || dest.KalemTipi == "OPTION");
+
+        if (!sameLevel || !(compatibleHeaders || compatibleChildren || compatibleSubs)) return;
+
+        // Aynı kardeş listesini al ve src'yi dest'in önüne taşı
+        IEnumerable<QuoteItemModel> siblingSrc;
+        if (compatibleHeaders)
+        {
+            siblingSrc = Items.Where(i => i.KalemTipi == "HEADER");
+        }
+        else if (compatibleChildren)
+        {
+            siblingSrc = Items.Where(i => i.UstKalemId == src.UstKalemId &&
+                                          (i.KalemTipi == "ITEM" || i.KalemTipi == "SPEC"));
+        }
+        else
+        {
+            siblingSrc = Items.Where(i => i.UstKalemId == src.UstKalemId &&
+                                          (i.KalemTipi == "SUB_ITEM" || i.KalemTipi == "OPTION"));
+        }
+
+        var siblings = siblingSrc.OrderBy(i => i.SiraNo).ToList();
+        siblings.Remove(src);
+        var destIdx = siblings.IndexOf(dest);
+        if (destIdx < 0) return;
+        siblings.Insert(destIdx, src);
+
+        // SiraNo'ları yeniden ata
+        for (int i = 0; i < siblings.Count; i++)
+            siblings[i].SiraNo = (i + 1) * 10;
+
+        NotifyChanged();
+    }
+
+    // ─── YENİ ŞABLON GRUBU (INLINE) ─────────────────────────
+
+    private void ToggleNewGroupForm()
+    {
+        showNewGroupForm = !showNewGroupForm;
+        if (showNewGroupForm) { newGroupName = ""; newGroupTablTipi = 1; }
+    }
+
+    private async Task OnNewGroupKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newGroupName)) await SaveNewGroup();
+        else if (e.Key == "Escape") showNewGroupForm = false;
+    }
+
+    private async Task SaveNewGroup()
+    {
+        if (string.IsNullOrWhiteSpace(newGroupName)) return;
+        try
+        {
+            var maxSort = (allGruplar?.Select(x => x.SortOrder).DefaultIfEmpty(0).Max() ?? 0) + 10;
+            var newGrup = new ArabaslikGrupModel
+            {
+                GrupAdi = newGroupName.Trim(),
+                GrupAdi_EN = "",
+                GrupAdi_FR = "",
+                GrupAdi_DE = "",
+                GrupAdi_RO = "",
+                GrupAdi_AR = "",
+                GrupAdi_RU = "",
+                TablTipi = newGroupTablTipi,
+                SortOrder = maxSort,
+                IsActive = true
+            };
+            await ArabaslikSvc.SaveGrupWithDetaylarAsync(newGrup, new List<ArabaslikDetayModel>());
+            showNewGroupForm = false;
+            await LoadGruplarAsync();
+            // Yeni grubu otomatik genişlet
+            if (newGrup.Id > 0)
+            {
+                expandedGroupIds.Add(newGrup.Id);
+                groupDetailsCache[newGrup.Id] = new();
+            }
+        }
+        catch { /* sessiz: form açık kalır */ }
     }
 }
