@@ -52,17 +52,18 @@
                 var isDragging = draggingQuoteItemId == item.Id;
 
                 <div class="@rowClass @(isDropTarget ? "drop-target-row" : "") @(isDragging ? "dragging" : "")"
-                     draggable="true"
-                     @ondragstart="() => OnDragStartQuoteItem(item)"
-                     @ondragend="OnDragEnd"
                      @ondragover:preventDefault="true"
                      @ondragenter="() => OnDragEnterItem(item)"
                      @ondragleave="() => OnDragLeaveItem(item)"
                      @ondrop:stopPropagation="true"
                      @ondrop="() => OnDropOnItem(item)">
 
-                    <div class="item-drag-grip" title="Sürükleyerek sırayı değiştirin">
-                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;">
+                    <div class="item-drag-grip"
+                         draggable="true"
+                         @ondragstart="() => OnDragStartQuoteItem(item)"
+                         @ondragend="OnDragEnd"
+                         title="Sürükleyerek sırayı değiştirin">
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;pointer-events:none;">
                             <circle cx="9" cy="5" r="1.6"/><circle cx="15" cy="5" r="1.6"/>
                             <circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/>
                             <circle cx="9" cy="19" r="1.6"/><circle cx="15" cy="19" r="1.6"/>
