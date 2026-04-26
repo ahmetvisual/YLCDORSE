@@ -622,7 +622,7 @@
                     <option value="MEETING">Toplanti</option>
                     <option value="NOTE">Not</option>
                 </select>
-                <input type="date" @bind="_qfSonraki" />
+                <TrDateInput @bind-Value="_qfSonraki" />
             </div>
             <textarea placeholder="Gorusme notu..." @bind="_qfNot" rows="2"></textarea>
             <div class="dash-tl-quickform-buttons">

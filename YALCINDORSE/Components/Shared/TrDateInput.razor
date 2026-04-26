@@ -1,0 +1,90 @@
+@* Turkce DD.MM.YYYY formatli tarih girisi.
+   HTML5 <input type=date> WebView2'de OS locale'ine gore (US: MM/DD/YYYY)
+   gozuktugunden, kontrolu kendimize alip her zaman gun.ay.yil
+   gosteren bir text input + takvim ikonu kullaniyoruz.
+*@
+@using System.Globalization
+
+<div class="tr-date @CssClass">
+    <input type="text" class="tr-date-text"
+           value="@_displayText"
+           placeholder="@Placeholder"
+           maxlength="10"
+           disabled="@Disabled"
+           @oninput="OnInput"
+           @onchange="OnCommit" />
+    <button type="button" class="tr-date-pick-btn"
+            disabled="@Disabled"
+            title="Takvim"
+            @onclick="OpenPicker">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             style="width:13px;height:13px;">
+            <rect x="3" y="4" width="18" height="18"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+    </button>
+    <input @ref="_hiddenDate" type="date" class="tr-date-hidden"
+           value="@(Value?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "")"
+           @onchange="OnPicked"
+           tabindex="-1" />
+</div>
+
+@code {
+    [Parameter] public DateTime? Value { get; set; }
+    [Parameter] public EventCallback<DateTime?> ValueChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string Placeholder { get; set; } = "GG.AA.YYYY";
+
+    [Inject] IJSRuntime JS { get; set; } = default!;
+
+    private string _displayText = "";
+    private DateTime? _last;
+    private ElementReference _hiddenDate;
+
+    private static readonly string[] AcceptedFormats =
+        { "dd.MM.yyyy", "d.M.yyyy", "dd/MM/yyyy", "d/M/yyyy", "dd-MM-yyyy", "ddMMyyyy" };
+
+    protected override void OnParametersSet()
+    {
+        if (Value != _last)
+        {
+            _last = Value;
+            _displayText = Value?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "";
+        }
+    }
+
+    private void OnInput(ChangeEventArgs e) => _displayText = e.Value?.ToString() ?? "";
+
+    private async Task OnCommit()
+    {
+        var s = (_displayText ?? "").Trim();
+        if (string.IsNullOrEmpty(s)) { await Set(null); return; }
+        if (DateTime.TryParseExact(s, AcceptedFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
+            await Set(d);
+        else
+            _displayText = Value?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "";
+    }
+
+    private async Task OnPicked(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        if (DateTime.TryParseExact(raw, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
+            await Set(d);
+    }
+
+    private async Task Set(DateTime? d)
+    {
+        Value = d;
+        _last = d;
+        _displayText = d?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "";
+        await ValueChanged.InvokeAsync(d);
+    }
+
+    private async Task OpenPicker()
+    {
+        try { await JS.InvokeVoidAsync("yldate.openPicker", _hiddenDate); } catch { }
+    }
+}

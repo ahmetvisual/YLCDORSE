@@ -97,11 +97,11 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div>
                     <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">TALEP TARIHI</label>
-                    <input type="date" class="form-control" @bind="quote.TalepTarihi" @bind:format="yyyy-MM-dd" />
+                    <TrDateInput Value="@quote.TalepTarihi" ValueChanged="(d) => quote.TalepTarihi = d ?? DateTime.Today" />
                 </div>
                 <div>
                     <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--yl-text-light);">GECERLILIK TARIHI</label>
-                    <input type="date" class="form-control" @bind="quote.GecerlilikTarihi" @bind:format="yyyy-MM-dd" />
+                    <TrDateInput Value="@quote.GecerlilikTarihi" ValueChanged="(d) => quote.GecerlilikTarihi = d ?? DateTime.Today.AddDays(15)" />
                 </div>
             </div>
         </div>

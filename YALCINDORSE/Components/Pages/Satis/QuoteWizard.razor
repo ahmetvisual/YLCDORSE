@@ -430,11 +430,11 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Talep Tarihi</label>
-                        <input type="date" @bind="quote.TalepTarihi" @bind:format="yyyy-MM-dd" />
+                        <TrDateInput Value="@quote.TalepTarihi" ValueChanged="(d) => quote.TalepTarihi = d ?? DateTime.Today" />
                     </div>
                     <div class="wizard-field compact">
                         <label>Gecerlilik Tarihi</label>
-                        <input type="date" @bind="quote.GecerlilikTarihi" @bind:format="yyyy-MM-dd" />
+                        <TrDateInput Value="@quote.GecerlilikTarihi" ValueChanged="(d) => quote.GecerlilikTarihi = d ?? DateTime.Today.AddDays(15)" />
                     </div>
                     <div class="wizard-field compact">
                         <label>Ilgili Kisiler</label>

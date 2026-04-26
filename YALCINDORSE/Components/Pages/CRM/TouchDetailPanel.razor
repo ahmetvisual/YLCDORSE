@@ -94,7 +94,7 @@
                 <div class="touch-form-grid3">
                     <div class="touch-form-row">
                         <label>Tarih</label>
-                        <input type="date" @bind="newTouch.TemasTarihi" @bind:format="yyyy-MM-dd" />
+                        <TrDateInput Value="@newTouch.TemasTarihi" ValueChanged="(d) => newTouch.TemasTarihi = d ?? DateTime.Now" />
                     </div>
                     <div class="touch-form-row">
                         <label>Tur</label>
@@ -108,7 +108,7 @@
                     </div>
                     <div class="touch-form-row">
                         <label>Sonraki Temas</label>
-                        <input type="date" @bind="newTouch.SonrakiTemasTarihi" @bind:format="yyyy-MM-dd" />
+                        <TrDateInput @bind-Value="newTouch.SonrakiTemasTarihi" />
                     </div>
                 </div>
                 <div class="touch-form-grid2">
@@ -154,7 +154,7 @@
                 <div class="touch-form-grid3">
                     <div class="touch-form-row">
                         <label>Tarih</label>
-                        <input type="date" @bind="editingTouch.TemasTarihi" @bind:format="yyyy-MM-dd" />
+                        <TrDateInput Value="@editingTouch.TemasTarihi" ValueChanged="(d) => editingTouch.TemasTarihi = d ?? DateTime.Now" />
                     </div>
                     <div class="touch-form-row">
                         <label>Tur</label>
@@ -168,7 +168,7 @@
                     </div>
                     <div class="touch-form-row">
                         <label>Sonraki Temas</label>
-                        <input type="date" @bind="editingTouch.SonrakiTemasTarihi" @bind:format="yyyy-MM-dd" />
+                        <TrDateInput @bind-Value="editingTouch.SonrakiTemasTarihi" />
                     </div>
                 </div>
                 <div class="touch-form-grid2">

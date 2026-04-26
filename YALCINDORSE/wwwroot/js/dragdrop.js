@@ -2,6 +2,17 @@
 // degistirme islemi pointer (mouse) event'leri ile yapiliyor. Sag panelden
 // sol panele tasima icin HTML5 drag hala kullaniliyor; ona da dataTransfer
 // guvencesi sagliyoruz.
+// Turkce tarih input'larinin takvim ikonu icin: gizli date input'un picker'ini ac
+window.yldate = window.yldate || {
+    openPicker: function (el) {
+        if (!el) return;
+        try {
+            if (typeof el.showPicker === 'function') el.showPicker();
+            else el.click();
+        } catch { try { el.click(); } catch { } }
+    }
+};
+
 (function () {
     'use strict';
     if (window.__yldragInit) return;
