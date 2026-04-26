@@ -591,9 +591,14 @@ h4 {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    transition: width 0.25s ease, min-width 0.25s ease;
+    /* Snappy easing (ease-out-expo benzeri) — daha hizli baslangic, yumusak bitis */
+    transition: width 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                min-width 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
     z-index: 100;
+    /* GPU compositing katmanini onceden hazirla, layout tetiklenmesini izole et */
+    will-change: width;
+    contain: layout style;
 }
 
 .app-sidebar.sidebar-collapsed {
@@ -611,6 +616,8 @@ h4 {
     flex-direction: column;
     min-width: 0;
     overflow: hidden;
+    /* Sidebar genisleme/daralma sirasinda layout reflow'u izole et */
+    contain: layout style;
 }
 
 /* Sidebar Header (Logo) */
