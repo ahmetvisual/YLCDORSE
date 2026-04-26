@@ -233,11 +233,11 @@
                                  style="width:13px;height:13px;color:#0c447c;flex-shrink:0">
                                 <path d="@(isExpanded ? "M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" : "M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z")"/>
                             </svg>
-                            <span class="group-name">@g.GrupAdi</span>
+                            <span class="group-name" title="@g.GrupAdi">@g.GrupAdi</span>
                             @{ var localized = GetGrupLocalizedName(g); }
                             @if (!string.IsNullOrEmpty(localized) && localized != g.GrupAdi)
                             {
-                                <span class="group-sub">@localized</span>
+                                <span class="group-sub" title="@localized">@localized</span>
                             }
                             <span class="group-badge">@(g.TablTipi == 1 ? "Tablo" : "Liste")</span>
                             <button class="group-tool-btn" @onclick:stopPropagation="true" @onclick="() => StartEditGrup(g)" title="Grup adını düzenle (diller)">
@@ -295,7 +295,8 @@
                                              @ondragstart="() => OnDragStartDetay(g, dt)"
                                              @ondragend="OnDragEnd">
                                             <span class="detail-bullet">›</span>
-                                            <span class="detail-text">@GetDetayLocalizedText(dt)</span>
+                                            @{ var detayText = GetDetayLocalizedText(dt); }
+                                            <span class="detail-text" title="@detayText">@detayText</span>
                                             @if (g.TablTipi == 1)
                                             {
                                                 <input type="text" class="detail-value-edit"
