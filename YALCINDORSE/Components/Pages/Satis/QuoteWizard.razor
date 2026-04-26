@@ -144,6 +144,11 @@
                                 }
                             </div>
                             <button class="wizard-btn wizard-btn-primary" style="padding:5px 12px;font-size:0.8rem" @onclick="() => showQuickAdd = true">+ Yeni</button>
+                            @if (quote.MusteriId > 0)
+                            {
+                                <button class="wizard-btn" style="padding:5px 12px;font-size:0.8rem;background:#f0f5ff;color:var(--yl-primary);border-color:rgba(59,125,221,0.35);"
+                                        @onclick="OpenAddContact" title="Bu musteriye ilgili kisi ekle">+ Kisi</button>
+                            }
                         </div>
                     </div>
                     <div class="wizard-field compact">
@@ -723,6 +728,58 @@
             </div>
         </div>
     }
+
+    <!-- Quick Add Ilgili Kisi Modal -->
+    @if (showQuickAddContact)
+    {
+        <div class="modal-overlay" @onclick="CloseAddContact">
+            <div class="quick-modal-content" style="max-width:520px" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h4>Ilgili Kisi Ekle</h4>
+                    <button class="btn-close" @onclick="CloseAddContact">&#10005;</button>
+                </div>
+                <div class="modal-body" style="padding:14px 16px">
+                    <div class="wizard-grid2">
+                        <div class="wizard-field compact">
+                            <label>Ad Soyad <span class="required">*</span></label>
+                            <input type="text" @bind="quickContact.ContactName" placeholder="Ornek: Ahmet Yilmaz" />
+                        </div>
+                        <div class="wizard-field compact">
+                            <label>Unvan / Pozisyon</label>
+                            <input type="text" @bind="quickContact.ContactTitle" placeholder="Satin Alma Mudur" />
+                        </div>
+                        <div class="wizard-field compact">
+                            <label>Telefon</label>
+                            <input type="text" @bind="quickContact.Phone" placeholder="+90 ..." />
+                        </div>
+                        <div class="wizard-field compact">
+                            <label>Cep</label>
+                            <input type="text" @bind="quickContact.Mobile" placeholder="+90 5xx ..." />
+                        </div>
+                        <div class="wizard-field compact">
+                            <label>E-posta</label>
+                            <input type="email" @bind="quickContact.Email" placeholder="ad@firma.com" />
+                        </div>
+                        <div class="wizard-field compact">
+                            <label>Departman</label>
+                            <input type="text" @bind="quickContact.Department" placeholder="Satin Alma" />
+                        </div>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;margin-top:6px;cursor:pointer">
+                        <input type="checkbox" @bind="quickContact.IsPrimary" />
+                        <span>Birincil ilgili kisi olarak isaretle</span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button class="wizard-btn" @onclick="CloseAddContact" disabled="@savingQuickContact">Iptal</button>
+                    <button class="wizard-btn wizard-btn-primary" @onclick="SaveQuickContact"
+                            disabled="@(savingQuickContact || string.IsNullOrWhiteSpace(quickContact.ContactName))">
+                        @(savingQuickContact ? "Kaydediliyor..." : "Kaydet")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @* === TOAST OVERLAY === *@
@@ -810,6 +867,11 @@
     private bool showQuickAdd;
     private string quickAddTitle = "";
     private string quickAddCountry = "TR";
+
+    // Hizli Ilgili Kisi ekleme
+    private bool showQuickAddContact;
+    private CustomerContactModel quickContact = new();
+    private bool savingQuickContact;
 
     protected override async Task OnInitializedAsync()
     {
@@ -1305,5 +1367,63 @@
             quickAddCountry = "TR";
         }
         catch { }
+    }
+
+    // ─── HIZLI ILGILI KISI EKLEME ──────────────────────
+
+    private void OpenAddContact()
+    {
+        if (quote.MusteriId <= 0) return;
+        quickContact = new CustomerContactModel { CustomerId = quote.MusteriId, IsActive = true };
+        showQuickAddContact = true;
+    }
+
+    private void CloseAddContact()
+    {
+        showQuickAddContact = false;
+        quickContact = new CustomerContactModel();
+    }
+
+    private async Task SaveQuickContact()
+    {
+        if (savingQuickContact) return;
+        if (quote.MusteriId <= 0 || string.IsNullOrWhiteSpace(quickContact.ContactName)) return;
+
+        savingQuickContact = true;
+        try
+        {
+            await CustomerSvc.AddContactAsync(quote.MusteriId, quickContact);
+
+            // Ilgili kisiler listesini guncelle: yeni kisiyi push et (musteri reload etmeden)
+            // Eger primary olarak isaretlendiyse, mevcutlerdeki primary'leri pasiflestir
+            if (quickContact.IsPrimary)
+                foreach (var c in contacts) c.IsPrimary = false;
+            contacts.Add(quickContact);
+            if (quickContact.Id > 0 && !selectedContacts.Contains(quickContact.Id))
+                selectedContacts.Add(quickContact.Id);
+
+            toastIsSuccess = true;
+            toastMessage = "Ilgili kisi eklendi.";
+            showToast = true;
+            showQuickAddContact = false;
+            quickContact = new CustomerContactModel();
+            MarkDirty();
+            StateHasChanged();
+            await Task.Delay(1200);
+            showToast = false;
+        }
+        catch (Exception ex)
+        {
+            toastIsSuccess = false;
+            toastMessage = ex.Message;
+            showToast = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            showToast = false;
+        }
+        finally
+        {
+            savingQuickContact = false;
+        }
     }
 }

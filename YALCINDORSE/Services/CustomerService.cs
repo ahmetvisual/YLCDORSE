@@ -580,6 +580,55 @@ namespace YALCINDORSE.Services
             }
         }
 
+        /// <summary>
+        /// Mevcut bir musteriye yeni bir ilgili kisi (contact) ekler. Quote editor'undeki
+        /// hizli ekleme akisi icin tek-INSERT yardimci metod.
+        /// </summary>
+        public async Task<int> AddContactAsync(int customerId, CustomerContactModel contact)
+        {
+            if (customerId <= 0) throw new ArgumentException("Gecersiz musteri Id");
+            if (string.IsNullOrWhiteSpace(contact.ContactName)) throw new ArgumentException("Ilgili kisi adi bos olamaz");
+
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+
+            // Eger primary olarak isaretlendiyse: digerlerini false yap
+            if (contact.IsPrimary)
+            {
+                using var clearCmd = new NpgsqlCommand(
+                    """UPDATE "YLCustomerContacts" SET "IsPrimary" = FALSE WHERE "CustomerId" = @cid;""", conn);
+                clearCmd.Parameters.AddWithValue("cid", customerId);
+                await clearCmd.ExecuteNonQueryAsync();
+            }
+
+            const string sql = """
+                INSERT INTO "YLCustomerContacts"
+                    ("CustomerId","ContactName","ContactTitle","Email","Phone","Mobile",
+                     "Department","IsPrimary","IsActive","Notes","CreatedBy")
+                VALUES (@customerId,@contactName,@contactTitle,@email,@phone,@mobile,
+                        @department,@isPrimary,@isActive,@notes,@createdBy)
+                RETURNING "Id";
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("customerId", customerId);
+            cmd.Parameters.AddWithValue("contactName", contact.ContactName.Trim());
+            cmd.Parameters.AddWithValue("contactTitle", (object?)NullIfWhiteSpace(contact.ContactTitle) ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("email", (object?)NullIfWhiteSpace(contact.Email) ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("phone", (object?)NullIfWhiteSpace(contact.Phone) ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("mobile", (object?)NullIfWhiteSpace(contact.Mobile) ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("department", (object?)NullIfWhiteSpace(contact.Department) ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("isPrimary", contact.IsPrimary);
+            cmd.Parameters.AddWithValue("isActive", contact.IsActive);
+            cmd.Parameters.AddWithValue("notes", (object?)NullIfWhiteSpace(contact.Notes) ?? DBNull.Value);
+            var actor = string.IsNullOrWhiteSpace(_auth.CurrentUser) ? "system" : _auth.CurrentUser!;
+            cmd.Parameters.AddWithValue("createdBy", actor);
+
+            var result = await cmd.ExecuteScalarAsync();
+            contact.Id = Convert.ToInt32(result);
+            contact.CustomerId = customerId;
+            return contact.Id;
+        }
+
         private async Task UpsertContactsAsync(
             NpgsqlConnection conn,
             NpgsqlTransaction tx,
