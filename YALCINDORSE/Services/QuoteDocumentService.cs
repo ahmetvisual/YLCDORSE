@@ -267,6 +267,7 @@ namespace YALCINDORSE.Services
                 UrunAltYazi      = urunAltYazi,
                 SasiNo           = quote.SasiNo ?? "",
                 ModelYili        = quote.ModelYili?.ToString() ?? "",
+                Dil              = quote.Dil ?? "TR",
                 LogoBytes        = logoBytes,
                 UrunFoto1        = foto1,
                 UrunFoto2        = foto2,
