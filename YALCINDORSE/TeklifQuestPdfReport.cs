@@ -32,9 +32,13 @@ namespace YALCINDORSE
         public string GecerlilikTarihi  { get; set; } = "";
         public string MusteriAdi        { get; set; } = "";
         public string MusteriKodu       { get; set; } = "";
+        // Eski tek kisi alanlari — geri uyumluluk + Greeting fallback'i.
+        // Yeni cogul yapi: IlgiliKisiler listesi (asagida).
         public string IlgiliKisi        { get; set; } = "";
         public string IlgiliEmail       { get; set; } = "";
         public string IlgiliMobil       { get; set; } = "";
+        /// <summary>Cari (musteri) icin tum aktif ilgili kisiler — coklu rendered edilir.</summary>
+        public List<IlgiliKisiInfo> IlgiliKisiler { get; set; } = new();
         public string SaticiAdi         { get; set; } = "";
         public string SaticiEmail       { get; set; } = "";
         public string SaticiTelefon     { get; set; } = "";
@@ -65,6 +69,16 @@ namespace YALCINDORSE
         public List<ListItem>   ListItems   { get; set; } = new();
 
         // ─── İç Tipler ──────────────────────────────────────────────────────
+        /// <summary>PDF'in sol ust kontak blogunda gosterilecek tek bir ilgili kisi.</summary>
+        public class IlgiliKisiInfo
+        {
+            public string Ad      { get; set; } = "";  // ContactName
+            public string Unvan   { get; set; } = "";  // ContactTitle
+            public string Email   { get; set; } = "";
+            public string Mobil   { get; set; } = "";  // Mobile
+            public string Telefon { get; set; } = "";  // Phone
+        }
+
         public class SpecGroup
         {
             public string GrupAdi { get; set; } = "";
@@ -218,45 +232,73 @@ namespace YALCINDORSE
         {
             col.Item().Row(row =>
             {
-                // ── SOL: Ilgili Kisi Bilgileri (ad + kontak + arac bilgisi) ─────
-                // "Sayin" prefix yok — selamlama greeting bolumunde tek kez yapilir.
-                // Sag taraftaki Musteri Adi + Kodu pattern'i ile simetrik yapi.
+                // ── SOL: Cari'nin tum aktif ilgili kisileri ────────────────────
+                // Referans (HARPUT docx) duzeni: her kisi icin "Sayin {Ad}" basligi
+                // altinda Unvan / E-mail / Mobil / Tel. Cogul kisi -> ust uste blok blok.
                 row.RelativeItem().Column(c =>
                 {
-                    bool hasAnyInfo =
-                        !string.IsNullOrWhiteSpace(IlgiliKisi)  ||
-                        !string.IsNullOrWhiteSpace(IlgiliEmail) ||
-                        !string.IsNullOrWhiteSpace(IlgiliMobil) ||
-                        !string.IsNullOrWhiteSpace(SasiNo)      ||
+                    // Cogul liste yoksa eski tek-kisi alanindan tek elemanli liste yap (geri uyumluluk)
+                    var kisiler = IlgiliKisiler.Count > 0
+                        ? IlgiliKisiler
+                        : (!string.IsNullOrWhiteSpace(IlgiliKisi)
+                            ? new List<IlgiliKisiInfo>
+                              {
+                                  new()
+                                  {
+                                      Ad = IlgiliKisi,
+                                      Email = IlgiliEmail,
+                                      Mobil = IlgiliMobil
+                                  }
+                              }
+                            : new List<IlgiliKisiInfo>());
+
+                    bool hasAracBilgi =
+                        !string.IsNullOrWhiteSpace(SasiNo) ||
                         !string.IsNullOrWhiteSpace(ModelYili);
 
-                    if (!hasAnyInfo) return;
+                    if (kisiler.Count == 0 && !hasAracBilgi) return;
 
-                    // "İlgili Kişi" etiketi — sag taraftaki "Musteri Kodu" labelina paralel
-                    c.Item().Text(t =>
-                        t.Span("İlgili Kişi").FontSize(8).FontColor(MutedText));
-
-                    // Ilgili kisi adi (bold, 10pt) — sag taraftaki MusteriAdi pattern'i
-                    if (!string.IsNullOrWhiteSpace(IlgiliKisi))
+                    bool firstKisi = true;
+                    foreach (var k in kisiler)
                     {
-                        c.Item().Text(t =>
-                            t.Span(IlgiliKisi).Bold().FontSize(10).FontColor(DarkText));
+                        // Kisiler arasi ince bosluk
+                        if (!firstKisi) c.Item().Height(3);
+                        firstKisi = false;
+
+                        // "Sayin {Ad}" — kisi blogunun basligi (referans docx pattern'i)
+                        if (!string.IsNullOrWhiteSpace(k.Ad))
+                        {
+                            c.Item().Text(t =>
+                                t.Span($"Sayın {k.Ad}")
+                                 .Bold().FontSize(9.5f).FontColor(DarkText));
+                        }
+
+                        // Unvan / Pozisyon (varsa)
+                        if (!string.IsNullOrWhiteSpace(k.Unvan))
+                        {
+                            c.Item().Text(t =>
+                                t.Span(k.Unvan).Italic().FontSize(7.5f).FontColor(MutedText));
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(k.Email))
+                            c.Item().Text(t =>
+                            {
+                                t.Span("E-mail : ").FontSize(8).FontColor(MutedText);
+                                t.Span(k.Email).FontSize(8).FontColor(BodyText);
+                            });
+                        if (!string.IsNullOrWhiteSpace(k.Mobil))
+                            c.Item().Text(t =>
+                            {
+                                t.Span("Mobil : ").FontSize(8).FontColor(MutedText);
+                                t.Span(k.Mobil).FontSize(8).FontColor(BodyText);
+                            });
+                        if (!string.IsNullOrWhiteSpace(k.Telefon))
+                            c.Item().Text(t =>
+                            {
+                                t.Span("Tel : ").FontSize(8).FontColor(MutedText);
+                                t.Span(k.Telefon).FontSize(8).FontColor(BodyText);
+                            });
                     }
-
-                    c.Item().Height(2);
-
-                    if (!string.IsNullOrWhiteSpace(IlgiliEmail))
-                        c.Item().Text(t =>
-                        {
-                            t.Span("E-mail : ").FontSize(8).FontColor(MutedText);
-                            t.Span(IlgiliEmail).FontSize(8).FontColor(BodyText);
-                        });
-                    if (!string.IsNullOrWhiteSpace(IlgiliMobil))
-                        c.Item().Text(t =>
-                        {
-                            t.Span("Mobil : ").FontSize(8).FontColor(MutedText);
-                            t.Span(IlgiliMobil).FontSize(8).FontColor(BodyText);
-                        });
 
                     if (!string.IsNullOrWhiteSpace(SasiNo))
                     {
@@ -342,11 +384,14 @@ namespace YALCINDORSE
         // ════════════════════════════════════════════════════════════════════
         private void BuildGreeting(ColumnDescriptor col)
         {
-            // Tek selamlama burada — MainInfo'da artik "Sayin" yok.
-            // Ad bossa "Sayin Yetkili," fallback (cirkin "Sayin ," olusmasin).
-            var greeting = !string.IsNullOrWhiteSpace(IlgiliKisi)
-                ? $"Sayın {IlgiliKisi},"
-                : "Sayın Yetkili,";
+            // Selamlama icin oncelik: cogul listenin ilk kisisi -> tek-kisi alani -> fallback.
+            // MainInfo'da kisi blogu zaten basligi "Sayin {Ad}" ile basliyor; bu greeting
+            // gov de yine ekleniyor (referans docx ile ayni). Ad yoksa "Sayin Yetkilim,".
+            var greetingAd = IlgiliKisiler.FirstOrDefault()?.Ad
+                             ?? IlgiliKisi;
+            var greeting = !string.IsNullOrWhiteSpace(greetingAd)
+                ? $"Sayın {greetingAd},"
+                : "Sayın Yetkilim,";
 
             col.Item().Column(c =>
             {

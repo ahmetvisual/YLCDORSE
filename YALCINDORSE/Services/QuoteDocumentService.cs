@@ -70,33 +70,67 @@ namespace YALCINDORSE.Services
             string musteriAdi = "", musteriKodu = "";
             string ilgiliKisi = "", ilgiliEmail = "", ilgiliMobil = "";
             string saticiAdi = "", saticiEmail = "", saticiTelefon = "";
+            var ilgiliKisiler = new List<TeklifQuestPdfReport.IlgiliKisiInfo>();
             try
             {
                 using var conn = _db.GetConnection();
                 await conn.OpenAsync();
+
+                // 1) Musteri + primary ilgili kisi + satici (geri uyumluluk)
                 const string sql = """
                     SELECT c."Title", c."CustomerCode",
                            cc."ContactName", cc."Email", cc."Mobile",
-                           u."FullName", u."Email" as "SaticiEmail", u."Phone" as "SaticiTelefon"
+                           u."FullName", u."Email" as "SaticiEmail", u."Phone" as "SaticiTelefon",
+                           q."MusteriId"
                     FROM "YLTeklifler" q
                     LEFT JOIN "YLCustomers" c ON c."Id" = q."MusteriId"
                     LEFT JOIN "YLCustomerContacts" cc ON cc."Id" = q."IlgiliKisiId"
                     LEFT JOIN "YLUsers" u ON u."Id" = q."SaticiId"
                     WHERE q."Id" = @id;
                     """;
-                using var cmd = new NpgsqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("id", quoteId);
-                using var r = await cmd.ExecuteReaderAsync();
-                if (await r.ReadAsync())
+                int? musteriId = null;
+                using (var cmd = new NpgsqlCommand(sql, conn))
                 {
-                    musteriAdi    = r.IsDBNull(0) ? "" : r.GetString(0);
-                    musteriKodu   = r.IsDBNull(1) ? "" : r.GetString(1);
-                    ilgiliKisi    = r.IsDBNull(2) ? "" : r.GetString(2);
-                    ilgiliEmail   = r.IsDBNull(3) ? "" : r.GetString(3);
-                    ilgiliMobil   = r.IsDBNull(4) ? "" : r.GetString(4);
-                    saticiAdi     = r.IsDBNull(5) ? "" : r.GetString(5);
-                    saticiEmail   = r.IsDBNull(6) ? "" : r.GetString(6);
-                    saticiTelefon = r.IsDBNull(7) ? "" : r.GetString(7);
+                    cmd.Parameters.AddWithValue("id", quoteId);
+                    using var r = await cmd.ExecuteReaderAsync();
+                    if (await r.ReadAsync())
+                    {
+                        musteriAdi    = r.IsDBNull(0) ? "" : r.GetString(0);
+                        musteriKodu   = r.IsDBNull(1) ? "" : r.GetString(1);
+                        ilgiliKisi    = r.IsDBNull(2) ? "" : r.GetString(2);
+                        ilgiliEmail   = r.IsDBNull(3) ? "" : r.GetString(3);
+                        ilgiliMobil   = r.IsDBNull(4) ? "" : r.GetString(4);
+                        saticiAdi     = r.IsDBNull(5) ? "" : r.GetString(5);
+                        saticiEmail   = r.IsDBNull(6) ? "" : r.GetString(6);
+                        saticiTelefon = r.IsDBNull(7) ? "" : r.GetString(7);
+                        musteriId     = r.IsDBNull(8) ? null : (int?)r.GetInt32(8);
+                    }
+                }
+
+                // 2) Cari'nin TUM aktif ilgili kisileri — coklu rendered icin.
+                //    Primary kisi en uste gelir; sonra ad'a gore alfabetik.
+                if (musteriId.HasValue)
+                {
+                    const string contactsSql = """
+                        SELECT "ContactName", "ContactTitle", "Email", "Phone", "Mobile"
+                        FROM "YLCustomerContacts"
+                        WHERE "CustomerId" = @cid AND "IsActive" = TRUE
+                        ORDER BY "IsPrimary" DESC, "ContactName";
+                        """;
+                    using var ccmd = new NpgsqlCommand(contactsSql, conn);
+                    ccmd.Parameters.AddWithValue("cid", musteriId.Value);
+                    using var cr = await ccmd.ExecuteReaderAsync();
+                    while (await cr.ReadAsync())
+                    {
+                        ilgiliKisiler.Add(new TeklifQuestPdfReport.IlgiliKisiInfo
+                        {
+                            Ad      = cr.IsDBNull(0) ? "" : cr.GetString(0),
+                            Unvan   = cr.IsDBNull(1) ? "" : cr.GetString(1),
+                            Email   = cr.IsDBNull(2) ? "" : cr.GetString(2),
+                            Telefon = cr.IsDBNull(3) ? "" : cr.GetString(3),
+                            Mobil   = cr.IsDBNull(4) ? "" : cr.GetString(4),
+                        });
+                    }
                 }
             }
             catch { }
@@ -220,6 +254,7 @@ namespace YALCINDORSE.Services
                 IlgiliKisi       = ilgiliKisi,
                 IlgiliEmail      = ilgiliEmail,
                 IlgiliMobil      = ilgiliMobil,
+                IlgiliKisiler    = ilgiliKisiler,
                 SaticiAdi        = saticiAdi,
                 SaticiEmail      = saticiEmail,
                 SaticiTelefon    = saticiTelefon,
