@@ -102,6 +102,102 @@ namespace YALCINDORSE.Services
                 await cmd.ExecuteNonQueryAsync();
             }
             catch { /* tablo yoksa veya yetki yoksa sessiz devam */ }
+
+            // OM (Offer Manual) sablonlarini idempotent seed et — barandrive
+            // OM_TR/OM_EN.xlsx verilerinden 3 grup (BPW/SAF, TURK MALI, OPSIYONEL)
+            // YLArabaslikGruplar/Detaylar tablolarina yansir; quote items editor'da
+            // sablon olarak gorunur. Mevcut grup varsa atlar (kullanici silmis olabilir).
+            try { await SeedOmSablonAsync(conn); }
+            catch { /* seed hatasi: kullanici manuel SQL calistirabilir */ }
+        }
+
+        /// <summary>
+        /// OmFormVerileri'ndeki TR/EN listelerini YLArabaslikGruplar+Detaylar'a
+        /// idempotent insert eder. SECTION satirlari yeni grup acar; ITEM satirlari
+        /// o gruba TablTipi=2 detayi olarak eklenir. Grup ayni isimde varsa atlar.
+        /// </summary>
+        private static async Task SeedOmSablonAsync(NpgsqlConnection conn)
+        {
+            var tr = OmFormVerileri.TR;
+            var en = OmFormVerileri.EN;
+            if (tr.Count == 0 || tr.Count != en.Count) return;
+
+            int? curGrupId = null;
+            int  detaySort = 0;
+            int  grupSort  = 900;  // Diger gruplarin sonuna konumlanir
+
+            for (int i = 0; i < tr.Count; i++)
+            {
+                var rTr = tr[i];
+                var rEn = en[i];
+
+                if (rTr.Tip == "SECTION")
+                {
+                    string grupAdi    = rTr.Aciklama;
+                    string grupAdiEn  = rEn.Aciklama;
+
+                    // Idempotent: ayni isimde grup varsa atla. Kullanici silmis olabilir,
+                    // tekrar otomatik olusturma — bilerek silmis olabilir.
+                    using (var checkCmd = new NpgsqlCommand(
+                        @"SELECT ""Id"" FROM ""YLArabaslikGruplar"" WHERE ""GrupAdi"" = @ad LIMIT 1",
+                        conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("ad", grupAdi);
+                        var existing = await checkCmd.ExecuteScalarAsync();
+                        if (existing != null && existing != DBNull.Value)
+                        {
+                            curGrupId = null;  // Bu grubu atla; detaylar da eklenmez
+                            grupSort += 10;
+                            continue;
+                        }
+                    }
+
+                    using var insGrup = new NpgsqlCommand("""
+                        INSERT INTO "YLArabaslikGruplar"
+                            ("GrupAdi","GrupAdi_EN","GrupAdi_FR","GrupAdi_DE","GrupAdi_RO","GrupAdi_AR","GrupAdi_RU",
+                             "TablTipi","SortOrder","IsActive","CreatedDate","CreatedBy")
+                        VALUES (@ad,@adEn,'','','','','',2,@sort,TRUE,NOW(),'OM Auto-Seed')
+                        RETURNING "Id"
+                        """, conn);
+                    insGrup.Parameters.AddWithValue("ad",   grupAdi);
+                    insGrup.Parameters.AddWithValue("adEn", grupAdiEn);
+                    insGrup.Parameters.AddWithValue("sort", grupSort);
+                    grupSort += 10;
+                    curGrupId = Convert.ToInt32(await insGrup.ExecuteScalarAsync() ?? 0);
+                    detaySort = 0;
+                }
+                else if (rTr.Tip == "ITEM" && curGrupId.HasValue)
+                {
+                    detaySort += 10;
+
+                    // SatirMetni: "{Kod} - {Aciklama}" + (varsa) " — {Detay}"
+                    string metniTr = string.IsNullOrEmpty(rTr.Kod)
+                        ? rTr.Aciklama
+                        : $"{rTr.Kod} - {rTr.Aciklama}";
+                    if (!string.IsNullOrWhiteSpace(rTr.Detay))
+                        metniTr += $" — {rTr.Detay}";
+
+                    string metniEn = string.IsNullOrEmpty(rEn.Kod)
+                        ? rEn.Aciklama
+                        : $"{rEn.Kod} - {rEn.Aciklama}";
+                    if (!string.IsNullOrWhiteSpace(rEn.Detay))
+                        metniEn += $" — {rEn.Detay}";
+
+                    using var insDet = new NpgsqlCommand("""
+                        INSERT INTO "YLArabaslikDetaylar"
+                            ("GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
+                             "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
+                        VALUES (@gid,@metni,@metniEn,'','','','','',@fiyat,'EUR',@sort)
+                        """, conn);
+                    insDet.Parameters.AddWithValue("gid",     curGrupId.Value);
+                    insDet.Parameters.AddWithValue("metni",   metniTr);
+                    insDet.Parameters.AddWithValue("metniEn", metniEn);
+                    insDet.Parameters.AddWithValue("fiyat",
+                        rTr.BirimFiyat.HasValue ? (object)rTr.BirimFiyat.Value : DBNull.Value);
+                    insDet.Parameters.AddWithValue("sort",    detaySort);
+                    await insDet.ExecuteNonQueryAsync();
+                }
+            }
         }
 
         // ─── GRUP CRUD ───────────────────────────────────────

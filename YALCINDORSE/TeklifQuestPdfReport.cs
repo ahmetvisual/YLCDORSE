@@ -1,7 +1,6 @@
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using YALCINDORSE.Services;
 using QContainer = QuestPDF.Infrastructure.IContainer;
 
 namespace YALCINDORSE
@@ -49,8 +48,6 @@ namespace YALCINDORSE
         public string UrunAltYazi       { get; set; } = "";
         public string SasiNo            { get; set; } = "";
         public string ModelYili         { get; set; } = "";
-        /// <summary>Teklif dili — "TR" / "EN" / "DE" / "FR" / "RU". OM formu icin TR/EN bolumlenir.</summary>
-        public string Dil               { get; set; } = "TR";
 
         public byte[]? LogoBytes  { get; set; }
         public byte[]? UrunFoto1  { get; set; }
@@ -150,7 +147,6 @@ namespace YALCINDORSE
                             BuildCizimSection(inner);
                             BuildListSection(inner);
                             BuildBankaSection(inner);
-                            BuildOmSection(inner);   // Faz 3: barandrive OM formu (TR/EN)
                             inner.Item().Height(6);
                         });
                     });
@@ -651,139 +647,6 @@ namespace YALCINDORSE
                     c.Item().Text(t => t.Span(line).FontSize(8).FontColor(BodyText));
                 }
             });
-        }
-
-        // ════════════════════════════════════════════════════════════════════
-        //  OM FORMU (Faz 3) — barandrive/OM_TR.xlsx & OM_EN.xlsx kaynakli
-        //  Teklif sonuna eklenen tam fiyat listesi + musteri bilgi formu.
-        //  Yeni sayfada baslar; quote.Dil = "EN" -> EN, digerleri -> TR.
-        // ════════════════════════════════════════════════════════════════════
-        private void BuildOmSection(ColumnDescriptor col)
-        {
-            var rows = OmFormVerileri.ForDil(Dil);
-            if (rows == null || rows.Count == 0) return;
-
-            bool isEn = string.Equals(Dil, "EN", StringComparison.OrdinalIgnoreCase);
-
-            // Yeni sayfada basla — banka section'in altinda devam etmesin.
-            col.Item().PageBreak();
-
-            // Baslik
-            col.Item().PaddingTop(2)
-               .BorderLeft(3).BorderBottom(0.75f).BorderColor(BlueAccent)
-               .PaddingLeft(3, Unit.Millimetre).PaddingVertical(2.5f)
-               .Text(t => t.Span(isEn ? "OFFER FORM / PRICE LIST" : "TEKLİF FORMU / FİYAT LİSTESİ")
-                           .Bold().FontSize(10).FontColor(NavyDark));
-            col.Item().Height(4);
-
-            // Musteri bilgi formu (auto-fill)
-            BuildOmCustomerInfo(col, isEn);
-            col.Item().Height(4);
-
-            // Fiyat tablosu basligi
-            col.Item().Background(NavyDark).Padding(2).Row(row =>
-            {
-                row.ConstantItem(18, Unit.Millimetre).AlignMiddle()
-                   .Text(t => t.Span(isEn ? "CODE" : "KOD").Bold().FontSize(8).FontColor(White));
-                row.RelativeItem().AlignMiddle()
-                   .Text(t => t.Span(isEn ? "DESCRIPTION" : "AÇIKLAMA").Bold().FontSize(8).FontColor(White));
-                row.ConstantItem(28, Unit.Millimetre).AlignMiddle().AlignRight()
-                   .Text(t => t.Span(isEn ? "UNIT PRICE" : "BİRİM FİYAT").Bold().FontSize(8).FontColor(White));
-            });
-
-            bool altRow = false;
-            foreach (var r in rows)
-            {
-                if (r.Tip == "SECTION")
-                {
-                    altRow = false;
-                    col.Item().Height(2);
-                    col.Item().BorderLeft(2).BorderColor(BlueAccent)
-                       .PaddingLeft(3, Unit.Millimetre).PaddingVertical(2)
-                       .Text(t => t.Span(r.Aciklama).Bold().FontSize(9).FontColor(NavyDark));
-                }
-                else // ITEM
-                {
-                    string bg = altRow ? AltRowBg : White;
-                    col.Item().Background(bg).Row(row =>
-                    {
-                        row.ConstantItem(18, Unit.Millimetre)
-                           .BorderBottom(0.5f).BorderColor(BorderClr)
-                           .PaddingVertical(1.5f).PaddingHorizontal(2)
-                           .Text(t => t.Span(r.Kod).Bold().FontSize(7.5f).FontColor(BlueAccent));
-
-                        row.RelativeItem()
-                           .BorderBottom(0.5f).BorderColor(BorderClr)
-                           .PaddingVertical(1.5f).PaddingHorizontal(2)
-                           .Column(c =>
-                           {
-                               c.Item().Text(t => t.Span(r.Aciklama).FontSize(7.5f).FontColor(DarkText));
-                               if (!string.IsNullOrWhiteSpace(r.Detay))
-                                   c.Item().Text(t => t.Span(r.Detay).FontSize(6.5f).FontColor(MutedText));
-                           });
-
-                        row.ConstantItem(28, Unit.Millimetre)
-                           .BorderBottom(0.5f).BorderColor(BorderClr)
-                           .PaddingVertical(1.5f).PaddingHorizontal(2)
-                           .AlignRight().AlignMiddle()
-                           .Text(t => t.Span(FormatOmPrice(r.BirimFiyat)).Bold().FontSize(7.5f).FontColor(DarkText));
-                    });
-                    altRow = !altRow;
-                }
-            }
-
-            // Dipnot
-            col.Item().Height(3);
-            col.Item().BorderLeft(2).BorderColor(MutedText)
-               .PaddingLeft(3, Unit.Millimetre)
-               .Text(t => t.Span(isEn
-                    ? "* Prices are reference list prices in EUR. Final prices subject to confirmation."
-                    : "* Fiyatlar referans liste fiyatlarıdır (EUR). Nihai fiyatlar onaya tabidir.")
-                    .Italic().FontSize(7).FontColor(MutedText));
-        }
-
-        /// <summary>OM ust kismi: musteri bilgi formu (FİRMA İSMİ / COMPANY NAME vb) auto-fill.</summary>
-        private void BuildOmCustomerInfo(ColumnDescriptor col, bool isEn)
-        {
-            var labels = isEn
-                ? new[] { ("COMPANY NAME", MusteriAdi),
-                          ("AUTHORIZED PERSON", IlgiliKisiler.FirstOrDefault()?.Ad ?? IlgiliKisi),
-                          ("E-MAIL", IlgiliKisiler.FirstOrDefault()?.Email ?? IlgiliEmail),
-                          ("MOBILE", IlgiliKisiler.FirstOrDefault()?.Mobil ?? IlgiliMobil),
-                          ("DATE", Tarih),
-                          ("OFFER NO", TeklifNo) }
-                : new[] { ("FİRMA İSMİ", MusteriAdi),
-                          ("FİRMA YETKİLİSİ", IlgiliKisiler.FirstOrDefault()?.Ad ?? IlgiliKisi),
-                          ("E-MAİL", IlgiliKisiler.FirstOrDefault()?.Email ?? IlgiliEmail),
-                          ("MOBİL", IlgiliKisiler.FirstOrDefault()?.Mobil ?? IlgiliMobil),
-                          ("TARİH", Tarih),
-                          ("TEKLİF NO", TeklifNo) };
-
-            col.Item().Border(0.5f).BorderColor(BorderClr).Column(c =>
-            {
-                bool altRow = false;
-                foreach (var (label, value) in labels)
-                {
-                    string bg = altRow ? AltRowBg : White;
-                    c.Item().Background(bg).Row(row =>
-                    {
-                        row.ConstantItem(40, Unit.Millimetre)
-                           .BorderRight(0.5f).BorderColor(BorderClr)
-                           .PaddingVertical(2).PaddingHorizontal(3)
-                           .Text(t => t.Span(label).Bold().FontSize(8).FontColor(NavyDark));
-                        row.RelativeItem()
-                           .PaddingVertical(2).PaddingHorizontal(3)
-                           .Text(t => t.Span(value ?? "").FontSize(8).FontColor(BodyText));
-                    });
-                    altRow = !altRow;
-                }
-            });
-        }
-
-        private static string FormatOmPrice(decimal? p)
-        {
-            if (!p.HasValue) return "";
-            return p.Value.ToString("N0") + " EUR";
         }
 
         // ════════════════════════════════════════════════════════════════════
