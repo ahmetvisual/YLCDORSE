@@ -349,9 +349,11 @@ namespace YALCINDORSE
             bool hasImage = UrunFoto1?.Length > 0 && !string.IsNullOrWhiteSpace(UrunBaslik);
             if (!hasImage) return;
 
-            // Urun basligi — diger bolum basliklariyla hizali olmasi icin 12mm yatay padding
+            // Urun basligi — diger bolum basliklariyla hizali (12mm padding) + alt cizgi
             col.Item().PaddingHorizontal(12, Unit.Millimetre)
-               .BorderLeft(3).BorderColor(BlueAccent)
+               .BorderLeft(3)
+               .BorderBottom(0.75f)
+               .BorderColor(BlueAccent)
                .PaddingLeft(3, Unit.Millimetre)
                .PaddingVertical(2, Unit.Millimetre)
                .Text(t => t.Span(UrunBaslik).Bold().FontSize(10).FontColor(NavyDark));
@@ -371,13 +373,13 @@ namespace YALCINDORSE
             }
             else
             {
-                // Tek foto: TAM SAYFA (210mm) genisligine gore ortalanmis.
-                // Outer col'da rendered ediliyor, AlignCenter sayfa ortasina yerlestirir.
-                // Width 180mm: sayfanin %86'sini kapliyor, her iki yanda 15mm bosluk birakir.
-                col.Item().AlignCenter()
-                   .Width(180, Unit.Millimetre)
-                   .Height(135, Unit.Millimetre)
-                   .Image(UrunFoto1!).FitArea();
+                // Tek foto: TAM SAYFA (210mm) genisligine gore SIMETRIK ortalama.
+                // PaddingHorizontal(15) + FitWidth -> goruntu kesin 180mm genislige
+                // oturur, her iki yanda 15mm esit bosluk kalir. AlignCenter+FitArea
+                // QuestPDF'te bazen icerigi sol-uste hizaliyor; bu pattern
+                // matematiksel olarak hatasiz simetri saglar.
+                col.Item().PaddingHorizontal(15, Unit.Millimetre)
+                   .Image(UrunFoto1!).FitWidth();
             }
 
             // Alt yazi — basliklarla hizali olmasi icin 12mm yatay padding
@@ -405,8 +407,11 @@ namespace YALCINDORSE
 
             foreach (var grp in activeGroups)
             {
-                // Grup başlığı — sol mavi çubuk + metin
-                col.Item().BorderLeft(3).BorderColor(BlueAccent)
+                // Grup basligi — sol mavi cubuk + metin + alt cizgi (BorderBottom)
+                col.Item()
+                   .BorderLeft(3)
+                   .BorderBottom(0.75f)
+                   .BorderColor(BlueAccent)
                    .PaddingLeft(3, Unit.Millimetre)
                    .PaddingVertical(2.5f)
                    .Text(t =>
@@ -498,7 +503,9 @@ namespace YALCINDORSE
 
             void RenderHeader(QContainer c, ListItem h)
             {
-                c.BorderLeft(3).BorderColor(BlueAccent)
+                c.BorderLeft(3)
+                 .BorderBottom(0.75f)
+                 .BorderColor(BlueAccent)
                  .Row(row =>
                  {
                      row.ConstantItem(3, Unit.Millimetre);
