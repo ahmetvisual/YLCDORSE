@@ -92,6 +92,131 @@
     min-height: 0;
 }
 
+/* ──────────────────────────────────────────────
+   Adım 3: Teslimat & Fiyat — sol form + sağ özet
+   ────────────────────────────────────────────── */
+.wizard-content.fill.step3-grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 14px;
+    align-items: start;
+    overflow-y: auto;
+}
+.step3-grid .step3-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.step3-grid .step3-summary {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.step3-summary .step3-summary-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--yl-text-light);
+    letter-spacing: 0.6px;
+    margin-bottom: 2px;
+}
+.step3-summary .summary-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.step3-summary .summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--yl-text);
+}
+.step3-summary .summary-row.total {
+    font-weight: 700;
+    color: var(--yl-primary);
+    font-size: 0.92rem;
+    margin-top: 2px;
+}
+.step3-summary .summary-divider {
+    border-bottom: 1px dashed var(--yl-border);
+    margin: 4px 0;
+}
+
+/* Mobil: ozet karti alta dusuyor */
+@media (max-width: 1100px) {
+    .wizard-content.fill.step3-grid {
+        grid-template-columns: 1fr;
+    }
+    .step3-grid .step3-summary {
+        position: static;
+    }
+}
+
+.app-root.dark .step3-grid .step3-summary {
+    background: #161b22;
+    border-color: var(--yl-border);
+}
+
+/* Teslimat notlari textarea */
+.teslimat-notlari-area {
+    width: 100%;
+    min-height: 110px;
+    padding: 8px 10px;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: #fff;
+    color: var(--yl-text);
+    resize: vertical;
+    box-sizing: border-box;
+    outline: none;
+    line-height: 1.45;
+}
+.teslimat-notlari-area:focus {
+    border-color: var(--yl-primary);
+    box-shadow: 0 0 0 2px rgba(24,95,165,0.08);
+}
+.app-root.dark .teslimat-notlari-area {
+    background: #161b22;
+    border-color: var(--yl-border);
+}
+
+/* TESLIMAT sablon picker icindeki tek satir butonu */
+.teslimat-pick-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 7px 10px;
+    background: #fff;
+    border: 1px solid transparent;
+    border-bottom: 1px solid #f0f2f5;
+    cursor: pointer;
+    font-size: 0.84rem;
+    color: var(--yl-text);
+    border-radius: 0;
+    font-family: inherit;
+    transition: all 0.1s;
+}
+.teslimat-pick-item:hover {
+    background: #eef3ff;
+    border-color: var(--yl-primary);
+}
+.app-root.dark .teslimat-pick-item {
+    background: #161b22;
+    border-bottom-color: rgba(255,255,255,0.05);
+    color: var(--yl-text);
+}
+.app-root.dark .teslimat-pick-item:hover {
+    background: rgba(59,125,221,0.12);
+    border-color: var(--yl-primary);
+}
+
 /* Adım 2: items-editor alta kadar uzasın */
 .wizard-content.fill.step2-fill {
     overflow-y: hidden;

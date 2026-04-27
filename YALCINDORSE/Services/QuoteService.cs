@@ -63,7 +63,14 @@ namespace YALCINDORSE.Services
         public string? TeslimatHaftasi { get; set; }
         public string? TeslimatTipiKodu { get; set; }
         public string? TeslimatYeri { get; set; }
+        public string? TeslimatNotlari { get; set; }   // Cok satirli teslimat sartlari/notlari
         public string? SiparisNo { get; set; }
+
+        // Ödeme planı (yeni)
+        public decimal OnOdemeYuzdesi { get; set; }    // %
+        public decimal OnOdemeTutari  { get; set; }    // hesaplanmis
+        public decimal BakiyeTutari   { get; set; }    // Net - OnOdemeTutari
+        public int? VadeGun           { get; set; }    // Bakiye odeme vadesi (gun)
         // Ikinci el alanları
         public string? SasiNo { get; set; }
         public int? ModelYili { get; set; }
@@ -135,6 +142,12 @@ namespace YALCINDORSE.Services
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Suspansiyon" TEXT""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Extension"   TEXT""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Gooseneck"   TEXT""",
+                    // Step 3 yeni alanlari — odeme plani + teslimat notlari
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "TeslimatNotlari" TEXT""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "OnOdemeYuzdesi"  NUMERIC(10,4) NOT NULL DEFAULT 0""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "OnOdemeTutari"   NUMERIC(18,4) NOT NULL DEFAULT 0""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "BakiyeTutari"    NUMERIC(18,4) NOT NULL DEFAULT 0""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "VadeGun"         INTEGER""",
                 };
 
                 foreach (var sql in migrations)
@@ -292,7 +305,8 @@ namespace YALCINDORSE.Services
                     "RevizyonNo", "OnayGerektirir", "Olusturan",
                     "TeklifKanali", "TeklifTipi", "AksSayisi", "OdemeSistemi",
                     "IskontoAciklama", "KdvDahilMi", "IhracatMi", "IhracKayitliMi",
-                    "TeslimatHaftasi", "TeslimatTipiKodu", "TeslimatYeri",
+                    "TeslimatHaftasi", "TeslimatTipiKodu", "TeslimatYeri", "TeslimatNotlari",
+                    "OnOdemeYuzdesi", "OnOdemeTutari", "BakiyeTutari", "VadeGun",
                     "SasiNo", "ModelYili",
                     "TipAdi", "Lastik", "Suspansiyon", "Extension", "Gooseneck"
                 )
@@ -305,7 +319,8 @@ namespace YALCINDORSE.Services
                     0, false, @Olusturan,
                     @TeklifKanali, @TeklifTipi, @AksSayisi, @OdemeSistemi,
                     @IskontoAciklama, @KdvDahilMi, @IhracatMi, @IhracKayitliMi,
-                    @TeslimatHaftasi, @TeslimatTipiKodu, @TeslimatYeri,
+                    @TeslimatHaftasi, @TeslimatTipiKodu, @TeslimatYeri, @TeslimatNotlari,
+                    @OnOdemeYuzdesi, @OnOdemeTutari, @BakiyeTutari, @VadeGun,
                     @SasiNo, @ModelYili,
                     @TipAdi, @Lastik, @Suspansiyon, @Extension, @Gooseneck
                 )
@@ -342,6 +357,11 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("TeslimatHaftasi", (object?)quote.TeslimatHaftasi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TeslimatTipiKodu", (object?)quote.TeslimatTipiKodu ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TeslimatNotlari", (object?)quote.TeslimatNotlari ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("OnOdemeYuzdesi", quote.OnOdemeYuzdesi);
+            cmd.Parameters.AddWithValue("OnOdemeTutari", quote.OnOdemeTutari);
+            cmd.Parameters.AddWithValue("BakiyeTutari", quote.BakiyeTutari);
+            cmd.Parameters.AddWithValue("VadeGun", (object?)quote.VadeGun ?? DBNull.Value);
             cmd.Parameters.AddWithValue("SasiNo", (object?)quote.SasiNo ?? DBNull.Value);
             cmd.Parameters.AddWithValue("ModelYili", (object?)quote.ModelYili ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TipAdi", (object?)quote.TipAdi ?? DBNull.Value);
@@ -410,6 +430,9 @@ namespace YALCINDORSE.Services
                     "OdemeSistemi" = @OdemeSistemi, "IskontoAciklama" = @IskontoAciklama,
                     "KdvDahilMi" = @KdvDahilMi, "IhracatMi" = @IhracatMi, "IhracKayitliMi" = @IhracKayitliMi,
                     "TeslimatHaftasi" = @TeslimatHaftasi, "TeslimatTipiKodu" = @TeslimatTipiKodu, "TeslimatYeri" = @TeslimatYeri,
+                    "TeslimatNotlari" = @TeslimatNotlari,
+                    "OnOdemeYuzdesi" = @OnOdemeYuzdesi, "OnOdemeTutari" = @OnOdemeTutari,
+                    "BakiyeTutari" = @BakiyeTutari, "VadeGun" = @VadeGun,
                     "SasiNo" = @SasiNo, "ModelYili" = @ModelYili,
                     "TipAdi" = @TipAdi, "Lastik" = @Lastik, "Suspansiyon" = @Suspansiyon, "Extension" = @Extension, "Gooseneck" = @Gooseneck
                 WHERE "Id" = @Id;
@@ -444,6 +467,11 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("TeslimatHaftasi", (object?)quote.TeslimatHaftasi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TeslimatTipiKodu", (object?)quote.TeslimatTipiKodu ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TeslimatYeri", (object?)quote.TeslimatYeri ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("TeslimatNotlari", (object?)quote.TeslimatNotlari ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("OnOdemeYuzdesi", quote.OnOdemeYuzdesi);
+            cmd.Parameters.AddWithValue("OnOdemeTutari", quote.OnOdemeTutari);
+            cmd.Parameters.AddWithValue("BakiyeTutari", quote.BakiyeTutari);
+            cmd.Parameters.AddWithValue("VadeGun", (object?)quote.VadeGun ?? DBNull.Value);
             cmd.Parameters.AddWithValue("SasiNo", (object?)quote.SasiNo ?? DBNull.Value);
             cmd.Parameters.AddWithValue("ModelYili", (object?)quote.ModelYili ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TipAdi", (object?)quote.TipAdi ?? DBNull.Value);
@@ -514,7 +542,8 @@ namespace YALCINDORSE.Services
                        "KdvDahilMi", "IhracatMi", "IhracKayitliMi", "TeslimatHaftasi",
                        "TeslimatTipiKodu", "TeslimatYeri", "SiparisNo",
                        "SasiNo", "ModelYili",
-                       "TipAdi", "Lastik", "Suspansiyon", "Extension", "Gooseneck"
+                       "TipAdi", "Lastik", "Suspansiyon", "Extension", "Gooseneck",
+                       "TeslimatNotlari", "OnOdemeYuzdesi", "OnOdemeTutari", "BakiyeTutari", "VadeGun"
                 FROM "YLTeklifler"
                 WHERE "Id" = @id;
                 """;
@@ -567,7 +596,12 @@ namespace YALCINDORSE.Services
                 Lastik      = r.IsDBNull(37) ? null : r.GetString(37),
                 Suspansiyon = r.IsDBNull(38) ? null : r.GetString(38),
                 Extension   = r.IsDBNull(39) ? null : r.GetString(39),
-                Gooseneck   = r.IsDBNull(40) ? null : r.GetString(40)
+                Gooseneck   = r.IsDBNull(40) ? null : r.GetString(40),
+                TeslimatNotlari = r.IsDBNull(41) ? null : r.GetString(41),
+                OnOdemeYuzdesi  = r.IsDBNull(42) ? 0 : r.GetDecimal(42),
+                OnOdemeTutari   = r.IsDBNull(43) ? 0 : r.GetDecimal(43),
+                BakiyeTutari    = r.IsDBNull(44) ? 0 : r.GetDecimal(44),
+                VadeGun         = r.IsDBNull(45) ? null : r.GetInt32(45),
             };
         }
 

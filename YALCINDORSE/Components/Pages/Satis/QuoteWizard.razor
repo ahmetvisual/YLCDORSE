@@ -9,6 +9,7 @@
 @inject DesktopWindowService WindowSvc
 @inject QuoteLookupService LookupSvc
 @inject ZirveService ZirveSvc
+@inject ArabaslikService ArabaslikSvc
 @implements IDisposable
 
 <div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow:hidden;"
@@ -485,97 +486,209 @@
         <!-- ADIM 3: Teslimat & Fiyatlandirma -->
         @if (currentStep == 3)
         {
-            <div class="wizard-content fill">
-                <div class="wizard-section-title">Teslimat Bilgileri</div>
-                <div class="wizard-grid3">
-                    <div class="wizard-field">
-                        <label>Teslimat Haftasi</label>
-                        <input type="text" @bind="quote.TeslimatHaftasi" placeholder="orn: 12-14" />
-                        <span style="font-size:0.75rem;color:var(--yl-text-light)">Aralik girilebilir: 12-14</span>
-                    </div>
-                    <div class="wizard-field">
-                        <label>Teslimat Tipi Kodu</label>
-                        <select @bind="quote.TeslimatTipiKodu">
-                            <option value="">— Seciniz —</option>
-                            <option value="EXW">EXW - Ex Works</option>
-                            <option value="FOB">FOB - Free on Board</option>
-                            <option value="CIF">CIF - Cost Insurance Freight</option>
-                            <option value="DAP">DAP - Delivered at Place</option>
-                            <option value="DDP">DDP - Delivered Duty Paid</option>
-                            <option value="CFR">CFR - Cost and Freight</option>
-                        </select>
-                    </div>
-                    <div class="wizard-field">
-                        <label>Teslimat Yeri</label>
-                        <input type="text" @bind="quote.TeslimatYeri" placeholder="Teslimat adresi/sehir" />
-                    </div>
-                </div>
+            <div class="wizard-content fill step3-grid">
 
-                <div class="wizard-section-title" style="margin-top:10px">Fiyatlandirma</div>
-                <div class="wizard-grid3">
-                    <div class="wizard-field">
-                        <label>Toplam Tutar</label>
-                        <input type="number" @bind="quote.ToplamTutar" @bind:after="CalculateNet" />
+                @* === SOL: Teslimat + Fiyat & Odeme === *@
+                <div class="step3-main">
+
+                    <!-- A. TESLIMAT BILGILERI -->
+                    <div class="wizard-section-title">Teslimat</div>
+                    <div class="wizard-grid3">
+                        <div class="wizard-field">
+                            <label>Teslimat Süresi (Hafta)</label>
+                            <input type="text" @bind="quote.TeslimatHaftasi" placeholder="örn: 12-14" />
+                        </div>
+                        <div class="wizard-field">
+                            <label>Incoterms (Teslimat Tipi)</label>
+                            <select @bind="quote.TeslimatTipiKodu">
+                                <option value="">— Seçiniz —</option>
+                                <option value="EXW">EXW — Ex Works</option>
+                                <option value="FCA">FCA — Free Carrier</option>
+                                <option value="FOB">FOB — Free On Board</option>
+                                <option value="CIF">CIF — Cost Insurance Freight</option>
+                                <option value="CFR">CFR — Cost and Freight</option>
+                                <option value="DAP">DAP — Delivered At Place</option>
+                                <option value="DDP">DDP — Delivered Duty Paid</option>
+                            </select>
+                        </div>
+                        <div class="wizard-field">
+                            <label>Teslimat Yeri</label>
+                            <input type="text" @bind="quote.TeslimatYeri" placeholder="örn: Adapazarı fabrika" />
+                        </div>
                     </div>
-                    <div class="wizard-field">
-                        <label>Indirim %</label>
-                        <input type="number" @bind="quote.IndirimYuzde" @bind:after="CalculateNet" />
+
+                    <!-- B. TESLIMAT SARTLARI / NOTLARI -->
+                    <div class="wizard-section-title" style="margin-top:10px;display:flex;align-items:center;justify-content:space-between">
+                        <span>Teslimat Şartları & Notları</span>
+                        <button type="button" class="wizard-btn" style="padding:4px 10px;font-size:0.74rem"
+                                @onclick="ToggleTeslimatPicker">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;margin-right:3px;vertical-align:text-bottom">
+                                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                            </svg>
+                            TESLİMAT Şablonundan Ekle
+                        </button>
                     </div>
-                    <div class="wizard-field">
-                        <label>Indirim Tutar</label>
-                        <input type="number" @bind="quote.IndirimTutar" disabled style="background:#f4f6fa" />
-                    </div>
-                    <div class="wizard-field">
-                        <label>Odeme Sistemi</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("odemeSistemi")'>
-                            <button class="custom-select-trigger" @onclick='() => ToggleDropdown("odemeSistemi")'>
-                                <span>@(odemeSistemiOpts.FirstOrDefault(o => o.Item1 == quote.OdemeSistemi).Item2 ?? "— Seciniz —")</span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                            </button>
-                            @if (openDropdown == "odemeSistemi")
-                            {
-                                <div class="custom-select-dropdown">
-                                    @foreach (var (val, label) in odemeSistemiOpts)
+                    <textarea class="teslimat-notlari-area" @bind="quote.TeslimatNotlari"
+                              placeholder="Teslimat şartlarınızı satır satır yazın. Sağdaki butonla TESLİMAT şablonundaki hazır maddeleri buraya ekleyebilirsiniz." />
+
+                    <!-- TESLIMAT sablon picker (overlay) -->
+                    @if (showTeslimatPicker)
+                    {
+                        <div class="modal-overlay" @onclick="() => showTeslimatPicker = false">
+                            <div class="quick-modal-content" style="max-width:560px;max-height:70vh;display:flex;flex-direction:column" @onclick:stopPropagation="true">
+                                <div class="modal-header">
+                                    <h4>TESLİMAT Şablon Maddeleri</h4>
+                                    <button class="btn-close" @onclick="() => showTeslimatPicker = false">&#10005;</button>
+                                </div>
+                                <div class="modal-body" style="padding:8px 14px;flex:1;overflow-y:auto">
+                                    @if (teslimatTemplateItems == null)
                                     {
-                                        <button class="custom-select-option @(quote.OdemeSistemi == val ? "selected" : "")"
-                                                @onmousedown="() => { quote.OdemeSistemi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                        <p style="font-size:0.85rem;color:var(--yl-text-light)">Yükleniyor...</p>
+                                    }
+                                    else if (!teslimatTemplateItems.Any())
+                                    {
+                                        <p style="font-size:0.85rem;color:var(--yl-text-light)">TESLİMAT şablonunda kayıt yok.</p>
+                                    }
+                                    else
+                                    {
+                                        <input type="text" placeholder="Madde ara..." @bind="teslimatPickerSearch" @bind:event="oninput"
+                                               style="width:100%;padding:6px 10px;margin-bottom:8px;border:1px solid var(--yl-border);font-size:0.83rem" />
+                                        <div style="display:flex;flex-direction:column;gap:1px">
+                                            @foreach (var dt in FilteredTeslimatItems)
+                                            {
+                                                <button type="button" class="teslimat-pick-item"
+                                                        @onclick="() => AppendTeslimatLine(GetDetayLocalizedText(dt))">
+                                                    <span style="color:var(--yl-text-light);margin-right:5px">+</span>@GetDetayLocalizedText(dt)
+                                                </button>
+                                            }
+                                        </div>
                                     }
                                 </div>
-                            }
+                                <div style="padding:10px 14px;border-top:1px solid var(--yl-border);display:flex;justify-content:flex-end">
+                                    <button class="wizard-btn" @onclick="() => showTeslimatPicker = false">Kapat</button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- C. FIYATLANDIRMA -->
+                    <div class="wizard-section-title" style="margin-top:10px">Fiyatlandırma</div>
+                    <div class="wizard-grid3">
+                        <div class="wizard-field">
+                            <label>Toplam Tutar (@quote.ParaBirimi)</label>
+                            <input type="number" step="0.01" @bind="quote.ToplamTutar" @bind:after="RecalcAll" />
+                        </div>
+                        <div class="wizard-field">
+                            <label>İndirim %</label>
+                            <input type="number" step="0.01" @bind="quote.IndirimYuzde" @bind:after="OnIndirimYuzdeChanged" />
+                        </div>
+                        <div class="wizard-field">
+                            <label>İndirim Tutar (@quote.ParaBirimi)</label>
+                            <input type="number" step="0.01" @bind="quote.IndirimTutar" @bind:after="OnIndirimTutarChanged" />
                         </div>
                     </div>
-                    <div class="wizard-field">
-                        <label>Iskonto Aciklama</label>
-                        <input type="text" @bind="quote.IskontoAciklama" placeholder="Iskonto detaylari" />
-                    </div>
-                    <div class="wizard-field">
-                        <label>Secenekler</label>
-                        <div class="wizard-checkbox-row">
-                            <label class="wizard-checkbox"><input type="checkbox" @bind="quote.KdvDahilMi" /> KDV Dahil</label>
-                            <label class="wizard-checkbox"><input type="checkbox" @bind="quote.IhracatMi" /> Ihracat</label>
-                            <label class="wizard-checkbox"><input type="checkbox" @bind="quote.IhracKayitliMi" /> Ihrac Kayitli</label>
+
+                    <!-- D. ODEME PLANI -->
+                    <div class="wizard-section-title" style="margin-top:10px">Ödeme Planı</div>
+                    <div class="wizard-grid3">
+                        <div class="wizard-field">
+                            <label>Ödeme Sistemi</label>
+                            <div class="custom-select" @onfocusout='() => CloseDropdown("odemeSistemi")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("odemeSistemi")'>
+                                    <span>@(odemeSistemiOpts.FirstOrDefault(o => o.Item1 == quote.OdemeSistemi).Item2 ?? "— Seciniz —")</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "odemeSistemi")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        @foreach (var (val, label) in odemeSistemiOpts)
+                                        {
+                                            <button class="custom-select-option @(quote.OdemeSistemi == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.OdemeSistemi = val; openDropdown = null; }" @onmousedown:preventDefault>@label</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
+                        <div class="wizard-field">
+                            <label>Ön Ödeme %</label>
+                            <input type="number" step="0.01" @bind="quote.OnOdemeYuzdesi" @bind:after="OnOnOdemeYuzdeChanged" />
+                        </div>
+                        <div class="wizard-field">
+                            <label>Ön Ödeme Tutar (@quote.ParaBirimi)</label>
+                            <input type="number" step="0.01" @bind="quote.OnOdemeTutari" @bind:after="OnOnOdemeTutarChanged" />
+                        </div>
+                        <div class="wizard-field">
+                            <label>Bakiye Tutar (@quote.ParaBirimi)</label>
+                            <input type="number" @bind="quote.BakiyeTutari" disabled style="background:#f4f6fa" />
+                        </div>
+                        <div class="wizard-field">
+                            <label>Vade (Gün)</label>
+                            <input type="number" @bind="quote.VadeGun" placeholder="örn: 30" />
+                        </div>
+                        <div class="wizard-field">
+                            <label>İskonto Açıklama</label>
+                            <input type="text" @bind="quote.IskontoAciklama" placeholder="İskonto detayları" />
+                        </div>
+                    </div>
+
+                    <!-- E. VERGI -->
+                    <div class="wizard-section-title" style="margin-top:10px">Vergi & Diğer</div>
+                    <div class="wizard-checkbox-row">
+                        <label class="wizard-checkbox"><input type="checkbox" @bind="quote.KdvDahilMi" /> KDV Dahil</label>
+                        <label class="wizard-checkbox"><input type="checkbox" @bind="quote.IhracatMi" /> İhracat</label>
+                        <label class="wizard-checkbox"><input type="checkbox" @bind="quote.IhracKayitliMi" /> İhraç Kayıtlı</label>
                     </div>
                 </div>
 
-                <div class="wizard-summary">
-                    <div class="summary-row">
-                        <span>Toplam Tutar</span>
-                        <span>@quote.ToplamTutar.ToString("N2") @quote.ParaBirimi</span>
+                @* === SAG: Ozet karti === *@
+                <aside class="step3-summary">
+                    <div class="step3-summary-title">ÖZET</div>
+                    <div class="summary-block">
+                        <div class="summary-row">
+                            <span>Toplam Tutar</span>
+                            <span>@quote.ToplamTutar.ToString("N2") @quote.ParaBirimi</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>İndirim (@quote.IndirimYuzde.ToString("0.##")%)</span>
+                            <span>-@quote.IndirimTutar.ToString("N2") @quote.ParaBirimi</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Net Tutar</span>
+                            <span>@quote.NetTutar.ToString("N2") @quote.ParaBirimi</span>
+                        </div>
                     </div>
-                    <div class="summary-row">
-                        <span>Indirim (@quote.IndirimYuzde%)</span>
-                        <span>-@quote.IndirimTutar.ToString("N2") @quote.ParaBirimi</span>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-block">
+                        <div class="summary-row">
+                            <span>Ön Ödeme (@quote.OnOdemeYuzdesi.ToString("0.##")%)</span>
+                            <span>@quote.OnOdemeTutari.ToString("N2") @quote.ParaBirimi</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Bakiye</span>
+                            <span>@quote.BakiyeTutari.ToString("N2") @quote.ParaBirimi</span>
+                        </div>
+                        @if (quote.VadeGun.HasValue && quote.VadeGun.Value > 0)
+                        {
+                            <div class="summary-row" style="font-size:0.78rem;color:var(--yl-text-light)">
+                                <span>Vade</span>
+                                <span>@quote.VadeGun gün</span>
+                            </div>
+                        }
                     </div>
-                    <div class="summary-row total">
-                        <span>Net Tutar</span>
-                        <span>@quote.NetTutar.ToString("N2") @quote.ParaBirimi</span>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-block">
+                        <div class="summary-row" style="font-size:0.8rem;color:var(--yl-text-light)">
+                            <span>Kalem Toplamı</span>
+                            <span>@(quoteItems.Where(i => i.KalemTipi != "HEADER").Sum(i => i.Tutar ?? 0).ToString("N2")) @quote.ParaBirimi</span>
+                        </div>
                     </div>
-                    <div class="summary-row" style="font-size:0.82rem;color:var(--yl-text-light)">
-                        <span>Kalem Toplami</span>
-                        <span>@(quoteItems.Where(i => i.KalemTipi != "HEADER").Sum(i => i.Tutar ?? 0).ToString("N2")) @quote.ParaBirimi</span>
-                    </div>
-                </div>
+                </aside>
             </div>
         }
 
@@ -1132,6 +1245,115 @@
     {
         quote.IndirimTutar = Math.Round(quote.ToplamTutar * quote.IndirimYuzde / 100, 2);
         quote.NetTutar = quote.ToplamTutar - quote.IndirimTutar;
+    }
+
+    /// <summary>Tum hesabi yeniden yapar: indirim/net + on odeme/bakiye.</summary>
+    private void RecalcAll()
+    {
+        CalculateNet();
+        RecalcOnOdeme();
+    }
+
+    /// <summary>Yuzdeden tutar hesaplama (indirim).</summary>
+    private void OnIndirimYuzdeChanged()
+    {
+        quote.IndirimTutar = Math.Round(quote.ToplamTutar * quote.IndirimYuzde / 100, 2);
+        quote.NetTutar = quote.ToplamTutar - quote.IndirimTutar;
+        RecalcOnOdeme();
+    }
+
+    /// <summary>Tutardan yuzde hesaplama (indirim).</summary>
+    private void OnIndirimTutarChanged()
+    {
+        if (quote.ToplamTutar > 0)
+            quote.IndirimYuzde = Math.Round(quote.IndirimTutar / quote.ToplamTutar * 100, 4);
+        else
+            quote.IndirimYuzde = 0;
+        quote.NetTutar = quote.ToplamTutar - quote.IndirimTutar;
+        RecalcOnOdeme();
+    }
+
+    /// <summary>NetTutar bazli on odeme + bakiye hesabi (yuzdeden).</summary>
+    private void OnOnOdemeYuzdeChanged()
+    {
+        quote.OnOdemeTutari = Math.Round(quote.NetTutar * quote.OnOdemeYuzdesi / 100, 2);
+        quote.BakiyeTutari = quote.NetTutar - quote.OnOdemeTutari;
+    }
+
+    /// <summary>NetTutar bazli yuzde + bakiye hesabi (tutardan).</summary>
+    private void OnOnOdemeTutarChanged()
+    {
+        if (quote.NetTutar > 0)
+            quote.OnOdemeYuzdesi = Math.Round(quote.OnOdemeTutari / quote.NetTutar * 100, 4);
+        else
+            quote.OnOdemeYuzdesi = 0;
+        quote.BakiyeTutari = quote.NetTutar - quote.OnOdemeTutari;
+    }
+
+    /// <summary>NetTutar degisince on odeme yuzdesini koruyup tutari + bakiyeyi hesapla.</summary>
+    private void RecalcOnOdeme()
+    {
+        quote.OnOdemeTutari = Math.Round(quote.NetTutar * quote.OnOdemeYuzdesi / 100, 2);
+        quote.BakiyeTutari = quote.NetTutar - quote.OnOdemeTutari;
+    }
+
+    // ─── TESLIMAT SABLON PICKER ─────────────────────────────────
+
+    private bool showTeslimatPicker = false;
+    private string teslimatPickerSearch = "";
+    private List<ArabaslikDetayModel>? teslimatTemplateItems;
+
+    private async Task ToggleTeslimatPicker()
+    {
+        showTeslimatPicker = !showTeslimatPicker;
+        if (showTeslimatPicker && teslimatTemplateItems == null)
+        {
+            try
+            {
+                var gruplar = await ArabaslikSvc.GetGruplarAsync();
+                var teslimatGrup = gruplar.FirstOrDefault(g =>
+                    string.Equals(g.GrupAdi, "TESLİMAT", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(g.GrupAdi, "TESLIMAT", StringComparison.OrdinalIgnoreCase));
+                teslimatTemplateItems = teslimatGrup != null
+                    ? await ArabaslikSvc.GetDetaylarAsync(teslimatGrup.Id)
+                    : new List<ArabaslikDetayModel>();
+            }
+            catch { teslimatTemplateItems = new(); }
+        }
+    }
+
+    private List<ArabaslikDetayModel> FilteredTeslimatItems
+    {
+        get
+        {
+            if (teslimatTemplateItems == null) return new();
+            if (string.IsNullOrWhiteSpace(teslimatPickerSearch)) return teslimatTemplateItems;
+            var q = teslimatPickerSearch.Trim();
+            return teslimatTemplateItems.Where(d =>
+                (d.SatirMetni ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (d.SatirMetni_EN ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+    }
+
+    private string GetDetayLocalizedText(ArabaslikDetayModel d) => quote.Dil switch
+    {
+        "EN" when !string.IsNullOrEmpty(d.SatirMetni_EN) => d.SatirMetni_EN,
+        "DE" when !string.IsNullOrEmpty(d.SatirMetni_DE) => d.SatirMetni_DE,
+        "FR" when !string.IsNullOrEmpty(d.SatirMetni_FR) => d.SatirMetni_FR,
+        "RU" when !string.IsNullOrEmpty(d.SatirMetni_RU) => d.SatirMetni_RU,
+        "RO" when !string.IsNullOrEmpty(d.SatirMetni_RO) => d.SatirMetni_RO,
+        "AR" when !string.IsNullOrEmpty(d.SatirMetni_AR) => d.SatirMetni_AR,
+        _ => d.SatirMetni ?? ""
+    };
+
+    private void AppendTeslimatLine(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line)) return;
+        var existing = string.IsNullOrEmpty(quote.TeslimatNotlari) ? "" : quote.TeslimatNotlari;
+        var sep = string.IsNullOrEmpty(existing) || existing.EndsWith("\n") ? "" : "\n";
+        quote.TeslimatNotlari = existing + sep + "• " + line.Trim();
+        MarkDirty();
     }
 
     private void GoToStep(int step)
