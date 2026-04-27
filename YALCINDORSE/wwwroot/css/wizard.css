@@ -187,35 +187,153 @@
     border-color: var(--yl-border);
 }
 
-/* TESLIMAT sablon picker icindeki tek satir butonu */
-.teslimat-pick-item {
-    display: block;
+/* TESLIMAT sablon picker (CRUD'lu) */
+.quick-modal-content.tlpick {
+    max-width: 600px;
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+}
+.tlpick-body {
+    padding: 8px 14px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.tlpick-search {
     width: 100%;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    font-size: 0.83rem;
+    background: #fff;
+    color: var(--yl-text);
+    outline: none;
+}
+.tlpick-search:focus { border-color: var(--yl-primary); }
+
+.tlpick-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 8px;
+}
+.tlpick-row {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid #f0f2f5;
+    transition: background 0.1s;
+}
+.tlpick-row:hover { background: #f7faff; }
+.tlpick-text {
+    flex: 1;
     text-align: left;
     padding: 7px 10px;
-    background: #fff;
+    background: transparent;
     border: 1px solid transparent;
-    border-bottom: 1px solid #f0f2f5;
     cursor: pointer;
     font-size: 0.84rem;
     color: var(--yl-text);
     border-radius: 0;
     font-family: inherit;
-    transition: all 0.1s;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
-.teslimat-pick-item:hover {
-    background: #eef3ff;
+.tlpick-text:hover { background: #eef3ff; border-color: var(--yl-primary); }
+.tlpick-plus {
+    color: var(--yl-text-light);
+    margin-right: 6px;
+    font-weight: 700;
+}
+.tlpick-text:hover .tlpick-plus { color: var(--yl-primary); }
+
+.tlpick-tool {
+    width: 28px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--yl-text-light);
+    cursor: pointer;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: all 0.12s;
+}
+.tlpick-row:hover .tlpick-tool { opacity: 1; }
+.tlpick-tool:hover {
     border-color: var(--yl-primary);
+    color: var(--yl-primary);
+    background: rgba(59,125,221,0.08);
 }
-.app-root.dark .teslimat-pick-item {
-    background: #161b22;
-    border-bottom-color: rgba(255,255,255,0.05);
+.tlpick-tool.delete:hover {
+    border-color: #dc2626;
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+/* + Yeni madde inline form */
+.tlpick-add {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: rgba(59,125,221,0.05);
+    border: 1px dashed rgba(59,125,221,0.3);
+    margin-top: 4px;
+}
+.tlpick-add-bullet {
+    color: var(--yl-primary);
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.tlpick-add input {
+    flex: 1;
+    border: 1px solid var(--yl-border);
+    background: #fff;
+    border-radius: 0;
+    padding: 5px 8px;
+    font-size: 0.83rem;
+    outline: none;
     color: var(--yl-text);
 }
-.app-root.dark .teslimat-pick-item:hover {
-    background: rgba(59,125,221,0.12);
-    border-color: var(--yl-primary);
+.tlpick-add input:focus { border-color: var(--yl-primary); }
+.tlpick-add-confirm {
+    border: 1px solid var(--yl-primary);
+    background: var(--yl-primary);
+    color: #fff;
+    padding: 5px 12px;
+    cursor: pointer;
+    border-radius: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    flex-shrink: 0;
 }
+.tlpick-add-confirm:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: transparent;
+    color: var(--yl-text-light);
+    border-color: var(--yl-border);
+}
+
+/* Dark mode */
+.app-root.dark .tlpick-search,
+.app-root.dark .tlpick-add input {
+    background: #161b22;
+    border-color: var(--yl-border);
+    color: var(--yl-text);
+}
+.app-root.dark .tlpick-row { border-bottom-color: rgba(255,255,255,0.05); }
+.app-root.dark .tlpick-row:hover { background: rgba(59,125,221,0.06); }
+.app-root.dark .tlpick-text:hover { background: rgba(59,125,221,0.12); border-color: var(--yl-primary); }
+.app-root.dark .tlpick-add { background: rgba(59,125,221,0.08); border-color: rgba(59,125,221,0.4); }
 
 /* Adım 2: items-editor alta kadar uzasın */
 .wizard-content.fill.step2-fill {
