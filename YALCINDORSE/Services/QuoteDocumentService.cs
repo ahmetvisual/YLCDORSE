@@ -171,12 +171,15 @@ namespace YALCINDORSE.Services
             var urunAltYazi = string.IsNullOrWhiteSpace(urunAdi) ? ""
                 : $"(Fotoğraflar, {urunAdi.ToLowerInvariant()} ürününe aittir.)";
 
-            // Firma bilgileri (singleton) + IBAN listesi
+            // Firma bilgileri (singleton) — hesap cekme baslarken bagimsiz olsun
             FirmaBilgileriModel? firma = null;
+            try { firma = await _firmaSvc.GetFirmaAsync(); }
+            catch { }
+
+            // Banka hesaplari / IBAN listesi — firma fetch hata verse de bagimsiz cekilir
             var ibanList = new List<string>();
             try
             {
-                firma = await _firmaSvc.GetFirmaAsync();
                 var hesaplar = await _firmaSvc.GetHesaplarAsync(onlyActive: true);
                 ibanList = hesaplar.Select(h =>
                 {

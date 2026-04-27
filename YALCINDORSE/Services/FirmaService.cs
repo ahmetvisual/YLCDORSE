@@ -125,6 +125,51 @@ namespace YALCINDORSE.Services
                     }
                     catch { /* mevcut tablo/kolon — atla */ }
                 }
+
+                // ─── Otomatik IBAN seed — yalniz tablo bossa calisir ───────
+                // Kaynak: barandrive/HESAP BILGILERI.xlsx (22 banka hesabi).
+                // Kullanici UI'dan IBAN ekledi/duzenlediyse bu blok atlanir,
+                // kullanicinin ozellestirmesi korunur.
+                try
+                {
+                    using var checkCmd = new NpgsqlCommand(
+                        @"SELECT COUNT(*) FROM ""YLFirmaHesaplari""", conn);
+                    var rowCount = Convert.ToInt64(
+                        await checkCmd.ExecuteScalarAsync() ?? 0L);
+                    if (rowCount == 0)
+                    {
+                        const string seedSql = """
+                            INSERT INTO "YLFirmaHesaplari"
+                                ("BankaAdi","ParaBirimi","Sube","IBAN","AktifMi","SortOrder")
+                            VALUES
+                                ('GARANTİ BBVA (Dorse)', 'TL', '595 - 6297007 SİLİVRİ', 'TR440006200059500006297007', TRUE, 10),
+                                ('GARANTİ BBVA (Dorse)', 'EUR', '595 - 9093069 SİLİVRİ', 'TR850006200059500009093070', TRUE, 20),
+                                ('GARANTİ BBVA (Dorse)', 'USD', '595 - 9093070 SİLİVRİ', 'TR150006200059500009093069', TRUE, 30),
+                                ('TÜRKİYE HALK BANKASI A.Ş. (Dorse)', 'TL', '1378 SİLİVRİ E-5 ŞUBESİ', 'TR940001200137800010100081', TRUE, 40),
+                                ('TÜRKİYE HALK BANKASI A.Ş. (Dorse)', 'EUR', '1378 SİLİVRİ E-5 ŞUBESİ', 'TR130001200137800058100049', TRUE, 50),
+                                ('TÜRKİYE HALK BANKASI A.Ş. (Dorse)', 'USD', '1378 SİLİVRİ E-5 ŞUBESİ', 'TR580001200137800053100053', TRUE, 60),
+                                ('TÜRKİYE VAKIFLAR BANKASI T.A.O. (Dorse)', 'TL', 'Hurrıyet Tekırdag Subesı-S01047', 'TR370001500158007297036415', TRUE, 70),
+                                ('TÜRKİYE VAKIFLAR BANKASI T.A.O. (Dorse)', 'EUR', 'Hurrıyet Tekırdag Subesı-S01047', 'TR660001500158048018275802', TRUE, 80),
+                                ('TÜRKİYE VAKIFLAR BANKASI T.A.O. (Dorse)', 'USD', 'Hurrıyet Tekırdag Subesı-S01047', 'TR750001500158048018257889', TRUE, 90),
+                                ('TÜRKİYE İŞ BANKASI A.Ş. (Dorse)', 'TL', '1522 - Emlakkent Çorlu Tekirdağ Şubesi', 'TR310006400000115220138841', TRUE, 100),
+                                ('TÜRKİYE İŞ BANKASI A.Ş. (Dorse)', 'EUR', '1523 - Emlakkent Çorlu Tekirdağ Şubesi', 'TR390006400000215220019382', TRUE, 110),
+                                ('TÜRKİYE CUMHURİYETİ ZİRAAT BANKASI A.Ş. (Dorse)', 'TL', 'Çorlu Tekirdağ Tic. Şubesi', 'TR250001002145016074835004', TRUE, 120),
+                                ('TÜRKİYE CUMHURİYETİ ZİRAAT BANKASI A.Ş. (Dorse)', 'EUR', 'Çorlu Tekirdağ Tic. Şubesi', 'TR410001002145016074835007', TRUE, 130),
+                                ('TÜRKİYE CUMHURİYETİ ZİRAAT BANKASI A.Ş. (Dorse)', 'USD', 'Çorlu Tekirdağ Tic. Şubesi', 'TR680001002145016074835006', TRUE, 140),
+                                ('TÜRKİYE EMLAK KATILIM BANKASI A.Ş. (Dorse)', 'TL', 'Çorlu Şube 088', 'TR820021100000073761800001', TRUE, 150),
+                                ('TÜRKİYE EMLAK KATILIM BANKASI A.Ş. (Dorse)', 'EUR', 'EMLATRISXXX Swift', 'TR710021100000073761800102', TRUE, 160),
+                                ('GARANTİ BBVA (Lowbed)', 'TL', '595 - 6295813 SİLİVRİ', 'TR780006200059500006295813', TRUE, 170),
+                                ('GARANTİ BBVA (Lowbed)', 'EUR', '595 - 9087110 SİLİVRİ', 'TR820006200059500009087110', TRUE, 180),
+                                ('TÜRKİYE HALK BANKASI A.Ş. (Lowbed)', 'TL', '1378 SİLİVRİ E-5 ŞUBESİ', 'TR730001200137800010100459', TRUE, 190),
+                                ('TÜRKİYE HALK BANKASI A.Ş. (Lowbed)', 'EUR', '1378 SİLİVRİ E-5 ŞUBESİ', 'TR500001200137800058100159', TRUE, 200),
+                                ('TÜRKİYE VAKIFLAR BANKASI T.A.O. (Lowbed)', 'TL', '158007311915411 Hurrıyet Tekırdag Subesı-S01047', 'TR170001500158007311915411', TRUE, 210),
+                                ('TÜRKİYE VAKIFLAR BANKASI T.A.O. (Lowbed)', 'EUR', '158048018866429 Hurrıyet Tekırdag Subesı-S01047', 'TR340001500158048018866429', TRUE, 220);
+                            """;
+                        using var seedCmd = new NpgsqlCommand(seedSql, conn);
+                        await seedCmd.ExecuteNonQueryAsync();
+                    }
+                }
+                catch { /* seed hatasi: kullanici UI'dan elle ekleyebilir */ }
             }
             finally { _schemaLock.Release(); }
         }
