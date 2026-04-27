@@ -187,16 +187,19 @@ namespace YALCINDORSE.Services
                     });
             }
 
-            // Numaralı liste
+            // Numaralı liste — SPEC-only header'lar (Tablo tipi: ÖLÇÜLER, AĞIRLIKLAR vb.)
+            // SpecSection'da zaten gosterildigi icin bunlari listeden cikar.
             var listItems = new List<TeklifQuestPdfReport.ListItem>();
             int hNum = 0;
             foreach (var header in headers)
             {
-                hNum++;
-                listItems.Add(new TeklifQuestPdfReport.ListItem($"{hNum}.", header.Aciklama, true, true));
                 var children = items
                     .Where(i => i.UstKalemId == header.Id && i.KalemTipi == "ITEM")
                     .OrderBy(i => i.SiraNo).ToList();
+                if (children.Count == 0) continue;  // SPEC-only header — listede yer alma
+
+                hNum++;
+                listItems.Add(new TeklifQuestPdfReport.ListItem($"{hNum}.", header.Aciklama, true, true));
                 int cNum = 0;
                 foreach (var child in children)
                 {

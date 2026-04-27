@@ -464,49 +464,68 @@ namespace YALCINDORSE
             col.Item().Height(0.5f).Background(BorderClr);
             col.Item().Height(4);
 
-            bool firstHeader = true;
-            foreach (var item in ListItems)
+            // Header bazinda gruplara bol — her grup: [header, ...children]
+            var groups = new List<List<ListItem>>();
+            List<ListItem>? cur = null;
+            foreach (var li in ListItems)
             {
-                if (item.IsHeader && !firstHeader)
-                    col.Item().Height(4);
-                if (item.IsHeader) firstHeader = false;
+                if (li.IsHeader) { cur = new List<ListItem> { li }; groups.Add(cur); }
+                else if (cur != null) cur.Add(li);
+            }
 
-                string metin = item.IsHeader ? item.Metin.ToUpperInvariant() : item.Metin;
-                bool   bold  = item.IsHeader || item.Bold;
+            void RenderHeader(QContainer c, ListItem h)
+            {
+                c.BorderLeft(3).BorderColor(BlueAccent)
+                 .Row(row =>
+                 {
+                     row.ConstantItem(3, Unit.Millimetre);
+                     row.ConstantItem(14, Unit.Millimetre)
+                        .AlignMiddle()
+                        .Text(t => t.Span(h.Numara).Bold().FontSize(8.5f).FontColor(BlueAccent));
+                     row.RelativeItem()
+                        .PaddingVertical(2.5f)
+                        .AlignMiddle()
+                        .Text(t => t.Span(h.Metin.ToUpperInvariant()).Bold().FontSize(9).FontColor(NavyDark));
+                 });
+            }
 
-                if (item.IsHeader)
+            void RenderChild(QContainer c, ListItem li)
+            {
+                c.Row(row =>
                 {
-                    col.Item().BorderLeft(3).BorderColor(BlueAccent)
-                       .Row(row =>
+                    row.ConstantItem(6, Unit.Millimetre);
+                    row.ConstantItem(14, Unit.Millimetre)
+                       .Text(t => t.Span(li.Numara).FontSize(8).FontColor(CyanTxt));
+                    row.RelativeItem()
+                       .PaddingVertical(1.5f)
+                       .Text(t =>
                        {
-                           row.ConstantItem(3, Unit.Millimetre);
-                           row.ConstantItem(14, Unit.Millimetre)
-                              .AlignMiddle()
-                              .Text(t => t.Span(item.Numara).Bold().FontSize(8.5f).FontColor(BlueAccent));
-                           row.RelativeItem()
-                              .PaddingVertical(2.5f)
-                              .AlignMiddle()
-                              .Text(t => t.Span(metin).Bold().FontSize(9).FontColor(NavyDark));
+                           if (li.Bold) t.Span(li.Metin).Bold().FontSize(8.5f).FontColor(BodyText);
+                           else        t.Span(li.Metin).FontSize(8.5f).FontColor(BodyText);
                        });
-                }
-                else
+                });
+            }
+
+            bool firstGroup = true;
+            foreach (var grp in groups)
+            {
+                var header = grp[0];
+                var children = grp.Skip(1).ToList();
+
+                if (!firstGroup) col.Item().Height(4);
+                firstGroup = false;
+
+                // Header + ilk child birlikte (sayfada bolunmesinler)
+                col.Item().ShowEntire().Column(c =>
                 {
-                    col.Item().Row(row =>
-                    {
-                        row.ConstantItem(6, Unit.Millimetre);
-                        row.ConstantItem(14, Unit.Millimetre)
-                           .Text(t => t.Span(item.Numara).FontSize(8).FontColor(CyanTxt));
-                        row.RelativeItem()
-                           .PaddingVertical(1.5f)
-                           .Text(t =>
-                           {
-                               if (bold)
-                                   t.Span(metin).Bold().FontSize(8.5f).FontColor(BodyText);
-                               else
-                                   t.Span(metin).FontSize(8.5f).FontColor(BodyText);
-                           });
-                    });
-                }
+                    c.Item().Element(ctn => RenderHeader(ctn, header));
+                    if (children.Count > 0)
+                        c.Item().Element(ctn => RenderChild(ctn, children[0]));
+                });
+
+                // Geri kalan child'lar normal akista (serbest sayfa kirilimi)
+                foreach (var ch in children.Skip(1))
+                    col.Item().Element(ctn => RenderChild(ctn, ch));
             }
         }
 

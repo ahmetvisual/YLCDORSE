@@ -672,7 +672,9 @@
             KalemTipi = "ITEM",
             UstKalemId = header.Id,
             SiraNo = maxSira + 10,
-            Aciklama = ""
+            Aciklama = "",
+            Miktar = 1,
+            Birim = "AD",
         });
         NotifyChanged();
     }
@@ -923,9 +925,9 @@
                     SiraNo = childSira,
                     Aciklama = itemText,
                     BirimFiyat = d.Fiyat,
-                    Miktar = d.Fiyat.HasValue ? 1 : null,
+                    Miktar = 1,
                     Tutar = d.Fiyat,
-                    Birim = d.Fiyat.HasValue ? "AD" : null
+                    Birim = "AD",
                 });
             }
         }
@@ -984,9 +986,9 @@
                 SiraNo = childSira + 10,
                 Aciklama = itemText,
                 BirimFiyat = d.Fiyat,
-                Miktar = d.Fiyat.HasValue ? 1 : null,
+                Miktar = 1,
                 Tutar = d.Fiyat,
-                Birim = d.Fiyat.HasValue ? "AD" : null
+                Birim = "AD",
             });
         }
         NotifyChanged();
