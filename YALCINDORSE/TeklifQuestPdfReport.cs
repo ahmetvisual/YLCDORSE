@@ -99,7 +99,9 @@ namespace YALCINDORSE
                 {
                     page.Size(PageSizes.A4);
                     page.MarginHorizontal(0);
-                    page.MarginTop(0);
+                    // Tum sayfalarda ust bosluk — 1. sayfa header'inin ustunde minimal beyaz
+                    // bant, 2.+ sayfa icin profesyonel ust kenar bosluk olusturur.
+                    page.MarginTop(8, Unit.Millimetre);
                     page.MarginBottom(0);
                     page.DefaultTextStyle(ts => ts.FontFamily("Segoe UI").FontSize(9));
 
@@ -342,20 +344,24 @@ namespace YALCINDORSE
                .Text(t => t.Span(UrunBaslik).Bold().FontSize(10).FontColor(NavyDark));
             col.Item().Height(3);
 
-            // Fotoğraf(lar)
+            // Fotoğraf(lar) — tek ise ortalı + buyuk, iki ise yan yana biraz daha genis
             bool hasImg2 = UrunFoto2?.Length > 0;
             if (hasImg2)
             {
                 col.Item().Row(row =>
                 {
-                    row.RelativeItem().Height(72, Unit.Millimetre).Image(UrunFoto1!).FitArea();
-                    row.ConstantItem(2, Unit.Millimetre);
-                    row.RelativeItem().Height(72, Unit.Millimetre).Image(UrunFoto2!).FitArea();
+                    row.RelativeItem().Height(95, Unit.Millimetre).Image(UrunFoto1!).FitArea();
+                    row.ConstantItem(3, Unit.Millimetre);
+                    row.RelativeItem().Height(95, Unit.Millimetre).Image(UrunFoto2!).FitArea();
                 });
             }
             else
             {
-                col.Item().Height(72, Unit.Millimetre).Image(UrunFoto1!).FitArea();
+                // Tek foto: AlignCenter + sabit genislik 150mm (sayfa icerik alani ~186mm)
+                col.Item().AlignCenter()
+                   .Width(150, Unit.Millimetre)
+                   .Height(115, Unit.Millimetre)
+                   .Image(UrunFoto1!).FitArea();
             }
 
             // Alt yazı
