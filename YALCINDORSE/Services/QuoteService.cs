@@ -143,11 +143,17 @@ namespace YALCINDORSE.Services
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Extension"   TEXT""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Gooseneck"   TEXT""",
                     // Step 3 yeni alanlari — odeme plani + teslimat notlari
+                    // NOT: NOT NULL clause kullanmiyoruz; bazi PG surumlerinde mevcut datayla
+                    // birlikte sessiz fail edebiliyor. C# tarafi default 0 yontuyor zaten.
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "TeslimatNotlari" TEXT""",
-                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "OnOdemeYuzdesi"  NUMERIC(10,4) NOT NULL DEFAULT 0""",
-                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "OnOdemeTutari"   NUMERIC(18,4) NOT NULL DEFAULT 0""",
-                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "BakiyeTutari"    NUMERIC(18,4) NOT NULL DEFAULT 0""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "OnOdemeYuzdesi"  NUMERIC(10,4) DEFAULT 0""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "OnOdemeTutari"   NUMERIC(18,4) DEFAULT 0""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "BakiyeTutari"    NUMERIC(18,4) DEFAULT 0""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "VadeGun"         INTEGER""",
+                    // Mevcut NULL kayitlari 0'a doldur — sonraki SELECT'ler 0 doner
+                    """UPDATE "YLTeklifler" SET "OnOdemeYuzdesi" = 0 WHERE "OnOdemeYuzdesi" IS NULL""",
+                    """UPDATE "YLTeklifler" SET "OnOdemeTutari"  = 0 WHERE "OnOdemeTutari"  IS NULL""",
+                    """UPDATE "YLTeklifler" SET "BakiyeTutari"   = 0 WHERE "BakiyeTutari"   IS NULL""",
                 };
 
                 foreach (var sql in migrations)
