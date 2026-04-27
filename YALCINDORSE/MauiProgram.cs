@@ -39,6 +39,7 @@ namespace YALCINDORSE
             builder.Services.AddTransient<QuoteLookupService>();
             builder.Services.AddTransient<ZirveService>();
             builder.Services.AddTransient<FirmaService>();
+            builder.Services.AddTransient<LastikService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

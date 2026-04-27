@@ -10,6 +10,7 @@
 @inject QuoteLookupService LookupSvc
 @inject ZirveService ZirveSvc
 @inject ArabaslikService ArabaslikSvc
+@inject LastikService LastikSvc
 @implements IDisposable
 
 <div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow:hidden;"
@@ -223,7 +224,69 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Lastik (Tire)</label>
-                        <input type="text" @bind="quote.Lastik" placeholder="Ornek: 385/65 R22.5" />
+                        <div style="display:flex;gap:4px;align-items:flex-start">
+                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("lastik")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleLastikDropdown()'>
+                                    <span>@(string.IsNullOrEmpty(quote.Lastik) ? "— Seciniz —" : quote.Lastik)</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "lastik")
+                                {
+                                    <div class="custom-select-dropdown" style="max-height:320px;overflow-y:auto">
+                                        <div style="padding:6px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
+                                            <input type="text" placeholder="Marka / Model / Ebat ara..."
+                                                   value="@lastikSearchText"
+                                                   @oninput="(e) => lastikSearchText = e.Value?.ToString() ?? string.Empty"
+                                                   @onmousedown:stopPropagation="true"
+                                                   @onclick:stopPropagation="true"
+                                                   style="width:100%;font-size:11px;padding:4px 6px" />
+                                        </div>
+                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.Lastik) ? "selected" : "")"
+                                                @onmousedown="() => { quote.Lastik = null; openDropdown = null; lastikSearchText = string.Empty; }" @onmousedown:preventDefault>— Temizle —</button>
+                                        @{ var filt = FilteredLastikler().ToList(); }
+                                        @if (filt.Count == 0)
+                                        {
+                                            <div style="padding:10px;color:#9ca3af;font-size:11px;text-align:center">Eslesen lastik yok</div>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var k in filt)
+                                            {
+                                                <button class="custom-select-option @(quote.Lastik == k.DisplayText ? "selected" : "")"
+                                                        @onmousedown="() => SelectLastik(k)" @onmousedown:preventDefault>@k.DisplayText</button>
+                                            }
+                                            @if (lastikKatalog.Count > filt.Count && string.IsNullOrWhiteSpace(lastikSearchText))
+                                            {
+                                                <div style="padding:6px;color:#9ca3af;font-size:10px;text-align:center;border-top:1px solid #e5e7eb">
+                                                    @filt.Count / @lastikKatalog.Count gosteriliyor — daraltmak icin yazin
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <button class="wizard-btn lookup-mgr-btn" title="Lastik katalogunu yonet" @onclick='() => ToggleLookupManager("LASTIK")'>&#x229E;</button>
+                        </div>
+                        @if (openLookupManager == "LASTIK")
+                        {
+                            <div class="lookup-manager-panel" style="max-height:360px;overflow-y:auto">
+                                @foreach (var k in lastikKatalog)
+                                {
+                                    <div class="lookup-mgr-row" style="font-size:11px">
+                                        <span style="flex:1">@k.DisplayText</span>
+                                        <button @onclick="async () => await DeleteLastikAsync(k.Id)" title="Sil">&#xD7;</button>
+                                    </div>
+                                }
+                                <div class="lookup-mgr-add" style="display:grid;grid-template-columns:90px 1fr 110px 80px 40px auto;gap:3px;font-size:11px;padding:6px 0">
+                                    <input type="text" @bind="newLastik.Marka" placeholder="Marka" />
+                                    <input type="text" @bind="newLastik.Model" placeholder="Model" />
+                                    <input type="text" @bind="newLastik.Ebat" placeholder="385/65 R 22.5" />
+                                    <input type="text" @bind="newLastik.YukIndeksi" placeholder="LI" />
+                                    <input type="text" @bind="newLastik.HizSimgesi" placeholder="Hiz" maxlength="3" />
+                                    <button @onclick="AddLastikAsync" title="Ekle">+</button>
+                                </div>
+                            </div>
+                        }
                     </div>
                     <div class="wizard-field compact">
                         <label>Suspansiyon</label>
@@ -1044,6 +1107,11 @@
     private List<string> extensionValues   = new();
     private List<string> gooseneckValues   = new();
 
+    // Lastik katalogu (Faz 2) — Marka/Model/Ebat/LI/Hiz; quote.Lastik string olarak kaydedilir.
+    private List<LastikKatalogModel> lastikKatalog = new();
+    private string lastikSearchText = string.Empty;
+    private LastikKatalogModel newLastik = new();
+
     // Lookup manager UI
     private string? openLookupManager;
     private string newLookupValue = "";
@@ -1069,6 +1137,7 @@
             suspansiyonValues = await LookupSvc.GetValuesAsync("SUSPANSIYON");
             extensionValues   = await LookupSvc.GetValuesAsync("EXTENSION");
             gooseneckValues   = await LookupSvc.GetValuesAsync("GOOSENECK");
+            try { lastikKatalog = await LastikSvc.GetAllAsync(onlyActive: true); } catch { }
         }
         catch { }
 
@@ -1636,6 +1705,65 @@
         {
             errorMessage = $"Deger silinemedi: {ex.Message}";
         }
+    }
+
+    // ───────────── Lastik katalogu (Faz 2) ─────────────
+
+    private void ToggleLastikDropdown()
+    {
+        openDropdown = openDropdown == "lastik" ? null : "lastik";
+        if (openDropdown == "lastik") lastikSearchText = string.Empty;
+    }
+
+    private IEnumerable<LastikKatalogModel> FilteredLastikler()
+    {
+        if (string.IsNullOrWhiteSpace(lastikSearchText))
+            return lastikKatalog.Take(60);
+        var q = lastikSearchText.Trim().ToUpperInvariant();
+        return lastikKatalog
+            .Where(k =>
+                (k.Marka      ?? "").ToUpperInvariant().Contains(q) ||
+                (k.Model      ?? "").ToUpperInvariant().Contains(q) ||
+                (k.Ebat       ?? "").ToUpperInvariant().Contains(q) ||
+                (k.YukIndeksi ?? "").ToUpperInvariant().Contains(q))
+            .Take(120);
+    }
+
+    private void SelectLastik(LastikKatalogModel k)
+    {
+        quote.Lastik = k.DisplayText;
+        openDropdown = null;
+        lastikSearchText = string.Empty;
+    }
+
+    private async Task AddLastikAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newLastik.Marka) &&
+            string.IsNullOrWhiteSpace(newLastik.Model) &&
+            string.IsNullOrWhiteSpace(newLastik.Ebat))
+            return;
+        try
+        {
+            // Yeni eklenen kayit en uste gelsin
+            newLastik.SortOrder = lastikKatalog.Count > 0
+                ? lastikKatalog.Min(x => x.SortOrder) - 10
+                : 10;
+            newLastik.AktifMi = true;
+            newLastik.Id = await LastikSvc.AddAsync(newLastik);
+            lastikKatalog = await LastikSvc.GetAllAsync(onlyActive: true);
+            newLastik = new LastikKatalogModel();
+        }
+        catch (Exception ex) { errorMessage = $"Lastik eklenemedi: {ex.Message}"; }
+    }
+
+    private async Task DeleteLastikAsync(int id)
+    {
+        try
+        {
+            await LastikSvc.DeleteAsync(id);
+            lastikKatalog = await LastikSvc.GetAllAsync(onlyActive: true);
+        }
+        catch (Exception ex) { errorMessage = $"Lastik silinemedi: {ex.Message}"; }
     }
 
     private void SaveDraftConfirm()  { if (!isSaving) { pendingDurum = "Draft"; showConfirmDialog = true; } }
