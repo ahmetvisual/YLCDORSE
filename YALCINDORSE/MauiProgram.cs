@@ -8,6 +8,11 @@ namespace YALCINDORSE
     {
         public static MauiApp CreateMauiApp()
         {
+#if WINDOWS
+            // Windows Server 2019 + RDP: GPU olmayan ortamlarda yazilim tabanli render
+            Environment.SetEnvironmentVariable("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+                "--disable-gpu --disable-gpu-compositing --use-angle=warp --disable-gpu-rasterization");
+#endif
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
@@ -33,6 +38,7 @@ namespace YALCINDORSE
             builder.Services.AddTransient<ArabaslikService>();
             builder.Services.AddTransient<QuoteLookupService>();
             builder.Services.AddTransient<ZirveService>();
+            builder.Services.AddTransient<FirmaService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

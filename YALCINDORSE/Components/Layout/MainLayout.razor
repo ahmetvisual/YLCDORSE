@@ -115,6 +115,13 @@
                     <span>Yonetim</span>
                     <span class="sidebar-tooltip">Yonetim</span>
                 </button>
+                <button class="sidebar-item" @onclick="OpenFirmaBilgileri">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>
+                    </svg>
+                    <span>Firma Bilgileri</span>
+                    <span class="sidebar-tooltip">Firma Bilgileri</span>
+                </button>
             }
         </nav>
 
@@ -401,6 +408,14 @@
         flyoutMenu = null;
         if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Satis.TeklifListesi>("Teklif Listesi", 1300, 800))
             Nav.NavigateTo("/satis/teklif-listesi");
+    }
+
+    private void OpenFirmaBilgileri()
+    {
+        mobileMenuOpen = false;
+        showProfileMenu = false;
+        if (!WindowService.OpenWindow<YALCINDORSE.Components.Pages.Yonetim.FirmaBilgileri>("Firma Bilgileri", 1100, 800))
+            Nav.NavigateTo("/yonetim/firma-bilgileri");
     }
 
     private void GoToUserManagement()

@@ -1,0 +1,464 @@
+@page "/yonetim/firma-bilgileri"
+@using YALCINDORSE.Services
+@inject FirmaService FirmaSvc
+@inject AuthService Auth
+
+@if (!Auth.IsAdmin)
+{
+    <div class="um-denied">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="um-denied-icon">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+        </svg>
+        <h3>Yetkisiz Erişim</h3>
+        <p>Bu sayfaya yalnızca <strong>Admin</strong> rolündeki kullanıcılar erişebilir.</p>
+    </div>
+}
+else
+{
+<div class="firma-shell">
+
+    <div class="firma-header">
+        <div class="firma-header-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="firma-header-icon">
+                <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>
+            </svg>
+            <div>
+                <h3>Firma Bilgileri</h3>
+                @if (firma.GuncellenmeTarihi.HasValue)
+                {
+                    <p class="firma-header-sub">Son güncelleme: @firma.GuncellenmeTarihi.Value.ToString("dd.MM.yyyy HH:mm") · @firma.GuncelleyenKullanici</p>
+                }
+                else
+                {
+                    <p class="firma-header-sub">Henüz kaydedilmedi</p>
+                }
+            </div>
+        </div>
+        <button class="wizard-btn wizard-btn-primary" @onclick="SaveFirmaAsync" disabled="@isSaving">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:4px;vertical-align:text-bottom">
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            </svg>
+            @(isSaving ? "Kaydediliyor..." : "Genel Bilgileri Kaydet")
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(toastMessage))
+    {
+        <div class="firma-toast @(toastIsSuccess ? "ok" : "err")">@toastMessage</div>
+    }
+
+    <div class="firma-body">
+
+        <!-- ═══ A. GENEL BİLGİLER ═══ -->
+        <div class="firma-section">
+            <div class="wizard-section-title">Genel Bilgiler</div>
+            <div class="wizard-grid2">
+                <div class="wizard-field">
+                    <label>Tam Ünvan</label>
+                    <input type="text" @bind="firma.TamUnvan" placeholder="örn: YALÇIN DORSE SAN. TİC. A.Ş." />
+                </div>
+                <div class="wizard-field">
+                    <label>Kısa Ünvan</label>
+                    <input type="text" @bind="firma.KisaUnvan" placeholder="örn: YALÇIN DORSE" />
+                </div>
+                <div class="wizard-field">
+                    <label>Vergi Dairesi</label>
+                    <input type="text" @bind="firma.VergiDairesi" />
+                </div>
+                <div class="wizard-field">
+                    <label>Vergi No</label>
+                    <input type="text" @bind="firma.VergiNo" />
+                </div>
+                <div class="wizard-field">
+                    <label>MERSİS No</label>
+                    <input type="text" @bind="firma.MersisNo" />
+                </div>
+                <div class="wizard-field">
+                    <label>Ticaret Sicil No</label>
+                    <input type="text" @bind="firma.TicaretSicilNo" />
+                </div>
+            </div>
+
+            <div class="wizard-section-title" style="margin-top:14px">Adres</div>
+            <div class="wizard-grid2">
+                <div class="wizard-field">
+                    <label>Adres Satır 1</label>
+                    <input type="text" @bind="firma.AdresSatir1" />
+                </div>
+                <div class="wizard-field">
+                    <label>Adres Satır 2</label>
+                    <input type="text" @bind="firma.AdresSatir2" />
+                </div>
+                <div class="wizard-field">
+                    <label>Şehir</label>
+                    <input type="text" @bind="firma.Sehir" />
+                </div>
+                <div class="wizard-field">
+                    <label>Ülke</label>
+                    <input type="text" @bind="firma.Ulke" />
+                </div>
+                <div class="wizard-field">
+                    <label>Posta Kodu</label>
+                    <input type="text" @bind="firma.PostaKodu" />
+                </div>
+            </div>
+
+            <div class="wizard-section-title" style="margin-top:14px">İletişim</div>
+            <div class="wizard-grid2">
+                <div class="wizard-field">
+                    <label>Telefon</label>
+                    <input type="text" @bind="firma.Telefon" />
+                </div>
+                <div class="wizard-field">
+                    <label>Faks</label>
+                    <input type="text" @bind="firma.Faks" />
+                </div>
+                <div class="wizard-field">
+                    <label>E-posta</label>
+                    <input type="email" @bind="firma.Email" />
+                </div>
+                <div class="wizard-field">
+                    <label>Web</label>
+                    <input type="text" @bind="firma.Web" placeholder="https://" />
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ B. GÖRSELLER ═══ -->
+        <div class="firma-section">
+            <div class="wizard-section-title">Logo ve Görseller</div>
+            <div class="firma-imgs">
+                <div class="firma-img-card">
+                    <div class="firma-img-label">Logo</div>
+                    <div class="firma-img-preview">
+                        @if (firma.LogoBytes != null && firma.LogoBytes.Length > 0)
+                        {
+                            <img src="@($"data:{firma.LogoMime ?? "image/png"};base64,{Convert.ToBase64String(firma.LogoBytes)}")" alt="Logo" />
+                        }
+                        else
+                        {
+                            <div class="firma-img-empty">Logo yüklü değil</div>
+                        }
+                    </div>
+                    <div class="firma-img-actions">
+                        <button class="wizard-btn" @onclick="PickLogoAsync" disabled="@isUploadingLogo">
+                            @(isUploadingLogo ? "Yükleniyor..." : "Yeni Yükle")
+                        </button>
+                        @if (firma.LogoBytes != null)
+                        {
+                            <button class="wizard-btn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca" @onclick="RemoveLogoAsync">Kaldır</button>
+                        }
+                    </div>
+                </div>
+
+                <div class="firma-img-card">
+                    <div class="firma-img-label">Kapak Fotoğrafı (Quote PDF)</div>
+                    <div class="firma-img-preview">
+                        @if (firma.KapakFotoBytes != null && firma.KapakFotoBytes.Length > 0)
+                        {
+                            <img src="@($"data:{firma.KapakFotoMime ?? "image/jpeg"};base64,{Convert.ToBase64String(firma.KapakFotoBytes)}")" alt="Kapak" />
+                        }
+                        else
+                        {
+                            <div class="firma-img-empty">Kapak yüklü değil</div>
+                        }
+                    </div>
+                    <div class="firma-img-actions">
+                        <button class="wizard-btn" @onclick="PickKapakAsync" disabled="@isUploadingKapak">
+                            @(isUploadingKapak ? "Yükleniyor..." : "Yeni Yükle")
+                        </button>
+                        @if (firma.KapakFotoBytes != null)
+                        {
+                            <button class="wizard-btn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca" @onclick="RemoveKapakAsync">Kaldır</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ C. BANKA HESAPLARI ═══ -->
+        <div class="firma-section">
+            <div class="wizard-section-title" style="display:flex;align-items:center;justify-content:space-between">
+                <span>Banka Hesapları (IBAN)</span>
+                <span style="font-size:0.7rem;font-weight:500;color:var(--yl-text-light);text-transform:none;letter-spacing:0">Aktif olanlar quote PDF'inde listelenir</span>
+            </div>
+
+            <div class="firma-iban-table">
+                <div class="firma-iban-head">
+                    <div style="width:30px"></div>
+                    <div style="flex:1.4">Banka</div>
+                    <div style="width:80px">Para</div>
+                    <div style="flex:1">Şube</div>
+                    <div style="flex:1.6">IBAN</div>
+                    <div style="flex:0.8">Hesap No</div>
+                    <div style="width:75px">Swift</div>
+                    <div style="width:60px;text-align:center">Aktif</div>
+                    <div style="width:34px"></div>
+                </div>
+                @foreach (var h in hesaplar)
+                {
+                    <div class="firma-iban-row">
+                        <div style="width:30px;text-align:center;color:var(--yl-text-light);font-size:0.78rem">@(hesaplar.IndexOf(h) + 1)</div>
+                        <div style="flex:1.4"><input type="text" value="@h.BankaAdi" @onchange="(e) => OnHesapEdit(h, nameof(h.BankaAdi), e.Value?.ToString())" /></div>
+                        <div style="width:80px">
+                            <select value="@h.ParaBirimi" @onchange="(e) => OnHesapEdit(h, nameof(h.ParaBirimi), e.Value?.ToString())">
+                                <option value="TL">TL</option>
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="GBP">GBP</option>
+                                <option value="RUB">RUB</option>
+                            </select>
+                        </div>
+                        <div style="flex:1"><input type="text" value="@h.Sube" @onchange="(e) => OnHesapEdit(h, nameof(h.Sube), e.Value?.ToString())" /></div>
+                        <div style="flex:1.6"><input type="text" value="@h.IBAN" @onchange="(e) => OnHesapEdit(h, nameof(h.IBAN), e.Value?.ToString())" placeholder="TR.." /></div>
+                        <div style="flex:0.8"><input type="text" value="@h.HesapNo" @onchange="(e) => OnHesapEdit(h, nameof(h.HesapNo), e.Value?.ToString())" /></div>
+                        <div style="width:75px"><input type="text" value="@h.SwiftKodu" @onchange="(e) => OnHesapEdit(h, nameof(h.SwiftKodu), e.Value?.ToString())" /></div>
+                        <div style="width:60px;text-align:center"><input type="checkbox" checked="@h.AktifMi" @onchange="(e) => OnHesapEdit(h, nameof(h.AktifMi), e.Value?.ToString())" /></div>
+                        <div style="width:34px;text-align:center">
+                            <button class="firma-iban-del" title="Sil" @onclick="() => confirmDeleteHesapId = h.Id">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px">
+                                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                }
+                @if (hesaplar.Count == 0)
+                {
+                    <div class="firma-iban-empty">Henüz hesap yok. Aşağıdan ekleyebilirsiniz.</div>
+                }
+
+                <!-- Yeni hesap ekleme formu -->
+                <div class="firma-iban-add">
+                    <div style="width:30px;text-align:center;color:var(--yl-primary);font-weight:700">+</div>
+                    <div style="flex:1.4"><input type="text" placeholder="Banka adı" @bind="newHesap.BankaAdi" /></div>
+                    <div style="width:80px">
+                        <select @bind="newHesap.ParaBirimi">
+                            <option value="TL">TL</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="RUB">RUB</option>
+                        </select>
+                    </div>
+                    <div style="flex:1"><input type="text" placeholder="Şube" @bind="newHesap.Sube" /></div>
+                    <div style="flex:1.6"><input type="text" placeholder="IBAN" @bind="newHesap.IBAN" /></div>
+                    <div style="flex:0.8"><input type="text" placeholder="Hesap No" @bind="newHesap.HesapNo" /></div>
+                    <div style="width:75px"><input type="text" placeholder="Swift" @bind="newHesap.SwiftKodu" /></div>
+                    <div style="width:60px;text-align:center"><input type="checkbox" @bind="newHesap.AktifMi" /></div>
+                    <div style="width:34px;text-align:center">
+                        <button class="firma-iban-add-btn" title="Ekle"
+                                disabled="@(string.IsNullOrWhiteSpace(newHesap.BankaAdi) || string.IsNullOrWhiteSpace(newHesap.IBAN))"
+                                @onclick="AddHesapAsync">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    @* Hesap silme onay *@
+    @if (confirmDeleteHesapId.HasValue)
+    {
+        <div class="modal-overlay" @onclick="() => confirmDeleteHesapId = null">
+            <div class="quick-modal-content" style="max-width:380px" @onclick:stopPropagation="true">
+                <div class="modal-header"><h4>Hesabı Sil</h4><button class="btn-close" @onclick="() => confirmDeleteHesapId = null">&#10005;</button></div>
+                <div class="modal-body" style="padding:16px"><p>Bu banka hesabı (IBAN) silinecek. Emin misiniz?</p></div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--yl-border)">
+                    <button class="wizard-btn" @onclick="() => confirmDeleteHesapId = null">Vazgeç</button>
+                    <button class="wizard-btn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca" @onclick="() => DeleteHesapAsync(confirmDeleteHesapId.Value)">Sil</button>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+}
+
+@code {
+    private FirmaBilgileriModel firma = new() { Id = 1 };
+    private List<FirmaHesabiModel> hesaplar = new();
+    private FirmaHesabiModel newHesap = new() { ParaBirimi = "TL", AktifMi = true };
+    private int? confirmDeleteHesapId;
+
+    private bool isSaving;
+    private bool isUploadingLogo;
+    private bool isUploadingKapak;
+    private string? toastMessage;
+    private bool toastIsSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.IsAdmin) return;
+        try
+        {
+            firma = await FirmaSvc.GetFirmaAsync();
+            hesaplar = await FirmaSvc.GetHesaplarAsync();
+        }
+        catch (Exception ex)
+        {
+            await ShowToast(false, ex.Message);
+        }
+    }
+
+    private async Task SaveFirmaAsync()
+    {
+        if (isSaving) return;
+        isSaving = true;
+        try
+        {
+            await FirmaSvc.SaveFirmaAsync(firma);
+            firma = await FirmaSvc.GetFirmaAsync();
+            await ShowToast(true, "Genel bilgiler kaydedildi.");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast(false, $"Kayıt hatası: {ex.Message}");
+        }
+        finally { isSaving = false; }
+    }
+
+    // ─── LOGO / KAPAK ─────────────────────────────────────
+
+    private async Task PickLogoAsync()
+    {
+        try
+        {
+            isUploadingLogo = true;
+            StateHasChanged();
+            var (bytes, mime) = await PickImageAsync("Logo Seç");
+            if (bytes == null) { isUploadingLogo = false; return; }
+            await FirmaSvc.SaveLogoAsync(bytes, mime);
+            firma.LogoBytes = bytes;
+            firma.LogoMime = mime;
+            await ShowToast(true, "Logo yüklendi.");
+        }
+        catch (Exception ex) { await ShowToast(false, $"Logo yükleme: {ex.Message}"); }
+        finally { isUploadingLogo = false; }
+    }
+
+    private async Task PickKapakAsync()
+    {
+        try
+        {
+            isUploadingKapak = true;
+            StateHasChanged();
+            var (bytes, mime) = await PickImageAsync("Kapak Fotoğrafı Seç");
+            if (bytes == null) { isUploadingKapak = false; return; }
+            await FirmaSvc.SaveKapakFotoAsync(bytes, mime);
+            firma.KapakFotoBytes = bytes;
+            firma.KapakFotoMime = mime;
+            await ShowToast(true, "Kapak yüklendi.");
+        }
+        catch (Exception ex) { await ShowToast(false, $"Kapak yükleme: {ex.Message}"); }
+        finally { isUploadingKapak = false; }
+    }
+
+    private async Task RemoveLogoAsync()
+    {
+        await FirmaSvc.SaveLogoAsync(null, null);
+        firma.LogoBytes = null;
+        firma.LogoMime = null;
+        await ShowToast(true, "Logo kaldırıldı.");
+    }
+
+    private async Task RemoveKapakAsync()
+    {
+        await FirmaSvc.SaveKapakFotoAsync(null, null);
+        firma.KapakFotoBytes = null;
+        firma.KapakFotoMime = null;
+        await ShowToast(true, "Kapak kaldırıldı.");
+    }
+
+    private static async Task<(byte[]? bytes, string? mime)> PickImageAsync(string title)
+    {
+        var options = new PickOptions
+        {
+            PickerTitle = title,
+            FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+            {
+                { DevicePlatform.WinUI,        new[] { ".jpg", ".jpeg", ".png" } },
+                { DevicePlatform.iOS,          new[] { "public.image" } },
+                { DevicePlatform.Android,      new[] { "image/*" } },
+                { DevicePlatform.MacCatalyst,  new[] { "public.image" } },
+            })
+        };
+        var result = await FilePicker.Default.PickAsync(options);
+        if (result == null) return (null, null);
+        using var stream = await result.OpenReadAsync();
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var ext = Path.GetExtension(result.FileName).ToLowerInvariant();
+        var mime = ext switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            _ => "application/octet-stream"
+        };
+        return (ms.ToArray(), mime);
+    }
+
+    // ─── BANKA HESAPLARI ──────────────────────────────────
+
+    private void OnHesapEdit(FirmaHesabiModel h, string field, string? value)
+    {
+        switch (field)
+        {
+            case nameof(h.BankaAdi): h.BankaAdi = value ?? ""; break;
+            case nameof(h.ParaBirimi): h.ParaBirimi = value ?? "TL"; break;
+            case nameof(h.Sube): h.Sube = value ?? ""; break;
+            case nameof(h.IBAN): h.IBAN = (value ?? "").Replace(" ", "").ToUpperInvariant(); break;
+            case nameof(h.HesapNo): h.HesapNo = value ?? ""; break;
+            case nameof(h.SwiftKodu): h.SwiftKodu = (value ?? "").ToUpperInvariant(); break;
+            case nameof(h.AktifMi): h.AktifMi = value == "true" || value == "on"; break;
+        }
+        // Anlik DB'ye yaz: hızlı UX
+        _ = SaveHesapImmediateAsync(h);
+    }
+
+    private async Task SaveHesapImmediateAsync(FirmaHesabiModel h)
+    {
+        try { await FirmaSvc.SaveHesapAsync(h); }
+        catch { /* sessiz: ekrandaki son state geri kalir, bir sonraki kullanici aksiyonu retry */ }
+    }
+
+    private async Task AddHesapAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newHesap.BankaAdi) || string.IsNullOrWhiteSpace(newHesap.IBAN)) return;
+        try
+        {
+            newHesap.IBAN = newHesap.IBAN.Replace(" ", "").ToUpperInvariant();
+            newHesap.SortOrder = (hesaplar.Count > 0 ? hesaplar.Max(x => x.SortOrder) : 0) + 10;
+            await FirmaSvc.SaveHesapAsync(newHesap);
+            hesaplar.Add(newHesap);
+            newHesap = new FirmaHesabiModel { ParaBirimi = "TL", AktifMi = true };
+            await ShowToast(true, "Hesap eklendi.");
+        }
+        catch (Exception ex) { await ShowToast(false, $"Ekleme hatası: {ex.Message}"); }
+    }
+
+    private async Task DeleteHesapAsync(int id)
+    {
+        try
+        {
+            await FirmaSvc.DeleteHesapAsync(id);
+            hesaplar.RemoveAll(h => h.Id == id);
+        }
+        catch (Exception ex) { await ShowToast(false, $"Silme hatası: {ex.Message}"); }
+        confirmDeleteHesapId = null;
+    }
+
+    // ─── TOAST ─────────────────────────────────────────────
+
+    private async Task ShowToast(bool ok, string msg)
+    {
+        toastIsSuccess = ok;
+        toastMessage = msg;
+        StateHasChanged();
+        await Task.Delay(ok ? 2000 : 4000);
+        toastMessage = null;
+        StateHasChanged();
+    }
+}

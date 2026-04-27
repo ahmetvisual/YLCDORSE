@@ -49,6 +49,17 @@ namespace YALCINDORSE
         public byte[]? UrunFoto1  { get; set; }
         public byte[]? UrunFoto2  { get; set; }
 
+        // ─── Firma bilgileri (FirmaService'ten doldurulur) ────────────────
+        public string FirmaUnvan       { get; set; } = "";
+        public string FirmaAdresTam    { get; set; } = "";
+        public string FirmaTelefon     { get; set; } = "";
+        public string FirmaEmail       { get; set; } = "";
+        public string FirmaWeb         { get; set; } = "";
+        public string FirmaVergiNo     { get; set; } = "";
+        public byte[]? FirmaKapakFoto  { get; set; }
+        /// <summary>Aktif IBAN'lar — her satir "BANKA — PARA — IBAN" formatinda.</summary>
+        public List<string> IBANListesi { get; set; } = new();
+
         public List<SpecGroup>  SpecGroups  { get; set; } = new();
         public List<byte[]>     CizimImages { get; set; } = new();
         public List<ListItem>   ListItems   { get; set; } = new();
@@ -109,6 +120,7 @@ namespace YALCINDORSE
                             BuildSpecSection(inner);
                             BuildCizimSection(inner);
                             BuildListSection(inner);
+                            BuildBankaSection(inner);
                             inner.Item().Height(6);
                         });
                     });
@@ -499,20 +511,43 @@ namespace YALCINDORSE
         }
 
         // ════════════════════════════════════════════════════════════════════
+        //  BANKA HESAPLARI — IBAN listesi (FirmaService'ten doldurulur)
+        // ════════════════════════════════════════════════════════════════════
+        private void BuildBankaSection(ColumnDescriptor col)
+        {
+            if (IBANListesi == null || IBANListesi.Count == 0) return;
+
+            col.Item().PaddingTop(8).Column(c =>
+            {
+                c.Spacing(2);
+                c.Item().Text(t => t.Span("BANKA HESAPLARI / IBAN").FontSize(9.5f).Bold().FontColor(NavyDark));
+                c.Item().Height(1).Background(AccentLine);
+                c.Item().Height(2);
+                foreach (var line in IBANListesi)
+                {
+                    c.Item().Text(t => t.Span(line).FontSize(8).FontColor(BodyText));
+                }
+            });
+        }
+
+        // ════════════════════════════════════════════════════════════════════
         //  FOOTER — koyu lacivert tam genişlik bandı
         // ════════════════════════════════════════════════════════════════════
         private void BuildFooter(QContainer container)
         {
+            // Firma bilgisi varsa onu kullan, yoksa eski hard-coded metni kullan
+            var footerText = !string.IsNullOrWhiteSpace(FirmaUnvan)
+                ? string.Join("  |  ", new[] { FirmaUnvan, FirmaWeb, !string.IsNullOrWhiteSpace(FirmaTelefon) ? "Tel: " + FirmaTelefon : "" }
+                    .Where(s => !string.IsNullOrWhiteSpace(s)))
+                : "Yalçın Dorse Damper San. ve Tic. Ltd. Şti.  |  www.yalcintrailer.com  |  Tel: +90 212 735 39 49";
+
             container.Background(FooterBg)
                .PaddingHorizontal(12, Unit.Millimetre)
                .PaddingVertical(3, Unit.Millimetre)
                .Row(row =>
                {
                    row.RelativeItem().AlignMiddle()
-                      .Text(t =>
-                          t.Span("Yalçın Dorse Damper San. ve Tic. Ltd. Şti.  |  " +
-                                 "www.yalcintrailer.com  |  Tel: +90 212 735 39 49")
-                           .FontSize(7).FontColor(LightOnDark));
+                      .Text(t => t.Span(footerText).FontSize(7).FontColor(LightOnDark));
 
                    row.ConstantItem(22, Unit.Millimetre).AlignMiddle()
                       .Text(t =>

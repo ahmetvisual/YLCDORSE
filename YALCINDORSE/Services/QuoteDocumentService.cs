@@ -15,19 +15,22 @@ namespace YALCINDORSE.Services
         private readonly QuoteSpecService _specSvc;
         private readonly QuoteAttachmentService _attachSvc;
         private readonly CustomerService _customerSvc;
+        private readonly FirmaService _firmaSvc;
 
         public QuoteDocumentService(
             DatabaseHelper db,
             QuoteService quoteSvc,
             QuoteSpecService specSvc,
             QuoteAttachmentService attachSvc,
-            CustomerService customerSvc)
+            CustomerService customerSvc,
+            FirmaService firmaSvc)
         {
             _db = db;
             _quoteSvc = quoteSvc;
             _specSvc = specSvc;
             _attachSvc = attachSvc;
             _customerSvc = customerSvc;
+            _firmaSvc = firmaSvc;
         }
 
         // ─────────────────────────────────────────────
@@ -134,16 +137,39 @@ namespace YALCINDORSE.Services
             var urunAltYazi = string.IsNullOrWhiteSpace(urunAdi) ? ""
                 : $"(Fotoğraflar, {urunAdi.ToLowerInvariant()} ürününe aittir.)";
 
-            // Logo
-            byte[]? logoBytes = null;
+            // Firma bilgileri (singleton) + IBAN listesi
+            FirmaBilgileriModel? firma = null;
+            var ibanList = new List<string>();
             try
             {
-                var logoPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "images", "logo.png");
-                if (File.Exists(logoPath))
-                    logoBytes = await File.ReadAllBytesAsync(logoPath);
+                firma = await _firmaSvc.GetFirmaAsync();
+                var hesaplar = await _firmaSvc.GetHesaplarAsync(onlyActive: true);
+                ibanList = hesaplar.Select(h =>
+                {
+                    var parts = new[]
+                    {
+                        h.BankaAdi,
+                        h.ParaBirimi,
+                        FormatIban(h.IBAN)
+                    }.Where(p => !string.IsNullOrWhiteSpace(p));
+                    return string.Join("  —  ", parts);
+                }).ToList();
             }
             catch { }
+
+            // Logo: oncelik DB (FirmaBilgileri.LogoBytes), fallback disk dosyasi
+            byte[]? logoBytes = firma?.LogoBytes;
+            if (logoBytes == null || logoBytes.Length == 0)
+            {
+                try
+                {
+                    var logoPath = Path.Combine(
+                        AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "images", "logo.png");
+                    if (File.Exists(logoPath))
+                        logoBytes = await File.ReadAllBytesAsync(logoPath);
+                }
+                catch { }
+            }
 
             // Spec grupları
             var specGroups = new List<TeklifQuestPdfReport.SpecGroup>();
@@ -206,9 +232,45 @@ namespace YALCINDORSE.Services
                 SpecGroups       = specGroups,
                 CizimImages      = cizimImages,
                 ListItems        = listItems,
+                // Firma + IBAN
+                FirmaUnvan       = firma?.TamUnvan ?? "",
+                FirmaAdresTam    = BuildAdresTam(firma),
+                FirmaTelefon     = firma?.Telefon ?? "",
+                FirmaEmail       = firma?.Email ?? "",
+                FirmaWeb         = firma?.Web ?? "",
+                FirmaVergiNo     = firma?.VergiNo ?? "",
+                FirmaKapakFoto   = firma?.KapakFotoBytes,
+                IBANListesi      = ibanList,
             };
 
             return report.GeneratePdf();
+        }
+
+        /// <summary>Firma adres satirlarini tek bir string'e birlestirir.</summary>
+        private static string BuildAdresTam(FirmaBilgileriModel? f)
+        {
+            if (f == null) return "";
+            var parts = new[]
+            {
+                f.AdresSatir1, f.AdresSatir2,
+                string.Join(" ", new[] { f.PostaKodu, f.Sehir }.Where(s => !string.IsNullOrWhiteSpace(s))),
+                f.Ulke
+            }.Where(s => !string.IsNullOrWhiteSpace(s));
+            return string.Join(", ", parts);
+        }
+
+        /// <summary>IBAN'i okunabilir 4'erli gruplar halinde formatla: "TR44 0006 2000 ..."</summary>
+        private static string FormatIban(string iban)
+        {
+            if (string.IsNullOrWhiteSpace(iban)) return "";
+            var raw = iban.Replace(" ", "").ToUpperInvariant();
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < raw.Length; i++)
+            {
+                if (i > 0 && i % 4 == 0) sb.Append(' ');
+                sb.Append(raw[i]);
+            }
+            return sb.ToString();
         }
 
         // ─────────────────────────────────────────────
