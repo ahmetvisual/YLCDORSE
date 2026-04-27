@@ -218,13 +218,32 @@ namespace YALCINDORSE
         {
             col.Item().Row(row =>
             {
-                // ── SOL: İlgili Kişi Bilgileri ─────────────────────────────
+                // ── SOL: Ilgili Kisi Bilgileri (ad + kontak + arac bilgisi) ─────
+                // "Sayin" prefix yok — selamlama greeting bolumunde tek kez yapilir.
+                // Sag taraftaki Musteri Adi + Kodu pattern'i ile simetrik yapi.
                 row.RelativeItem().Column(c =>
                 {
+                    bool hasAnyInfo =
+                        !string.IsNullOrWhiteSpace(IlgiliKisi)  ||
+                        !string.IsNullOrWhiteSpace(IlgiliEmail) ||
+                        !string.IsNullOrWhiteSpace(IlgiliMobil) ||
+                        !string.IsNullOrWhiteSpace(SasiNo)      ||
+                        !string.IsNullOrWhiteSpace(ModelYili);
+
+                    if (!hasAnyInfo) return;
+
+                    // "İlgili Kişi" etiketi — sag taraftaki "Musteri Kodu" labelina paralel
                     c.Item().Text(t =>
-                        t.Span($"Sayın {IlgiliKisi},")
-                         .Bold().FontSize(9.5f).FontColor(DarkText));
-                    c.Item().Height(3);
+                        t.Span("İlgili Kişi").FontSize(8).FontColor(MutedText));
+
+                    // Ilgili kisi adi (bold, 10pt) — sag taraftaki MusteriAdi pattern'i
+                    if (!string.IsNullOrWhiteSpace(IlgiliKisi))
+                    {
+                        c.Item().Text(t =>
+                            t.Span(IlgiliKisi).Bold().FontSize(10).FontColor(DarkText));
+                    }
+
+                    c.Item().Height(2);
 
                     if (!string.IsNullOrWhiteSpace(IlgiliEmail))
                         c.Item().Text(t =>
@@ -323,10 +342,16 @@ namespace YALCINDORSE
         // ════════════════════════════════════════════════════════════════════
         private void BuildGreeting(ColumnDescriptor col)
         {
+            // Tek selamlama burada — MainInfo'da artik "Sayin" yok.
+            // Ad bossa "Sayin Yetkili," fallback (cirkin "Sayin ," olusmasin).
+            var greeting = !string.IsNullOrWhiteSpace(IlgiliKisi)
+                ? $"Sayın {IlgiliKisi},"
+                : "Sayın Yetkili,";
+
             col.Item().Column(c =>
             {
                 c.Item().Text(t =>
-                    t.Span($"Sayın {IlgiliKisi},")
+                    t.Span(greeting)
                      .Bold().FontSize(9.5f).FontColor(DarkText));
                 c.Item().Height(3);
                 c.Item().Text(t =>
