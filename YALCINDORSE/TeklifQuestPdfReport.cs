@@ -110,7 +110,7 @@ namespace YALCINDORSE
                         col.Spacing(0);
                         BuildHeader(col);
 
-                        // iç içerik için yatay padding
+                        // Ust bolum: ic icerik icin yatay padding (12mm)
                         col.Item().PaddingHorizontal(12, Unit.Millimetre).Column(inner =>
                         {
                             inner.Spacing(0);
@@ -118,7 +118,17 @@ namespace YALCINDORSE
                             BuildMainInfo(inner);
                             inner.Item().Height(6);
                             BuildGreeting(inner);
-                            BuildUrunSection(inner);
+                        });
+
+                        // Urun foto bolumu — outer col seviyesinde rendered ediliyor.
+                        // Sebep: Tek goruntuyu TAM SAYFA genisligine (210mm) gore
+                        // ortalayabilmek icin inner padding'in disinda olmasi gerekiyor.
+                        BuildUrunSection(col);
+
+                        // Alt bolum: kalan icerik tekrar 12mm yatay padding'de
+                        col.Item().PaddingHorizontal(12, Unit.Millimetre).Column(inner =>
+                        {
+                            inner.Spacing(0);
                             BuildSpecSection(inner);
                             BuildCizimSection(inner);
                             BuildListSection(inner);
@@ -330,25 +340,29 @@ namespace YALCINDORSE
         }
 
         // ════════════════════════════════════════════════════════════════════
-        //  ÜRÜN FOTOĞRAF BÖLÜMÜ — panelsiz, sade başlık
+        //  ÜRÜN FOTOĞRAF BÖLÜMÜ — outer col seviyesinde (tam sayfa genisligi)
+        //  Tek foto: 210mm sayfa genisligine gore ortalanir
+        //  Cift foto: ic icerik genisliginde (12mm padding) yan yana
         // ════════════════════════════════════════════════════════════════════
         private void BuildUrunSection(ColumnDescriptor col)
         {
             bool hasImage = UrunFoto1?.Length > 0 && !string.IsNullOrWhiteSpace(UrunBaslik);
             if (!hasImage) return;
 
-            // Ürün başlığı — sol mavi çubuk + metin
-            col.Item().BorderLeft(3).BorderColor(BlueAccent)
+            // Urun basligi — diger bolum basliklariyla hizali olmasi icin 12mm yatay padding
+            col.Item().PaddingHorizontal(12, Unit.Millimetre)
+               .BorderLeft(3).BorderColor(BlueAccent)
                .PaddingLeft(3, Unit.Millimetre)
                .PaddingVertical(2, Unit.Millimetre)
                .Text(t => t.Span(UrunBaslik).Bold().FontSize(10).FontColor(NavyDark));
             col.Item().Height(3);
 
-            // Fotoğraf(lar) — tek ise ortalı + buyuk, iki ise yan yana biraz daha genis
+            // Fotograf(lar)
             bool hasImg2 = UrunFoto2?.Length > 0;
             if (hasImg2)
             {
-                col.Item().Row(row =>
+                // Cift foto: ic icerik alaninda (12mm padding) yan yana
+                col.Item().PaddingHorizontal(12, Unit.Millimetre).Row(row =>
                 {
                     row.RelativeItem().Height(95, Unit.Millimetre).Image(UrunFoto1!).FitArea();
                     row.ConstantItem(3, Unit.Millimetre);
@@ -357,17 +371,20 @@ namespace YALCINDORSE
             }
             else
             {
-                // Tek foto: AlignCenter + sabit genislik 150mm (sayfa icerik alani ~186mm)
+                // Tek foto: TAM SAYFA (210mm) genisligine gore ortalanmis.
+                // Outer col'da rendered ediliyor, AlignCenter sayfa ortasina yerlestirir.
+                // Width 180mm: sayfanin %86'sini kapliyor, her iki yanda 15mm bosluk birakir.
                 col.Item().AlignCenter()
-                   .Width(150, Unit.Millimetre)
-                   .Height(115, Unit.Millimetre)
+                   .Width(180, Unit.Millimetre)
+                   .Height(135, Unit.Millimetre)
                    .Image(UrunFoto1!).FitArea();
             }
 
-            // Alt yazı
+            // Alt yazi — basliklarla hizali olmasi icin 12mm yatay padding
             if (!string.IsNullOrWhiteSpace(UrunAltYazi))
             {
-                col.Item().PaddingVertical(2, Unit.Millimetre)
+                col.Item().PaddingHorizontal(12, Unit.Millimetre)
+                   .PaddingVertical(2, Unit.Millimetre)
                    .Text(t =>
                    {
                        t.AlignCenter();
