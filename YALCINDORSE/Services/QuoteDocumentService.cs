@@ -282,6 +282,11 @@ namespace YALCINDORSE.Services
                 FirmaVergiNo     = firma?.VergiNo ?? "",
                 FirmaKapakFoto   = firma?.KapakFotoBytes,
                 IBANListesi      = ibanList,
+                // Teslimat detaylari (IBAN'dan once rendered edilir)
+                TeslimatHaftasi  = quote.TeslimatHaftasi  ?? "",
+                TeslimatTipiKodu = quote.TeslimatTipiKodu ?? "",
+                TeslimatYeri     = quote.TeslimatYeri     ?? "",
+                TeslimatNotlari  = quote.TeslimatNotlari  ?? "",
             };
 
             return report.GeneratePdf();

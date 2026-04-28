@@ -64,6 +64,12 @@ namespace YALCINDORSE
         /// <summary>Aktif IBAN'lar — her satir "BANKA — PARA — IBAN" formatinda.</summary>
         public List<string> IBANListesi { get; set; } = new();
 
+        // ─── Teslimat detaylari (QuoteModel'den doldurulur) ───────────────
+        public string TeslimatHaftasi  { get; set; } = "";
+        public string TeslimatTipiKodu { get; set; } = "";  // EXW, FOB, CIF, FCA, CFR, DAP, DDP
+        public string TeslimatYeri     { get; set; } = "";
+        public string TeslimatNotlari  { get; set; } = "";  // Cok satirli — '\n' veya '\r\n' ile bolunur
+
         public List<SpecGroup>  SpecGroups  { get; set; } = new();
         public List<byte[]>     CizimImages { get; set; } = new();
         public List<ListItem>   ListItems   { get; set; } = new();
@@ -146,6 +152,7 @@ namespace YALCINDORSE
                             BuildSpecSection(inner);
                             BuildCizimSection(inner);
                             BuildListSection(inner);
+                            BuildTeslimatSection(inner);
                             BuildBankaSection(inner);
                             inner.Item().Height(6);
                         });
@@ -627,6 +634,98 @@ namespace YALCINDORSE
                 foreach (var ch in children.Skip(1))
                     col.Item().Element(ctn => RenderChild(ctn, ch));
             }
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        //  TESLIMAT DETAYLARI — Hafta / Incoterms / Yer + cok satirli notlar
+        //  IBAN bolumunden hemen once gosterilir.
+        // ════════════════════════════════════════════════════════════════════
+        private void BuildTeslimatSection(ColumnDescriptor col)
+        {
+            bool hasMeta = !string.IsNullOrWhiteSpace(TeslimatHaftasi)
+                        || !string.IsNullOrWhiteSpace(TeslimatTipiKodu)
+                        || !string.IsNullOrWhiteSpace(TeslimatYeri);
+
+            // Notlari satirlara ayir; bos / sadece bosluk olan satirlari at.
+            var notSatirlari = (TeslimatNotlari ?? "")
+                .Replace("\r\n", "\n").Replace('\r', '\n')
+                .Split('\n')
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .ToList();
+
+            if (!hasMeta && notSatirlari.Count == 0) return;
+
+            // Bolum aliyor: PaddingTop(8) — IBAN bolumuyle ayni "alt bolum" stilinde
+            col.Item().PaddingTop(8).Column(c =>
+            {
+                c.Spacing(2);
+                c.Item().Text(t =>
+                    t.Span("TESLİMAT DETAYLARI").FontSize(9.5f).Bold().FontColor(NavyDark));
+                c.Item().Height(1).Background(AccentLine);
+                c.Item().Height(2);
+
+                // Meta satirlar — etiket : deger
+                if (!string.IsNullOrWhiteSpace(TeslimatHaftasi))
+                {
+                    var hafta = TeslimatHaftasi.IndexOf("hafta", StringComparison.OrdinalIgnoreCase) >= 0
+                        ? TeslimatHaftasi
+                        : TeslimatHaftasi + " hafta";
+                    c.Item().Text(t =>
+                    {
+                        t.Span("Teslimat Süresi : ").FontSize(8).FontColor(MutedText);
+                        t.Span(hafta).FontSize(8).FontColor(BodyText);
+                    });
+                }
+                if (!string.IsNullOrWhiteSpace(TeslimatTipiKodu))
+                {
+                    c.Item().Text(t =>
+                    {
+                        t.Span("Incoterms : ").FontSize(8).FontColor(MutedText);
+                        t.Span(ExpandIncoterm(TeslimatTipiKodu)).FontSize(8).FontColor(BodyText);
+                    });
+                }
+                if (!string.IsNullOrWhiteSpace(TeslimatYeri))
+                {
+                    c.Item().Text(t =>
+                    {
+                        t.Span("Teslimat Yeri : ").FontSize(8).FontColor(MutedText);
+                        t.Span(TeslimatYeri).FontSize(8).FontColor(BodyText);
+                    });
+                }
+
+                // Notlar bolumu — varsa ayrici basligi ile madde madde
+                if (notSatirlari.Count > 0)
+                {
+                    if (hasMeta) c.Item().Height(3);
+                    c.Item().Text(t =>
+                        t.Span("Şartlar / Notlar:").FontSize(8).Bold().FontColor(DarkText));
+                    foreach (var nt in notSatirlari)
+                    {
+                        // Kullanici "•" eklemis olabilir; varsa oldugu gibi tut.
+                        var line = nt.StartsWith("•") || nt.StartsWith("-") || nt.StartsWith("*")
+                            ? nt
+                            : "• " + nt;
+                        c.Item().Text(t => t.Span(line).FontSize(8).FontColor(BodyText));
+                    }
+                }
+            });
+        }
+
+        /// <summary>Incoterm kodunu kullanici dostu metne cevirir (EXW -> "EXW — Ex Works").</summary>
+        private static string ExpandIncoterm(string kod)
+        {
+            return kod?.Trim().ToUpperInvariant() switch
+            {
+                "EXW" => "EXW — Ex Works",
+                "FCA" => "FCA — Free Carrier",
+                "FOB" => "FOB — Free On Board",
+                "CIF" => "CIF — Cost Insurance Freight",
+                "CFR" => "CFR — Cost and Freight",
+                "DAP" => "DAP — Delivered At Place",
+                "DDP" => "DDP — Delivered Duty Paid",
+                _      => kod ?? ""
+            };
         }
 
         // ════════════════════════════════════════════════════════════════════
