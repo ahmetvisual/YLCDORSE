@@ -203,7 +203,7 @@ namespace YALCINDORSE.Services
 
                                     // Pozisyon + boyutu atomik set et — SetWindowPos(NOSIZE) yerine
                                     // bu kullanılıyor çünkü MAUI'nin DPI dönüşümü yanlış monitörü baz alır.
-                                    appWindow.MoveAndResize(new Windows.Graphics.RectInt32(posX, posY, physW, physH));
+                                    appWindow.MoveAndResize(new global::Windows.Graphics.RectInt32(posX, posY, physW, physH));
                                 });
                         }
                     }
