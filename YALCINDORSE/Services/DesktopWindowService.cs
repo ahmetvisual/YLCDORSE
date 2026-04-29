@@ -8,8 +8,10 @@ namespace YALCINDORSE.Services
     {
         private readonly ConcurrentDictionary<Type, Window> _openWindows = new();
 
-        // Ana pencerenin HWND'i — MaximizeMainWindow ilk cagrildiginda (app startup) cache'lenir.
-        // OpenWindow'da yeni pencerenin hangi monitörde acilacagini belirlemek icin kullanilir.
+        // Ana pencerenin MAUI Window referansi — MaximizeMainWindow'da set edilir.
+        // OpenWindow'da her acilista taze HWND alinir, boylece kullanici ana pencereyi
+        // baska monitore tasidiktan sonra da dogru monitoru bulabiliriz.
+        private Window? _mainMauiWindow = null;
         private IntPtr _mainWindowHandle = IntPtr.Zero;
 
 
@@ -108,11 +110,32 @@ namespace YALCINDORSE.Services
                         appWindow.TitleBar.ButtonInactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 20, 45, 85);
                         appWindow.TitleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 180, 180, 180);
 
-                        // Pencereyi ANA PENCERENIN oldugu monitorde ortala.
-                        // WinAppSDK DisplayArea API'si bazen guncel pencere pozisyonunu
-                        // dogru sorgulamiyor (ozellikle pencere monitor degistirdikten sonra).
-                        // Win32 MonitorFromWindow + GetMonitorInfo ile direkt sorguluyoruz —
-                        // bu API guncel HWND pozisyonunu kesin doner.
+                        // Gorev cubugunda bagımsız buton goster
+                        var exStyle = GetWindowLong(windowHandle, GWL_EXSTYLE);
+                        SetWindowLong(windowHandle, GWL_EXSTYLE,
+                            (exStyle | WS_EX_APPWINDOW) & ~WS_EX_TOOLWINDOW);
+
+                        // Ana pencerenin HWND'ini her seferinde taze al.
+                        // MAUI Window referansindan guncel handle'i cekiyoruz — kullanici
+                        // ana pencereyi baska monitore tasimis olsa bile MonitorFromWindow
+                        // dogru monitoru doner.
+                        // Not: Created event icerisinde olduğumuz icin yeni pencere henuz
+                        // Application.Windows'a eklenmemis olabilir; FirstOrDefault(w != newWindow)
+                        // yerine dogrudan _mainMauiWindow referansini kullaniyoruz.
+                        if (_mainMauiWindow != null)
+                        {
+                            var mainUiRef = _mainMauiWindow.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+                            if (mainUiRef != null)
+                            {
+                                var freshHandle = WinRT.Interop.WindowNative.GetWindowHandle(mainUiRef);
+                                if (freshHandle != IntPtr.Zero)
+                                    _mainWindowHandle = freshHandle;
+                            }
+                        }
+
+                        // Monitor bilgisini ana pencere uzerinden al.
+                        // Win32 MonitorFromWindow her zaman guncel pencere pozisyonunu kullanir;
+                        // WinAppSDK DisplayArea API'sinden daha guvenilir (monitor degistirme sonrasi).
                         int monX = 0, monY = 0, monW = 0, monH = 0;
                         bool monFound = false;
                         if (_mainWindowHandle != IntPtr.Zero)
@@ -132,7 +155,6 @@ namespace YALCINDORSE.Services
                                 }
                             }
                         }
-                        // Fallback: WinAppSDK primary monitor
                         if (!monFound)
                         {
                             var fallback = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
@@ -146,34 +168,32 @@ namespace YALCINDORSE.Services
                                 monFound = true;
                             }
                         }
+
                         if (monFound)
                         {
-                            // BOYUTA DOKUNMUYORUZ — MAUI Window Width/Height'i kendi
-                            // ayarlayacak. Biz sadece pencereyi dogru monitorde ortalayalim.
-                            // Centering icin pencere boyutunu appWindow.Size'dan deniyoruz;
-                            // gec(yanlis) raporlanmissa width/height parametrelerine fallback.
-                            int winW = appWindow.Size.Width;
-                            int winH = appWindow.Size.Height;
-                            // Sanity check: monitor genisliginden cok buyuk veya 0 ise fallback
-                            if (winW <= 0 || winW > monW * 2) winW = width;
-                            if (winH <= 0 || winH > monH * 2) winH = height;
+                            // SetWindowPos'u Low-priority ile kuyruğa al.
+                            // MAUI/WinUI, Created sonrasi kendi Width/Height atamasini yapar ve
+                            // pencereyi primary monitore konumlandirabilir. Low-priority dispatch
+                            // bu atamanin bitmesini bekler; sonra bizim pozisyonumuz kazanir.
+                            int capturedMonX = monX, capturedMonY = monY;
+                            int capturedMonW = monW, capturedMonH = monH;
+                            uiWindow.DispatcherQueue.TryEnqueue(
+                                Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+                                () =>
+                                {
+                                    int winW = appWindow.Size.Width;
+                                    int winH = appWindow.Size.Height;
+                                    if (winW <= 0 || winW > capturedMonW * 2) winW = width;
+                                    if (winH <= 0 || winH > capturedMonH * 2) winH = height;
 
-                            int posX = monX + (monW - winW) / 2;
-                            int posY = monY + (monH - winH) / 2;
+                                    int posX = capturedMonX + (capturedMonW - winW) / 2;
+                                    int posY = capturedMonY + (capturedMonH - winH) / 2;
 
-                            // SWP_NOSIZE -> sadece move, resize yok. MAUI boyutu kendi yonetir.
-                            SetWindowPos(windowHandle, IntPtr.Zero,
-                                posX, posY, 0, 0,
-                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+                                    SetWindowPos(windowHandle, IntPtr.Zero,
+                                        posX, posY, 0, 0,
+                                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+                                });
                         }
-
-                        // Gorev cubugunda bagımsız buton goster:
-                        // SetOwner KALDIRILDI - owner iliskisi goreve cubugunu engelliyor.
-                        // WS_EX_APPWINDOW: Windows'a "bu pencere gorev cubugunda ayri gorunsun" der.
-                        // WS_EX_TOOLWINDOW: varsa kaldir (gorev cubugundan gizler).
-                        var exStyle = GetWindowLong(windowHandle, GWL_EXSTYLE);
-                        SetWindowLong(windowHandle, GWL_EXSTYLE,
-                            (exStyle | WS_EX_APPWINDOW) & ~WS_EX_TOOLWINDOW);
                     }
 #endif
                 };
@@ -218,11 +238,13 @@ namespace YALCINDORSE.Services
 #if WINDOWS
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                var window = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+                var mauiWin = Application.Current?.Windows.FirstOrDefault();
+                var window = mauiWin?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
                 if (window != null)
                 {
+                    // MAUI Window referansini sakla — OpenWindow her acilista taze HWND alir.
+                    _mainMauiWindow = mauiWin;
                     var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                    // Ana pencere HWND'ini cache'le — OpenWindow bunu kullanarak dogru monitoru bulur.
                     _mainWindowHandle = windowHandle;
                     var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
                     var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
