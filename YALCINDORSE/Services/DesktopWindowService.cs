@@ -61,9 +61,10 @@ namespace YALCINDORSE.Services
                 var page = new GenericBlazorWindow(title, componentType, parameters);
                 var newWindow = new Window(page)
                 {
-                    Title = title,
-                    Width = width,
-                    Height = height
+                    Title = title
+                    // Width/Height MAUI'ye bırakılmıyor: MAUI bunları primary monitörün
+                    // DPI'sına göre piksele çevirir, hedef monitör farklı DPI'daysa yanlış
+                    // boyut ayarlar. Boyut+pozisyon Created handler'da MoveAndResize ile yönetilir.
                 };
 
                 newWindow.Destroying += (s, e) =>
@@ -171,40 +172,28 @@ namespace YALCINDORSE.Services
 
                         if (monFound)
                         {
-                            // MoveAndResize'i Low-priority ile kuyruğa al.
-                            // MAUI kendi Width/Height'ini primary monitörün DPI'sina göre piksel'e
-                            // cevirir ve pencereyi oraya koyar. Biz Low-priority dispatch ile
-                            // MAUI bittikten sonra devreye girip HEM pozisyonu HEM boyutu
-                            // hedef monitörün DPI'sina göre atomik olarak set ediyoruz.
-                            // Böylece farklı DPI'lı monitörlerde de boyut doğru çıkar.
-                            int capturedMonX = monX, capturedMonY = monY;
-                            int capturedMonW = monW, capturedMonH = monH;
-                            var capturedMainHandle = _mainWindowHandle;
+                            // Hedef monitörün DPI'sini al
+                            uint dpiX = 96, dpiY = 96;
+                            var hMonDpi = MonitorFromWindow(_mainWindowHandle != IntPtr.Zero
+                                ? _mainWindowHandle : windowHandle, MONITOR_DEFAULTTONEAREST);
+                            if (hMonDpi != IntPtr.Zero)
+                                GetDpiForMonitor(hMonDpi, MDT_EFFECTIVE_DPI, out dpiX, out dpiY);
+
+                            int physW = (int)Math.Round(width  * dpiX / 96.0);
+                            int physH = (int)Math.Round(height * dpiY / 96.0);
+                            int posX  = monX + (monW - physW) / 2;
+                            int posY  = monY + (monH - physH) / 2;
+
+                            var rect = new global::Windows.Graphics.RectInt32(posX, posY, physW, physH);
+
+                            // 1) Hemen sync uygula — pencere doğru boyut/konumla açılsın
+                            appWindow.MoveAndResize(rect);
+
+                            // 2) Low-priority ile tekrar uygula — MAUI kendi layout geçişini
+                            //    yaptıktan sonra bizim rect kazansın (farklı DPI senaryosu)
                             uiWindow.DispatcherQueue.TryEnqueue(
                                 Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
-                                () =>
-                                {
-                                    // Hedef monitörün DPI'sini al (farklı ölçekleme desteği)
-                                    uint dpiX = 96, dpiY = 96;
-                                    if (capturedMainHandle != IntPtr.Zero)
-                                    {
-                                        var hMonDpi = MonitorFromWindow(capturedMainHandle, MONITOR_DEFAULTTONEAREST);
-                                        if (hMonDpi != IntPtr.Zero)
-                                            GetDpiForMonitor(hMonDpi, MDT_EFFECTIVE_DPI, out dpiX, out dpiY);
-                                    }
-
-                                    // width/height DIP (device-independent pixel) cinsinden gelir.
-                                    // Hedef monitörün DPI'sına göre fiziksel piksele çevir.
-                                    int physW = (int)Math.Round(width  * dpiX / 96.0);
-                                    int physH = (int)Math.Round(height * dpiY / 96.0);
-
-                                    int posX = capturedMonX + (capturedMonW - physW) / 2;
-                                    int posY = capturedMonY + (capturedMonH - physH) / 2;
-
-                                    // Pozisyon + boyutu atomik set et — SetWindowPos(NOSIZE) yerine
-                                    // bu kullanılıyor çünkü MAUI'nin DPI dönüşümü yanlış monitörü baz alır.
-                                    appWindow.MoveAndResize(new global::Windows.Graphics.RectInt32(posX, posY, physW, physH));
-                                });
+                                () => appWindow.MoveAndResize(rect));
                         }
                     }
 #endif
