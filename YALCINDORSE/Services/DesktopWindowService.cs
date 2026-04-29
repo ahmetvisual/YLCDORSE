@@ -103,13 +103,30 @@ namespace YALCINDORSE.Services
                         appWindow.TitleBar.ButtonInactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 20, 45, 85);
                         appWindow.TitleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 180, 180, 180);
 
-                        // Pencereyi ortala
-                        var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
+                        // Pencereyi ANA PENCERENIN oldugu monitorde ortala.
+                        // Ana pencerenin HWND'ini al -> hangi monitorde oldugunu bul (Nearest) ->
+                        // o monitörün WorkArea'sini baz alarak yeni pencereyi merkezle.
+                        // WorkArea.X / Y kullanmak zorunlu: ikincil monitorde WorkArea (1920,0)'dan
+                        // basliyor, 0'dan degil. Yoksa pencere 1. monitore dusuyor.
+                        var mainUiWin = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView
+                                        as Microsoft.UI.Xaml.Window;
+                        Microsoft.UI.Windowing.DisplayArea? displayArea = null;
+                        if (mainUiWin != null)
+                        {
+                            var mainHandle   = WinRT.Interop.WindowNative.GetWindowHandle(mainUiWin);
+                            var mainWinId    = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(mainHandle);
+                            displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
+                                mainWinId, Microsoft.UI.Windowing.DisplayAreaFallback.Nearest);
+                        }
+                        displayArea ??= Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
+                            windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
+
                         if (displayArea != null)
                         {
+                            var wa = displayArea.WorkArea;
                             appWindow.Move(new global::Windows.Graphics.PointInt32(
-                                (displayArea.WorkArea.Width - appWindow.Size.Width) / 2,
-                                (displayArea.WorkArea.Height - appWindow.Size.Height) / 2
+                                wa.X + (wa.Width  - appWindow.Size.Width)  / 2,
+                                wa.Y + (wa.Height - appWindow.Size.Height) / 2
                             ));
                         }
 
