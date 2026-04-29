@@ -148,10 +148,21 @@ namespace YALCINDORSE.Services
                         }
                         if (monFound)
                         {
-                            appWindow.Move(new global::Windows.Graphics.PointInt32(
-                                monX + (monW - appWindow.Size.Width)  / 2,
-                                monY + (monH - appWindow.Size.Height) / 2
-                            ));
+                            // appWindow.Size Created event'inde guvenilir degil:
+                            // bazen 0, bazen DPI olceginde bozuk geliyor — pencerenin
+                            // ekran disinda (sol-ust) acilmasina neden oluyor.
+                            // SetWindowPos ile pozisyon + boyutu ATOMIK olarak yaziyoruz.
+                            // width/height MAUI parametreleri (DIP) -> ana pencerenin
+                            // monitor DPI'i ile fiziksel piksele cevriliyor.
+                            uint dpi   = GetDpiForWindow(_mainWindowHandle);
+                            double scl = dpi > 0 ? dpi / 96.0 : 1.0;
+                            int physW  = (int)Math.Round(width  * scl);
+                            int physH  = (int)Math.Round(height * scl);
+                            int posX   = monX + (monW - physW) / 2;
+                            int posY   = monY + (monH - physH) / 2;
+                            SetWindowPos(windowHandle, IntPtr.Zero,
+                                posX, posY, physW, physH,
+                                SWP_NOZORDER | SWP_NOACTIVATE);
                         }
 
                         // Gorev cubugunda bagımsız buton goster:
@@ -249,6 +260,10 @@ namespace YALCINDORSE.Services
         private const int SW_RESTORE        = 9;           // Minimize edilmis pencereyi geri ac
         private const int MONITOR_DEFAULTTONEAREST = 2;    // En yakin monitoru dondur
 
+        // SetWindowPos flagleri
+        private const uint SWP_NOZORDER     = 0x0004;
+        private const uint SWP_NOACTIVATE   = 0x0010;
+
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
@@ -266,6 +281,14 @@ namespace YALCINDORSE.Services
 
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern uint GetDpiForWindow(IntPtr hwnd);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
+            int X, int Y, int cx, int cy, uint uFlags);
 
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
         private struct RECT
