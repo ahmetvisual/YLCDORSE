@@ -148,21 +148,23 @@ namespace YALCINDORSE.Services
                         }
                         if (monFound)
                         {
-                            // appWindow.Size Created event'inde guvenilir degil:
-                            // bazen 0, bazen DPI olceginde bozuk geliyor — pencerenin
-                            // ekran disinda (sol-ust) acilmasina neden oluyor.
-                            // SetWindowPos ile pozisyon + boyutu ATOMIK olarak yaziyoruz.
-                            // width/height MAUI parametreleri (DIP) -> ana pencerenin
-                            // monitor DPI'i ile fiziksel piksele cevriliyor.
-                            uint dpi   = GetDpiForWindow(_mainWindowHandle);
-                            double scl = dpi > 0 ? dpi / 96.0 : 1.0;
-                            int physW  = (int)Math.Round(width  * scl);
-                            int physH  = (int)Math.Round(height * scl);
-                            int posX   = monX + (monW - physW) / 2;
-                            int posY   = monY + (monH - physH) / 2;
+                            // BOYUTA DOKUNMUYORUZ — MAUI Window Width/Height'i kendi
+                            // ayarlayacak. Biz sadece pencereyi dogru monitorde ortalayalim.
+                            // Centering icin pencere boyutunu appWindow.Size'dan deniyoruz;
+                            // gec(yanlis) raporlanmissa width/height parametrelerine fallback.
+                            int winW = appWindow.Size.Width;
+                            int winH = appWindow.Size.Height;
+                            // Sanity check: monitor genisliginden cok buyuk veya 0 ise fallback
+                            if (winW <= 0 || winW > monW * 2) winW = width;
+                            if (winH <= 0 || winH > monH * 2) winH = height;
+
+                            int posX = monX + (monW - winW) / 2;
+                            int posY = monY + (monH - winH) / 2;
+
+                            // SWP_NOSIZE -> sadece move, resize yok. MAUI boyutu kendi yonetir.
                             SetWindowPos(windowHandle, IntPtr.Zero,
-                                posX, posY, physW, physH,
-                                SWP_NOZORDER | SWP_NOACTIVATE);
+                                posX, posY, 0, 0,
+                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
                         }
 
                         // Gorev cubugunda bagımsız buton goster:
@@ -261,6 +263,7 @@ namespace YALCINDORSE.Services
         private const int MONITOR_DEFAULTTONEAREST = 2;    // En yakin monitoru dondur
 
         // SetWindowPos flagleri
+        private const uint SWP_NOSIZE       = 0x0001;
         private const uint SWP_NOZORDER     = 0x0004;
         private const uint SWP_NOACTIVATE   = 0x0010;
 
@@ -281,9 +284,6 @@ namespace YALCINDORSE.Services
 
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
-
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        private static extern uint GetDpiForWindow(IntPtr hwnd);
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
         [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
