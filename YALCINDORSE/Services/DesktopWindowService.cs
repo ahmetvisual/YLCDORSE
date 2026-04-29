@@ -171,27 +171,39 @@ namespace YALCINDORSE.Services
 
                         if (monFound)
                         {
-                            // SetWindowPos'u Low-priority ile kuyruğa al.
-                            // MAUI/WinUI, Created sonrasi kendi Width/Height atamasini yapar ve
-                            // pencereyi primary monitore konumlandirabilir. Low-priority dispatch
-                            // bu atamanin bitmesini bekler; sonra bizim pozisyonumuz kazanir.
+                            // MoveAndResize'i Low-priority ile kuyruğa al.
+                            // MAUI kendi Width/Height'ini primary monitörün DPI'sina göre piksel'e
+                            // cevirir ve pencereyi oraya koyar. Biz Low-priority dispatch ile
+                            // MAUI bittikten sonra devreye girip HEM pozisyonu HEM boyutu
+                            // hedef monitörün DPI'sina göre atomik olarak set ediyoruz.
+                            // Böylece farklı DPI'lı monitörlerde de boyut doğru çıkar.
                             int capturedMonX = monX, capturedMonY = monY;
                             int capturedMonW = monW, capturedMonH = monH;
+                            var capturedMainHandle = _mainWindowHandle;
                             uiWindow.DispatcherQueue.TryEnqueue(
                                 Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
                                 () =>
                                 {
-                                    int winW = appWindow.Size.Width;
-                                    int winH = appWindow.Size.Height;
-                                    if (winW <= 0 || winW > capturedMonW * 2) winW = width;
-                                    if (winH <= 0 || winH > capturedMonH * 2) winH = height;
+                                    // Hedef monitörün DPI'sini al (farklı ölçekleme desteği)
+                                    uint dpiX = 96, dpiY = 96;
+                                    if (capturedMainHandle != IntPtr.Zero)
+                                    {
+                                        var hMonDpi = MonitorFromWindow(capturedMainHandle, MONITOR_DEFAULTTONEAREST);
+                                        if (hMonDpi != IntPtr.Zero)
+                                            GetDpiForMonitor(hMonDpi, MDT_EFFECTIVE_DPI, out dpiX, out dpiY);
+                                    }
 
-                                    int posX = capturedMonX + (capturedMonW - winW) / 2;
-                                    int posY = capturedMonY + (capturedMonH - winH) / 2;
+                                    // width/height DIP (device-independent pixel) cinsinden gelir.
+                                    // Hedef monitörün DPI'sına göre fiziksel piksele çevir.
+                                    int physW = (int)Math.Round(width  * dpiX / 96.0);
+                                    int physH = (int)Math.Round(height * dpiY / 96.0);
 
-                                    SetWindowPos(windowHandle, IntPtr.Zero,
-                                        posX, posY, 0, 0,
-                                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+                                    int posX = capturedMonX + (capturedMonW - physW) / 2;
+                                    int posY = capturedMonY + (capturedMonH - physH) / 2;
+
+                                    // Pozisyon + boyutu atomik set et — SetWindowPos(NOSIZE) yerine
+                                    // bu kullanılıyor çünkü MAUI'nin DPI dönüşümü yanlış monitörü baz alır.
+                                    appWindow.MoveAndResize(new Windows.Graphics.RectInt32(posX, posY, physW, physH));
                                 });
                         }
                     }
@@ -278,13 +290,14 @@ namespace YALCINDORSE.Services
             SetForegroundWindow(hWnd);
         }
 
-        private const int GWL_EXSTYLE      = -20;
-        private const int WS_EX_APPWINDOW  = 0x00040000;  // Gorev cubugunda goster
-        private const int WS_EX_TOOLWINDOW = 0x00000080;  // Gorev cubugunden gizle (istemiyoruz)
-        private const int SW_RESTORE        = 9;           // Minimize edilmis pencereyi geri ac
-        private const int MONITOR_DEFAULTTONEAREST = 2;    // En yakin monitoru dondur
+        private const int  GWL_EXSTYLE             = -20;
+        private const int  WS_EX_APPWINDOW         = 0x00040000;
+        private const int  WS_EX_TOOLWINDOW        = 0x00000080;
+        private const int  SW_RESTORE              = 9;
+        private const int  MONITOR_DEFAULTTONEAREST = 2;
+        private const uint MDT_EFFECTIVE_DPI       = 0;   // GetDpiForMonitor: ekranın efektif DPI'si
 
-        // SetWindowPos flagleri
+        // SetWindowPos flagleri (artık yalnızca ActivateExistingWindow'da kullanılıyor)
         private const uint SWP_NOSIZE       = 0x0001;
         private const uint SWP_NOZORDER     = 0x0004;
         private const uint SWP_NOACTIVATE   = 0x0010;
@@ -311,6 +324,10 @@ namespace YALCINDORSE.Services
         [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
             int X, int Y, int cx, int cy, uint uFlags);
+
+        [System.Runtime.InteropServices.DllImport("shcore.dll")]
+        private static extern int GetDpiForMonitor(IntPtr hmonitor, uint dpiType,
+            out uint dpiX, out uint dpiY);
 
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
         private struct RECT
