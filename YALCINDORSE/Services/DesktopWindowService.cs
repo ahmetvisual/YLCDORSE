@@ -8,6 +8,11 @@ namespace YALCINDORSE.Services
     {
         private readonly ConcurrentDictionary<Type, Window> _openWindows = new();
 
+        // Ana pencerenin HWND'i — MaximizeMainWindow ilk cagrildiginda (app startup) cache'lenir.
+        // OpenWindow'da yeni pencerenin hangi monitörde acilacagini belirlemek icin kullanilir.
+        private IntPtr _mainWindowHandle = IntPtr.Zero;
+
+
         // Close-guard: bir Blazor component pencerenin kapanmasini engelleyebilir.
         // ShouldBlock = true donerse, pencere kapanmaz; OnBlocked geri cagrilarak
         // component'in (ornegin "kaydedilmemis degisiklikler" dialogu gostermesi) tetiklenir.
@@ -104,18 +109,14 @@ namespace YALCINDORSE.Services
                         appWindow.TitleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 180, 180, 180);
 
                         // Pencereyi ANA PENCERENIN oldugu monitorde ortala.
-                        // Ana pencerenin HWND'ini al -> hangi monitorde oldugunu bul (Nearest) ->
-                        // o monitörün WorkArea'sini baz alarak yeni pencereyi merkezle.
-                        // WorkArea.X / Y kullanmak zorunlu: ikincil monitorde WorkArea (1920,0)'dan
-                        // basliyor, 0'dan degil. Yoksa pencere 1. monitore dusuyor.
-                        var mainUiWin = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView
-                                        as Microsoft.UI.Xaml.Window;
+                        // _mainWindowHandle startup'ta MaximizeMainWindow tarafindan cache'lenir;
+                        // bu sayede Created event'i sirasinda Windows koleksiyonuna bakilmaz
+                        // (koleksiyonun sirasi belirsiz olabilir).
                         Microsoft.UI.Windowing.DisplayArea? displayArea = null;
-                        if (mainUiWin != null)
+                        if (_mainWindowHandle != IntPtr.Zero)
                         {
-                            var mainHandle   = WinRT.Interop.WindowNative.GetWindowHandle(mainUiWin);
-                            var mainWinId    = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(mainHandle);
-                            displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
+                            var mainWinId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(_mainWindowHandle);
+                            displayArea   = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
                                 mainWinId, Microsoft.UI.Windowing.DisplayAreaFallback.Nearest);
                         }
                         displayArea ??= Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
@@ -185,6 +186,8 @@ namespace YALCINDORSE.Services
                 if (window != null)
                 {
                     var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+                    // Ana pencere HWND'ini cache'le — OpenWindow bunu kullanarak dogru monitoru bulur.
+                    _mainWindowHandle = windowHandle;
                     var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
                     var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
 
