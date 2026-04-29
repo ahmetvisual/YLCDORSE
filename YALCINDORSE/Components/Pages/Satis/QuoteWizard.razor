@@ -64,7 +64,7 @@
             <div class="wizard-content fill">
                 <div class="wizard-section-title tight">Teklif Bilgileri</div>
                 @{
-                    var satisTipiOpts = new[] { ("NewProduction","Yeni Uretim"), ("SecondHand","Ikinci El"), ("SparePart","Yedek Parca") };
+                    var satisTipiOpts = new[] { ("NewProduction","Yeni Uretim"), ("Stock","Stok"), ("SecondHand","Ikinci El") };
                     var teklifKanaliOpts = new[] { ("","— Seciniz —"), ("BAYI","Bayi"), ("ZIYARET","Ziyaret"), ("ONLINE","Online"), ("WHATSAPP","WhatsApp"), ("EMAIL","E-Mail"), ("WEB_SITESI","Web Sitesi"), ("FUAR","Fuar") };
                     var puanOpts = new[] { ("WARM","WARM"), ("HOT","HOT"), ("COLD","COLD"), ("ORDER","ORDER"), ("CLOSED","CLOSED") };
                     var dilOpts = new[] { ("TR","Turkce"), ("EN","English"), ("DE","Deutsch"), ("FR","Francais"), ("RU","Russian") };
@@ -94,6 +94,24 @@
                             }
                         </div>
                     </div>
+                    @* ── Stok / İkinci El seçilince çıkan 3 alan — tek satır, tam genişlik ── *@
+                    @if (quote.SatisTipi == "Stock" || quote.SatisTipi == "SecondHand")
+                    {
+                        <div style="grid-column: 1 / -1; display:flex; gap:12px; align-items:flex-start; padding:4px 0 0 0; border-left:3px solid #1D4ED8; padding-left:10px; background:#f0f4ff; margin-bottom:2px;">
+                            <div class="wizard-field compact" style="flex:1.3; margin-bottom:0">
+                                <label style="color:#1D4ED8">Stok Kodu</label>
+                                <input type="text" @bind="quote.StokKodu" placeholder="örn: ACF0047..." style="border-color:rgba(29,78,216,0.35)" />
+                            </div>
+                            <div class="wizard-field compact" style="flex:1.5; margin-bottom:0">
+                                <label style="color:#1D4ED8">Şasi No</label>
+                                <input type="text" @bind="quote.SasiNo" placeholder="Şasi numarası giriniz" style="border-color:rgba(29,78,216,0.35)" />
+                            </div>
+                            <div class="wizard-field compact" style="flex:0.8; margin-bottom:0">
+                                <label style="color:#1D4ED8">Model Yılı</label>
+                                <input type="number" @bind="quote.ModelYili" min="1990" max="2030" placeholder="2024" style="border-color:rgba(29,78,216,0.35)" />
+                            </div>
+                        </div>
+                    }
                     <div class="wizard-field compact">
                         <label>Musteri <span class="required">*</span></label>
                         <div style="display:flex;gap:6px">
@@ -408,17 +426,6 @@
                             </div>
                         }
                     </div>
-                    @if (quote.SatisTipi == "SecondHand")
-                    {
-                        <div class="wizard-field compact extra-field">
-                            <label>Sasi No</label>
-                            <input type="text" @bind="quote.SasiNo" placeholder="Sasi numarasi giriniz" />
-                        </div>
-                        <div class="wizard-field compact extra-field">
-                            <label>Model Yili</label>
-                            <input type="number" @bind="quote.ModelYili" min="1990" max="2030" placeholder="Ornek: 2024" />
-                        </div>
-                    }
                     <div class="wizard-field compact">
                         <label>Puan</label>
                         <div class="custom-select" @onfocusout='() => CloseDropdown("puan")'>
