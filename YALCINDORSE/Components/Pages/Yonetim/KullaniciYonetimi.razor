@@ -128,7 +128,7 @@ else
 <!-- ═══ KULLANICI EKLE / DÜZENLE MODAL ═══ -->
 @if (showModal)
 {
-    <div class="rc-modal-overlay" @onclick="CloseModal">
+    <div class="rc-modal-overlay">
         <div class="rc-modal" style="min-width:460px;max-width:580px;" @onclick:stopPropagation="true">
             <div class="rc-modal-header">
                 @(isEditing ? "Kullanici Duzenle" : "Yeni Kullanici")

@@ -598,7 +598,7 @@
                     <!-- TESLIMAT sablon picker (overlay) -->
                     @if (showTeslimatPicker)
                     {
-                        <div class="modal-overlay" @onclick="() => showTeslimatPicker = false">
+                        <div class="modal-overlay">
                             <div class="quick-modal-content tlpick" @onclick:stopPropagation="true">
                                 <div class="modal-header">
                                     <h4>TESLİMAT Şablonu</h4>
@@ -666,7 +666,7 @@
                     @* TESLIMAT madde duzenleme popup *@
                     @if (editingTeslimatItem != null)
                     {
-                        <div class="modal-overlay" @onclick="() => editingTeslimatItem = null">
+                        <div class="modal-overlay">
                             <div class="quick-modal-content" style="max-width:560px" @onclick:stopPropagation="true">
                                 <div class="modal-header">
                                     <h4>Madde Düzenle</h4>
@@ -953,7 +953,7 @@
     <!-- Quick Add Modal -->
     @if (showQuickAdd)
     {
-        <div class="modal-overlay" @onclick="() => showQuickAdd = false">
+        <div class="modal-overlay">
             <div class="quick-modal-content" @onclick:stopPropagation="true">
                 <div class="modal-header">
                     <h4>Hizli Musteri Ekle</h4>
@@ -980,7 +980,7 @@
     <!-- Quick Add Ilgili Kisi Modal -->
     @if (showQuickAddContact)
     {
-        <div class="modal-overlay" @onclick="CloseAddContact">
+        <div class="modal-overlay">
             <div class="quick-modal-content" style="max-width:520px" @onclick:stopPropagation="true">
                 <div class="modal-header">
                     <h4>Ilgili Kisi Ekle</h4>

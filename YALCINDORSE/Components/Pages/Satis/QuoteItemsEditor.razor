@@ -352,7 +352,7 @@
     @* Grup düzenleme popup (multi-lang) *@
     @if (showGrupEdit && editingGrup != null)
     {
-        <div class="modal-overlay" @onclick="CancelGrupEdit">
+        <div class="modal-overlay">
             <div class="quick-modal-content" style="max-width:520px" @onclick:stopPropagation="true">
                 <div class="modal-header">
                     <h4>Grup Düzenle</h4>
@@ -385,7 +385,7 @@
     @* Detay düzenleme popup (multi-lang + fiyat) *@
     @if (showDetayEdit && editingDetay != null && editingDetayGrup != null)
     {
-        <div class="modal-overlay" @onclick="CancelDetayEdit">
+        <div class="modal-overlay">
             <div class="quick-modal-content" style="max-width:560px" @onclick:stopPropagation="true">
                 <div class="modal-header">
                     <h4>Kalem Düzenle</h4>
