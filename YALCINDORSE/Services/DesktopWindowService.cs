@@ -109,25 +109,48 @@ namespace YALCINDORSE.Services
                         appWindow.TitleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 180, 180, 180);
 
                         // Pencereyi ANA PENCERENIN oldugu monitorde ortala.
-                        // _mainWindowHandle startup'ta MaximizeMainWindow tarafindan cache'lenir;
-                        // bu sayede Created event'i sirasinda Windows koleksiyonuna bakilmaz
-                        // (koleksiyonun sirasi belirsiz olabilir).
-                        Microsoft.UI.Windowing.DisplayArea? displayArea = null;
+                        // WinAppSDK DisplayArea API'si bazen guncel pencere pozisyonunu
+                        // dogru sorgulamiyor (ozellikle pencere monitor degistirdikten sonra).
+                        // Win32 MonitorFromWindow + GetMonitorInfo ile direkt sorguluyoruz —
+                        // bu API guncel HWND pozisyonunu kesin doner.
+                        int monX = 0, monY = 0, monW = 0, monH = 0;
+                        bool monFound = false;
                         if (_mainWindowHandle != IntPtr.Zero)
                         {
-                            var mainWinId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(_mainWindowHandle);
-                            displayArea   = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
-                                mainWinId, Microsoft.UI.Windowing.DisplayAreaFallback.Nearest);
+                            var hMon = MonitorFromWindow(_mainWindowHandle, MONITOR_DEFAULTTONEAREST);
+                            if (hMon != IntPtr.Zero)
+                            {
+                                var mi = new MONITORINFO();
+                                mi.cbSize = System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>();
+                                if (GetMonitorInfo(hMon, ref mi))
+                                {
+                                    monX = mi.rcWork.Left;
+                                    monY = mi.rcWork.Top;
+                                    monW = mi.rcWork.Right  - mi.rcWork.Left;
+                                    monH = mi.rcWork.Bottom - mi.rcWork.Top;
+                                    monFound = true;
+                                }
+                            }
                         }
-                        displayArea ??= Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
-                            windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
-
-                        if (displayArea != null)
+                        // Fallback: WinAppSDK primary monitor
+                        if (!monFound)
                         {
-                            var wa = displayArea.WorkArea;
+                            var fallback = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
+                                windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
+                            if (fallback != null)
+                            {
+                                monX = fallback.WorkArea.X;
+                                monY = fallback.WorkArea.Y;
+                                monW = fallback.WorkArea.Width;
+                                monH = fallback.WorkArea.Height;
+                                monFound = true;
+                            }
+                        }
+                        if (monFound)
+                        {
                             appWindow.Move(new global::Windows.Graphics.PointInt32(
-                                wa.X + (wa.Width  - appWindow.Size.Width)  / 2,
-                                wa.Y + (wa.Height - appWindow.Size.Height) / 2
+                                monX + (monW - appWindow.Size.Width)  / 2,
+                                monY + (monH - appWindow.Size.Height) / 2
                             ));
                         }
 
@@ -224,6 +247,7 @@ namespace YALCINDORSE.Services
         private const int WS_EX_APPWINDOW  = 0x00040000;  // Gorev cubugunda goster
         private const int WS_EX_TOOLWINDOW = 0x00000080;  // Gorev cubugunden gizle (istemiyoruz)
         private const int SW_RESTORE        = 9;           // Minimize edilmis pencereyi geri ac
+        private const int MONITOR_DEFAULTTONEAREST = 2;    // En yakin monitoru dondur
 
         [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
@@ -236,6 +260,27 @@ namespace YALCINDORSE.Services
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int dwFlags);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left, Top, Right, Bottom;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int  cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public int  dwFlags;
+        }
 #endif
     }
 }
