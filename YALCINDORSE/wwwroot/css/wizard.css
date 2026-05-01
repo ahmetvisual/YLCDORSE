@@ -857,6 +857,31 @@
 .custom-select-option:hover { background: #eef2ff; }
 .custom-select-option.selected { background: #e8f0fe; font-weight: 600; }
 
+.dropdown-search-wrap {
+    padding: 5px 6px;
+    border-bottom: 1px solid var(--yl-border);
+    background: #f9fafb;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.dropdown-search-input {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border: 1px solid var(--yl-border);
+    border-radius: 0;
+    background: #fff;
+    color: var(--yl-text);
+    font-family: inherit;
+    box-sizing: border-box;
+    outline: none;
+}
+.dropdown-search-input:focus { border-color: var(--yl-primary); }
+
+.app-root.dark .dropdown-search-wrap { background: #1a1e2e; }
+.app-root.dark .dropdown-search-input { background: var(--yl-bg); color: var(--yl-text); border-color: var(--yl-border); }
+
 /* Dark mode */
 .app-root.dark .wizard-content { background: var(--yl-bg); border-color: var(--yl-border); }
 .app-root.dark .wizard-step-circle { background: var(--yl-bg); }

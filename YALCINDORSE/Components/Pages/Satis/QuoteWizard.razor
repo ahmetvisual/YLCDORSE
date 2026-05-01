@@ -201,12 +201,18 @@
                                 @if (openDropdown == "teklifTipi")
                                 {
                                     <div class="custom-select-dropdown">
+                                        <div class="dropdown-search-wrap">
+                                            <input class="dropdown-search-input" type="text" placeholder="Ara..." autocomplete="off"
+                                                   value="@dropdownSearchText"
+                                                   @oninput="(e) => dropdownSearchText = e.Value?.ToString() ?? string.Empty"
+                                                   @onmousedown:stopPropagation @onclick:stopPropagation @onfocusout:stopPropagation />
+                                        </div>
                                         <button class="custom-select-option @(string.IsNullOrEmpty(quote.TeklifTipi) ? "selected" : "")"
-                                                @onmousedown="() => { quote.TeklifTipi = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
-                                        @foreach (var val in teklifTipiValues)
+                                                @onmousedown="() => { quote.TeklifTipi = null; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in teklifTipiValues.Where(v => string.IsNullOrEmpty(dropdownSearchText) || v.Contains(dropdownSearchText, StringComparison.OrdinalIgnoreCase)))
                                         {
                                             <button class="custom-select-option @(quote.TeklifTipi == val ? "selected" : "")"
-                                                    @onmousedown="() => { quote.TeklifTipi = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                                    @onmousedown="() => { quote.TeklifTipi = val; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>@val</button>
                                         }
                                     </div>
                                 }
@@ -241,12 +247,18 @@
                                 @if (openDropdown == "tipadi")
                                 {
                                     <div class="custom-select-dropdown">
+                                        <div class="dropdown-search-wrap">
+                                            <input class="dropdown-search-input" type="text" placeholder="Ara..." autocomplete="off"
+                                                   value="@dropdownSearchText"
+                                                   @oninput="(e) => dropdownSearchText = e.Value?.ToString() ?? string.Empty"
+                                                   @onmousedown:stopPropagation @onclick:stopPropagation @onfocusout:stopPropagation />
+                                        </div>
                                         <button class="custom-select-option @(string.IsNullOrEmpty(quote.TipAdi) ? "selected" : "")"
-                                                @onmousedown="() => { quote.TipAdi = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
-                                        @foreach (var val in tipAdiValues)
+                                                @onmousedown="() => { quote.TipAdi = null; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in tipAdiValues.Where(v => string.IsNullOrEmpty(dropdownSearchText) || v.Contains(dropdownSearchText, StringComparison.OrdinalIgnoreCase)))
                                         {
                                             <button class="custom-select-option @(quote.TipAdi == val ? "selected" : "")"
-                                                    @onmousedown="() => { quote.TipAdi = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                                    @onmousedown="() => { quote.TipAdi = val; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>@val</button>
                                         }
                                     </div>
                                 }
@@ -351,12 +363,18 @@
                                 @if (openDropdown == "suspansiyon")
                                 {
                                     <div class="custom-select-dropdown">
+                                        <div class="dropdown-search-wrap">
+                                            <input class="dropdown-search-input" type="text" placeholder="Ara..." autocomplete="off"
+                                                   value="@dropdownSearchText"
+                                                   @oninput="(e) => dropdownSearchText = e.Value?.ToString() ?? string.Empty"
+                                                   @onmousedown:stopPropagation @onclick:stopPropagation @onfocusout:stopPropagation />
+                                        </div>
                                         <button class="custom-select-option @(string.IsNullOrEmpty(quote.Suspansiyon) ? "selected" : "")"
-                                                @onmousedown="() => { quote.Suspansiyon = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
-                                        @foreach (var val in suspansiyonValues)
+                                                @onmousedown="() => { quote.Suspansiyon = null; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in suspansiyonValues.Where(v => string.IsNullOrEmpty(dropdownSearchText) || v.Contains(dropdownSearchText, StringComparison.OrdinalIgnoreCase)))
                                         {
                                             <button class="custom-select-option @(quote.Suspansiyon == val ? "selected" : "")"
-                                                    @onmousedown="() => { quote.Suspansiyon = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                                    @onmousedown="() => { quote.Suspansiyon = val; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>@val</button>
                                         }
                                     </div>
                                 }
@@ -391,12 +409,18 @@
                                 @if (openDropdown == "extension")
                                 {
                                     <div class="custom-select-dropdown">
+                                        <div class="dropdown-search-wrap">
+                                            <input class="dropdown-search-input" type="text" placeholder="Ara..." autocomplete="off"
+                                                   value="@dropdownSearchText"
+                                                   @oninput="(e) => dropdownSearchText = e.Value?.ToString() ?? string.Empty"
+                                                   @onmousedown:stopPropagation @onclick:stopPropagation @onfocusout:stopPropagation />
+                                        </div>
                                         <button class="custom-select-option @(string.IsNullOrEmpty(quote.Extension) ? "selected" : "")"
-                                                @onmousedown="() => { quote.Extension = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
-                                        @foreach (var val in extensionValues)
+                                                @onmousedown="() => { quote.Extension = null; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in extensionValues.Where(v => string.IsNullOrEmpty(dropdownSearchText) || v.Contains(dropdownSearchText, StringComparison.OrdinalIgnoreCase)))
                                         {
                                             <button class="custom-select-option @(quote.Extension == val ? "selected" : "")"
-                                                    @onmousedown="() => { quote.Extension = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                                    @onmousedown="() => { quote.Extension = val; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>@val</button>
                                         }
                                     </div>
                                 }
@@ -431,12 +455,18 @@
                                 @if (openDropdown == "gooseneck")
                                 {
                                     <div class="custom-select-dropdown">
+                                        <div class="dropdown-search-wrap">
+                                            <input class="dropdown-search-input" type="text" placeholder="Ara..." autocomplete="off"
+                                                   value="@dropdownSearchText"
+                                                   @oninput="(e) => dropdownSearchText = e.Value?.ToString() ?? string.Empty"
+                                                   @onmousedown:stopPropagation @onclick:stopPropagation @onfocusout:stopPropagation />
+                                        </div>
                                         <button class="custom-select-option @(string.IsNullOrEmpty(quote.Gooseneck) ? "selected" : "")"
-                                                @onmousedown="() => { quote.Gooseneck = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
-                                        @foreach (var val in gooseneckValues)
+                                                @onmousedown="() => { quote.Gooseneck = null; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in gooseneckValues.Where(v => string.IsNullOrEmpty(dropdownSearchText) || v.Contains(dropdownSearchText, StringComparison.OrdinalIgnoreCase)))
                                         {
                                             <button class="custom-select-option @(quote.Gooseneck == val ? "selected" : "")"
-                                                    @onmousedown="() => { quote.Gooseneck = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                                    @onmousedown="() => { quote.Gooseneck = val; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>@val</button>
                                         }
                                     </div>
                                 }
@@ -1139,8 +1169,16 @@
 
     // Custom dropdown state
     private string? openDropdown;
-    private void ToggleDropdown(string name) => openDropdown = openDropdown == name ? null : name;
-    private void CloseDropdown(string name) { if (openDropdown == name) openDropdown = null; }
+    private string dropdownSearchText = "";
+    private void ToggleDropdown(string name)
+    {
+        openDropdown = openDropdown == name ? null : name;
+        dropdownSearchText = "";
+    }
+    private void CloseDropdown(string name)
+    {
+        if (openDropdown == name) { openDropdown = null; dropdownSearchText = ""; }
+    }
 
     // Lookup degerleri (dinamik dropdownlar)
     private List<string> teklifTipiValues  = new();
