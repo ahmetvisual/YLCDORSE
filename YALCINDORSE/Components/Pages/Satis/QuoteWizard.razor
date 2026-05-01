@@ -15,6 +15,15 @@
 
 <div style="display:flex;flex-direction:column;height:100vh;padding:8px 12px;box-sizing:border-box;overflow:hidden;"
      @oninput="MarkDirty" @onchange="MarkDirty">
+
+    @* Global backdrop — herhangi bir dropdown açıkken dışarı tıklanınca kapatır.
+       @onfocusout kullanmıyoruz: search input'a tıklanınca focusout dropdown'ı öldürüyordu. *@
+    @if (openDropdown != null)
+    {
+        <div style="position:fixed;inset:0;z-index:499"
+             @onclick="() => { openDropdown = null; dropdownSearchText = string.Empty; }"></div>
+    }
+
     <div class="wizard-container">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
             <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--yl-primary)">@(isEditMode ? $"Teklif Duzenle - {quote.TeklifNo}" : isCopyMode ? "Teklif Kopyala" : "Teklif Olustur")</h3>
@@ -77,7 +86,7 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Satis Tipi</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("satisTipi")'>
+                        <div class="custom-select">
                             <button class="custom-select-trigger" @onclick='() => ToggleDropdown("satisTipi")'>
                                 <span>@(satisTipiOpts.FirstOrDefault(o => o.Item1 == quote.SatisTipi).Item2 ?? "Seciniz")</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -115,7 +124,7 @@
                     <div class="wizard-field compact">
                         <label>Musteri <span class="required">*</span></label>
                         <div style="display:flex;gap:6px">
-                            <div class="searchable-select" style="flex:1" @onfocusout="CloseCustomerDropdown">
+                            <div class="searchable-select" style="flex:1">
                                 <input type="text" @bind="customerSearchText" @bind:event="oninput"
                                        @onfocus="OpenCustomerDropdown"
                                        placeholder="Musteri ara..." autocomplete="off" />
@@ -173,7 +182,7 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Teklif Kanali</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("teklifKanali")'>
+                        <div class="custom-select">
                             <button class="custom-select-trigger" @onclick='() => ToggleDropdown("teklifKanali")'>
                                 <span>@(teklifKanaliOpts.FirstOrDefault(o => o.Item1 == quote.TeklifKanali).Item2 ?? "— Seciniz —")</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -193,7 +202,7 @@
                     <div class="wizard-field compact">
                         <label>Teklif Tipi</label>
                         <div style="display:flex;gap:4px;align-items:flex-start">
-                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("teklifTipi")'>
+                            <div class="custom-select" style="flex:1">
                                 <button class="custom-select-trigger" @onclick='() => ToggleDropdown("teklifTipi")'>
                                     <span>@(string.IsNullOrEmpty(quote.TeklifTipi) ? "— Seciniz —" : quote.TeklifTipi)</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -239,7 +248,7 @@
                     <div class="wizard-field compact">
                         <label>Tip Adi</label>
                         <div style="display:flex;gap:4px;align-items:flex-start">
-                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("tipadi")'>
+                            <div class="custom-select" style="flex:1">
                                 <button class="custom-select-trigger" @onclick='() => ToggleDropdown("tipadi")'>
                                     <span>@(string.IsNullOrEmpty(quote.TipAdi) ? "— Seciniz —" : quote.TipAdi)</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -289,7 +298,7 @@
                     <div class="wizard-field compact">
                         <label>Lastik (Tire)</label>
                         <div style="display:flex;gap:4px;align-items:flex-start">
-                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("lastik")'>
+                            <div class="custom-select" style="flex:1">
                                 <button class="custom-select-trigger" @onclick='() => ToggleLastikDropdown()'>
                                     <span>@(string.IsNullOrEmpty(quote.Lastik) ? "— Seciniz —" : quote.Lastik)</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -355,7 +364,7 @@
                     <div class="wizard-field compact">
                         <label>Suspansiyon</label>
                         <div style="display:flex;gap:4px;align-items:flex-start">
-                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("suspansiyon")'>
+                            <div class="custom-select" style="flex:1">
                                 <button class="custom-select-trigger" @onclick='() => ToggleDropdown("suspansiyon")'>
                                     <span>@(string.IsNullOrEmpty(quote.Suspansiyon) ? "— Seciniz —" : quote.Suspansiyon)</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -401,7 +410,7 @@
                     <div class="wizard-field compact">
                         <label>Extension</label>
                         <div style="display:flex;gap:4px;align-items:flex-start">
-                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("extension")'>
+                            <div class="custom-select" style="flex:1">
                                 <button class="custom-select-trigger" @onclick='() => ToggleDropdown("extension")'>
                                     <span>@(string.IsNullOrEmpty(quote.Extension) ? "— Seciniz —" : quote.Extension)</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -447,7 +456,7 @@
                     <div class="wizard-field compact">
                         <label>Gooseneck</label>
                         <div style="display:flex;gap:4px;align-items:flex-start">
-                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("gooseneck")'>
+                            <div class="custom-select" style="flex:1">
                                 <button class="custom-select-trigger" @onclick='() => ToggleDropdown("gooseneck")'>
                                     <span>@(string.IsNullOrEmpty(quote.Gooseneck) ? "— Seciniz —" : quote.Gooseneck)</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -492,7 +501,7 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Puan</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("puan")'>
+                        <div class="custom-select">
                             <button class="custom-select-trigger" @onclick='() => ToggleDropdown("puan")'>
                                 <span>@(string.IsNullOrEmpty(quote.Puan) ? "Seciniz" : quote.Puan)</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -511,7 +520,7 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Temsilci</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("satici")'>
+                        <div class="custom-select">
                             <button class="custom-select-trigger" @onclick='() => ToggleDropdown("satici")'>
                                 <span>@(salesReps.FirstOrDefault(s => s.Id == quote.SaticiId)?.FullName ?? "— Seciniz —")</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -532,7 +541,7 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Dil</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("dil")'>
+                        <div class="custom-select">
                             <button class="custom-select-trigger" @onclick='() => ToggleDropdown("dil")'>
                                 <span>@(dilOpts.FirstOrDefault(o => o.Item1 == quote.Dil).Item2 ?? "Turkce")</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -551,7 +560,7 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Para Birimi</label>
-                        <div class="custom-select" @onfocusout='() => CloseDropdown("paraBirimi")'>
+                        <div class="custom-select">
                             <button class="custom-select-trigger" @onclick='() => ToggleDropdown("paraBirimi")'>
                                 <span>@(paraBirimiOpts.FirstOrDefault(o => o.Item1 == quote.ParaBirimi).Item2 ?? "EUR")</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -800,7 +809,7 @@
                     <div class="wizard-grid3">
                         <div class="wizard-field">
                             <label>Ödeme Sistemi</label>
-                            <div class="custom-select" @onfocusout='() => CloseDropdown("odemeSistemi")'>
+                            <div class="custom-select">
                                 <button class="custom-select-trigger" @onclick='() => ToggleDropdown("odemeSistemi")'>
                                     <span>@(odemeSistemiOpts.FirstOrDefault(o => o.Item1 == quote.OdemeSistemi).Item2 ?? "— Seciniz —")</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
