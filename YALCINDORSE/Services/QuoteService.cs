@@ -78,7 +78,9 @@ namespace YALCINDORSE.Services
 
         // Urun detay alanlari
         public string? TipAdi        { get; set; }
-        public string? Lastik        { get; set; }
+        public string? Lastik        { get; set; }  // eski alan — geri uyumluluk
+        public string? LastikType    { get; set; }  // Tyre ebatı  (ör. 315/70)
+        public string? LastikDrum    { get; set; }  // Drum/jant   (ör. R 22.5)
         public string? Suspansiyon   { get; set; }
         public string? Extension     { get; set; }
         public string? Gooseneck     { get; set; }
@@ -141,6 +143,8 @@ namespace YALCINDORSE.Services
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "StokKodu"    TEXT""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "TipAdi"      TEXT""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Lastik"      TEXT""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "LastikType"  TEXT""",
+                    """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "LastikDrum"  TEXT""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Suspansiyon" TEXT""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Extension"   TEXT""",
                     """ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "Gooseneck"   TEXT""",
@@ -316,7 +320,8 @@ namespace YALCINDORSE.Services
                     "TeslimatHaftasi", "TeslimatTipiKodu", "TeslimatYeri", "TeslimatNotlari",
                     "OnOdemeYuzdesi", "OnOdemeTutari", "BakiyeTutari", "VadeGun",
                     "StokKodu", "SasiNo", "ModelYili",
-                    "TipAdi", "Lastik", "Suspansiyon", "Extension", "Gooseneck"
+                    "TipAdi", "Lastik", "LastikType", "LastikDrum",
+                    "Suspansiyon", "Extension", "Gooseneck"
                 )
                 VALUES
                 (
@@ -330,7 +335,8 @@ namespace YALCINDORSE.Services
                     @TeslimatHaftasi, @TeslimatTipiKodu, @TeslimatYeri, @TeslimatNotlari,
                     @OnOdemeYuzdesi, @OnOdemeTutari, @BakiyeTutari, @VadeGun,
                     @StokKodu, @SasiNo, @ModelYili,
-                    @TipAdi, @Lastik, @Suspansiyon, @Extension, @Gooseneck
+                    @TipAdi, @Lastik, @LastikType, @LastikDrum,
+                    @Suspansiyon, @Extension, @Gooseneck
                 )
                 RETURNING "Id";
                 """;
@@ -375,6 +381,8 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("ModelYili", (object?)quote.ModelYili ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TipAdi", (object?)quote.TipAdi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Lastik", (object?)quote.Lastik ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("LastikType", (object?)quote.LastikType ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("LastikDrum", (object?)quote.LastikDrum ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Suspansiyon", (object?)quote.Suspansiyon ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Extension", (object?)quote.Extension ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Gooseneck", (object?)quote.Gooseneck ?? DBNull.Value);
@@ -443,7 +451,9 @@ namespace YALCINDORSE.Services
                     "OnOdemeYuzdesi" = @OnOdemeYuzdesi, "OnOdemeTutari" = @OnOdemeTutari,
                     "BakiyeTutari" = @BakiyeTutari, "VadeGun" = @VadeGun,
                     "StokKodu" = @StokKodu, "SasiNo" = @SasiNo, "ModelYili" = @ModelYili,
-                    "TipAdi" = @TipAdi, "Lastik" = @Lastik, "Suspansiyon" = @Suspansiyon, "Extension" = @Extension, "Gooseneck" = @Gooseneck
+                    "TipAdi" = @TipAdi, "Lastik" = @Lastik,
+                    "LastikType" = @LastikType, "LastikDrum" = @LastikDrum,
+                    "Suspansiyon" = @Suspansiyon, "Extension" = @Extension, "Gooseneck" = @Gooseneck
                 WHERE "Id" = @Id;
                 """;
 
@@ -486,6 +496,8 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("ModelYili", (object?)quote.ModelYili ?? DBNull.Value);
             cmd.Parameters.AddWithValue("TipAdi", (object?)quote.TipAdi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Lastik", (object?)quote.Lastik ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("LastikType", (object?)quote.LastikType ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("LastikDrum", (object?)quote.LastikDrum ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Suspansiyon", (object?)quote.Suspansiyon ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Extension", (object?)quote.Extension ?? DBNull.Value);
             cmd.Parameters.AddWithValue("Gooseneck", (object?)quote.Gooseneck ?? DBNull.Value);
@@ -554,7 +566,7 @@ namespace YALCINDORSE.Services
                        "SasiNo", "ModelYili",
                        "TipAdi", "Lastik", "Suspansiyon", "Extension", "Gooseneck",
                        "TeslimatNotlari", "OnOdemeYuzdesi", "OnOdemeTutari", "BakiyeTutari", "VadeGun",
-                       "StokKodu"
+                       "StokKodu", "LastikType", "LastikDrum"
                 FROM "YLTeklifler"
                 WHERE "Id" = @id;
                 """;
@@ -614,6 +626,8 @@ namespace YALCINDORSE.Services
                 BakiyeTutari    = r.IsDBNull(44) ? 0 : r.GetDecimal(44),
                 VadeGun         = r.IsDBNull(45) ? null : r.GetInt32(45),
                 StokKodu        = r.IsDBNull(46) ? null : r.GetString(46),
+                LastikType      = r.IsDBNull(47) ? null : r.GetString(47),
+                LastikDrum      = r.IsDBNull(48) ? null : r.GetString(48),
             };
         }
 

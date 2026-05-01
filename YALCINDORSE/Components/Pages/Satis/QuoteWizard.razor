@@ -295,68 +295,95 @@
                         <label>Aks Sayisi</label>
                         <input type="number" @bind="quote.AksSayisi" min="1" max="10" />
                     </div>
+                    @* ── Lastik: TYPE + DRUM yan yana ── *@
                     <div class="wizard-field compact">
-                        <label>Lastik (Tire)</label>
+                        <label>Lastik Type</label>
                         <div style="display:flex;gap:4px;align-items:flex-start">
                             <div class="custom-select" style="flex:1">
-                                <button class="custom-select-trigger" @onclick='() => ToggleLastikDropdown()'>
-                                    <span>@(string.IsNullOrEmpty(quote.Lastik) ? "— Seciniz —" : quote.Lastik)</span>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("lastikType")'>
+                                    <span>@(string.IsNullOrEmpty(quote.LastikType) ? "— Seciniz —" : quote.LastikType)</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                                 </button>
-                                @if (openDropdown == "lastik")
+                                @if (openDropdown == "lastikType")
                                 {
-                                    <div class="custom-select-dropdown" style="max-height:320px;overflow-y:auto">
-                                        <div style="padding:6px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
-                                            <input type="text" placeholder="Marka / Model / Ebat ara..."
-                                                   value="@lastikSearchText"
-                                                   @oninput="(e) => lastikSearchText = e.Value?.ToString() ?? string.Empty"
-                                                   @onmousedown:stopPropagation="true"
-                                                   @onclick:stopPropagation="true"
-                                                   style="width:100%;font-size:11px;padding:4px 6px" />
+                                    <div class="custom-select-dropdown">
+                                        <div class="dropdown-search-wrap">
+                                            <input class="dropdown-search-input" type="text" placeholder="Ara..." autocomplete="off"
+                                                   value="@dropdownSearchText"
+                                                   @oninput="(e) => dropdownSearchText = e.Value?.ToString() ?? string.Empty"
+                                                   @onmousedown:stopPropagation @onclick:stopPropagation @onfocusout:stopPropagation />
                                         </div>
-                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.Lastik) ? "selected" : "")"
-                                                @onmousedown="() => { quote.Lastik = null; openDropdown = null; lastikSearchText = string.Empty; }" @onmousedown:preventDefault>— Temizle —</button>
-                                        @{ var filt = FilteredLastikler().ToList(); }
-                                        @if (filt.Count == 0)
+                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.LastikType) ? "selected" : "")"
+                                                @onmousedown="() => { quote.LastikType = null; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in lastikTypeValues.Where(v => string.IsNullOrEmpty(dropdownSearchText) || v.Contains(dropdownSearchText, StringComparison.OrdinalIgnoreCase)))
                                         {
-                                            <div style="padding:10px;color:#9ca3af;font-size:11px;text-align:center">Eslesen lastik yok</div>
-                                        }
-                                        else
-                                        {
-                                            @foreach (var k in filt)
-                                            {
-                                                <button class="custom-select-option @(quote.Lastik == k.DisplayText ? "selected" : "")"
-                                                        @onmousedown="() => SelectLastik(k)" @onmousedown:preventDefault>@k.DisplayText</button>
-                                            }
-                                            @if (lastikKatalog.Count > filt.Count && string.IsNullOrWhiteSpace(lastikSearchText))
-                                            {
-                                                <div style="padding:6px;color:#9ca3af;font-size:10px;text-align:center;border-top:1px solid #e5e7eb">
-                                                    @filt.Count / @lastikKatalog.Count gosteriliyor — daraltmak icin yazin
-                                                </div>
-                                            }
+                                            <button class="custom-select-option @(quote.LastikType == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.LastikType = val; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>@val</button>
                                         }
                                     </div>
                                 }
                             </div>
-                            <button class="wizard-btn lookup-mgr-btn" title="Lastik katalogunu yonet" @onclick='() => ToggleLookupManager("LASTIK")'>&#x229E;</button>
+                            <button class="wizard-btn lookup-mgr-btn" title="Secenekleri yonet" @onclick='() => ToggleLookupManager("LASTIK_TYPE")'>&#x229E;</button>
                         </div>
-                        @if (openLookupManager == "LASTIK")
+                        @if (openLookupManager == "LASTIK_TYPE")
                         {
-                            <div class="lookup-manager-panel" style="max-height:360px;overflow-y:auto">
-                                @foreach (var k in lastikKatalog)
+                            <div class="lookup-manager-panel">
+                                @foreach (var v in lastikTypeValues)
                                 {
-                                    <div class="lookup-mgr-row" style="font-size:11px">
-                                        <span style="flex:1">@k.DisplayText</span>
-                                        <button @onclick="async () => await DeleteLastikAsync(k.Id)" title="Sil">&#xD7;</button>
+                                    <div class="lookup-mgr-row">
+                                        <span>@v</span>
+                                        <button @onclick='async () => await DeleteLookupValueAsync("LASTIK_TYPE", v)'>&#xD7;</button>
                                     </div>
                                 }
-                                <div class="lookup-mgr-add" style="display:grid;grid-template-columns:90px 1fr 110px 80px 40px auto;gap:3px;font-size:11px;padding:6px 0">
-                                    <input type="text" @bind="newLastik.Marka" placeholder="Marka" />
-                                    <input type="text" @bind="newLastik.Model" placeholder="Model" />
-                                    <input type="text" @bind="newLastik.Ebat" placeholder="385/65 R 22.5" />
-                                    <input type="text" @bind="newLastik.YukIndeksi" placeholder="LI" />
-                                    <input type="text" @bind="newLastik.HizSimgesi" placeholder="Hiz" maxlength="3" />
-                                    <button @onclick="AddLastikAsync" title="Ekle">+</button>
+                                <div class="lookup-mgr-add">
+                                    <input type="text" @bind="newLookupValue" placeholder="Yeni deger..." @bind:event="oninput" />
+                                    <button @onclick='async () => await AddLookupValueAsync("LASTIK_TYPE")'>+</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="wizard-field compact">
+                        <label>Lastik Drum</label>
+                        <div style="display:flex;gap:4px;align-items:flex-start">
+                            <div class="custom-select" style="flex:1">
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("lastikDrum")'>
+                                    <span>@(string.IsNullOrEmpty(quote.LastikDrum) ? "— Seciniz —" : quote.LastikDrum)</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "lastikDrum")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        <div class="dropdown-search-wrap">
+                                            <input class="dropdown-search-input" type="text" placeholder="Ara..." autocomplete="off"
+                                                   value="@dropdownSearchText"
+                                                   @oninput="(e) => dropdownSearchText = e.Value?.ToString() ?? string.Empty"
+                                                   @onmousedown:stopPropagation @onclick:stopPropagation @onfocusout:stopPropagation />
+                                        </div>
+                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.LastikDrum) ? "selected" : "")"
+                                                @onmousedown="() => { quote.LastikDrum = null; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in lastikDrumValues.Where(v => string.IsNullOrEmpty(dropdownSearchText) || v.Contains(dropdownSearchText, StringComparison.OrdinalIgnoreCase)))
+                                        {
+                                            <button class="custom-select-option @(quote.LastikDrum == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.LastikDrum = val; openDropdown = null; dropdownSearchText = string.Empty; }" @onmousedown:preventDefault>@val</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <button class="wizard-btn lookup-mgr-btn" title="Secenekleri yonet" @onclick='() => ToggleLookupManager("LASTIK_DRUM")'>&#x229E;</button>
+                        </div>
+                        @if (openLookupManager == "LASTIK_DRUM")
+                        {
+                            <div class="lookup-manager-panel">
+                                @foreach (var v in lastikDrumValues)
+                                {
+                                    <div class="lookup-mgr-row">
+                                        <span>@v</span>
+                                        <button @onclick='async () => await DeleteLookupValueAsync("LASTIK_DRUM", v)'>&#xD7;</button>
+                                    </div>
+                                }
+                                <div class="lookup-mgr-add">
+                                    <input type="text" @bind="newLookupValue" placeholder="Yeni deger..." @bind:event="oninput" />
+                                    <button @onclick='async () => await AddLookupValueAsync("LASTIK_DRUM")'>+</button>
                                 </div>
                             </div>
                         }
@@ -1192,6 +1219,8 @@
     // Lookup degerleri (dinamik dropdownlar)
     private List<string> teklifTipiValues  = new();
     private List<string> tipAdiValues      = new();
+    private List<string> lastikTypeValues  = new();
+    private List<string> lastikDrumValues  = new();
     private List<string> suspansiyonValues = new();
     private List<string> extensionValues   = new();
     private List<string> gooseneckValues   = new();
@@ -1224,6 +1253,8 @@
             try { resmiCariler = await ZirveSvc.GetResmiCarilerAsync(); } catch { }
             teklifTipiValues  = await LookupSvc.GetValuesAsync("TEKLIF_TIPI");
             tipAdiValues      = await LookupSvc.GetValuesAsync("TIP_ADI");
+            lastikTypeValues  = await LookupSvc.GetValuesAsync("LASTIK_TYPE");
+            lastikDrumValues  = await LookupSvc.GetValuesAsync("LASTIK_DRUM");
             suspansiyonValues = await LookupSvc.GetValuesAsync("SUSPANSIYON");
             extensionValues   = await LookupSvc.GetValuesAsync("EXTENSION");
             gooseneckValues   = await LookupSvc.GetValuesAsync("GOOSENECK");
@@ -1768,6 +1799,8 @@
             {
                 case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
                 case "TIP_ADI":      tipAdiValues      = await LookupSvc.GetValuesAsync(type); break;
+                case "LASTIK_TYPE":  lastikTypeValues  = await LookupSvc.GetValuesAsync(type); break;
+                case "LASTIK_DRUM":  lastikDrumValues  = await LookupSvc.GetValuesAsync(type); break;
                 case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
                 case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
                 case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
@@ -1788,6 +1821,8 @@
             {
                 case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
                 case "TIP_ADI":      tipAdiValues      = await LookupSvc.GetValuesAsync(type); break;
+                case "LASTIK_TYPE":  lastikTypeValues  = await LookupSvc.GetValuesAsync(type); break;
+                case "LASTIK_DRUM":  lastikDrumValues  = await LookupSvc.GetValuesAsync(type); break;
                 case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
                 case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
                 case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
