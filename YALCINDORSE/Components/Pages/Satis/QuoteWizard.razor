@@ -232,9 +232,43 @@
                     </div>
                     <div class="wizard-field compact">
                         <label>Tip Adi</label>
-                        <input type="text" value="@quote.TipAdi"
-                               @onchange="(e) => { quote.TipAdi = e.Value?.ToString()?.ToUpperInvariant(); }"
-                               placeholder="Ornek: DEVEBOYNU" />
+                        <div style="display:flex;gap:4px;align-items:flex-start">
+                            <div class="custom-select" style="flex:1" @onfocusout='() => CloseDropdown("tipadi")'>
+                                <button class="custom-select-trigger" @onclick='() => ToggleDropdown("tipadi")'>
+                                    <span>@(string.IsNullOrEmpty(quote.TipAdi) ? "— Seciniz —" : quote.TipAdi)</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                @if (openDropdown == "tipadi")
+                                {
+                                    <div class="custom-select-dropdown">
+                                        <button class="custom-select-option @(string.IsNullOrEmpty(quote.TipAdi) ? "selected" : "")"
+                                                @onmousedown="() => { quote.TipAdi = null; openDropdown = null; }" @onmousedown:preventDefault>— Seciniz —</button>
+                                        @foreach (var val in tipAdiValues)
+                                        {
+                                            <button class="custom-select-option @(quote.TipAdi == val ? "selected" : "")"
+                                                    @onmousedown="() => { quote.TipAdi = val; openDropdown = null; }" @onmousedown:preventDefault>@val</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <button class="wizard-btn lookup-mgr-btn" title="Secenekleri yonet" @onclick='() => ToggleLookupManager("TIP_ADI")'>&#x229E;</button>
+                        </div>
+                        @if (openLookupManager == "TIP_ADI")
+                        {
+                            <div class="lookup-manager-panel">
+                                @foreach (var v in tipAdiValues)
+                                {
+                                    <div class="lookup-mgr-row">
+                                        <span>@v</span>
+                                        <button @onclick='async () => await DeleteLookupValueAsync("TIP_ADI", v)'>&#xD7;</button>
+                                    </div>
+                                }
+                                <div class="lookup-mgr-add">
+                                    <input type="text" @bind="newLookupValue" placeholder="Yeni deger..." @bind:event="oninput" />
+                                    <button @onclick='async () => await AddLookupValueAsync("TIP_ADI")'>+</button>
+                                </div>
+                            </div>
+                        }
                     </div>
                     <div class="wizard-field compact">
                         <label>Aks Sayisi</label>
@@ -1110,6 +1144,7 @@
 
     // Lookup degerleri (dinamik dropdownlar)
     private List<string> teklifTipiValues  = new();
+    private List<string> tipAdiValues      = new();
     private List<string> suspansiyonValues = new();
     private List<string> extensionValues   = new();
     private List<string> gooseneckValues   = new();
@@ -1141,6 +1176,7 @@
             salesReps = await CustomerSvc.GetSalesRepsAsync();
             try { resmiCariler = await ZirveSvc.GetResmiCarilerAsync(); } catch { }
             teklifTipiValues  = await LookupSvc.GetValuesAsync("TEKLIF_TIPI");
+            tipAdiValues      = await LookupSvc.GetValuesAsync("TIP_ADI");
             suspansiyonValues = await LookupSvc.GetValuesAsync("SUSPANSIYON");
             extensionValues   = await LookupSvc.GetValuesAsync("EXTENSION");
             gooseneckValues   = await LookupSvc.GetValuesAsync("GOOSENECK");
@@ -1684,6 +1720,7 @@
             switch (type)
             {
                 case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
+                case "TIP_ADI":      tipAdiValues      = await LookupSvc.GetValuesAsync(type); break;
                 case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
                 case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
                 case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
@@ -1703,6 +1740,7 @@
             switch (type)
             {
                 case "TEKLIF_TIPI":  teklifTipiValues  = await LookupSvc.GetValuesAsync(type); break;
+                case "TIP_ADI":      tipAdiValues      = await LookupSvc.GetValuesAsync(type); break;
                 case "SUSPANSIYON":  suspansiyonValues = await LookupSvc.GetValuesAsync(type); break;
                 case "EXTENSION":    extensionValues   = await LookupSvc.GetValuesAsync(type); break;
                 case "GOOSENECK":    gooseneckValues   = await LookupSvc.GetValuesAsync(type); break;
