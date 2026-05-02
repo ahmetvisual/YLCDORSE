@@ -88,7 +88,15 @@ namespace YALCINDORSE
         public class SpecGroup
         {
             public string GrupAdi { get; set; } = "";
-            public List<(string Ozellik, string Deger)> Rows { get; set; } = new();
+            public List<SpecRow> Rows { get; set; } = new();
+        }
+
+        public class SpecRow
+        {
+            public string Ozellik { get; set; } = "";
+            public string Deger { get; set; } = "";
+            public bool Bold { get; set; }
+            public bool Italic { get; set; }
         }
 
         public class ListItem
@@ -97,14 +105,16 @@ namespace YALCINDORSE
             public string Numara   { get; set; } = "";
             public bool   IsHeader { get; set; }
             public bool   Bold     { get; set; }
+            public bool   Italic   { get; set; }
 
             public ListItem() { }
-            public ListItem(string numara, string metin, bool isHeader, bool bold)
+            public ListItem(string numara, string metin, bool isHeader, bool bold, bool italic = false)
             {
                 Numara   = numara;
                 Metin    = metin;
                 IsHeader = isHeader;
                 Bold     = bold;
+                Italic   = italic;
             }
         }
 
@@ -496,7 +506,7 @@ namespace YALCINDORSE
                         .Bold().FontSize(9).FontColor(NavyDark));
 
                 bool alt = false;
-                foreach (var (ozellik, deger) in grp.Rows)
+                foreach (var spec in grp.Rows)
                 {
                     string bg = alt ? AltRowBg : White;
                     col.Item().Background(bg).Row(row =>
@@ -504,7 +514,7 @@ namespace YALCINDORSE
                         row.RelativeItem()
                            .BorderBottom(0.5f).BorderColor(BorderClr)
                            .PaddingVertical(2).PaddingLeft(10).PaddingRight(4)
-                           .Text(t => t.Span(ozellik).FontSize(8.5f).FontColor(BodyText));
+                           .Text(t => t.Span(spec.Ozellik).FontSize(8.5f).FontColor(BodyText));
 
                         row.ConstantItem(0.5f).Background(BorderClr);
 
@@ -518,7 +528,12 @@ namespace YALCINDORSE
                         row.RelativeItem()
                            .BorderBottom(0.5f).BorderColor(BorderClr)
                            .PaddingVertical(2).PaddingLeft(6).PaddingRight(4)
-                           .Text(t => t.Span(deger).Bold().FontSize(8.5f).FontColor(DarkText));
+                           .Text(t =>
+                           {
+                               var span = t.Span(spec.Deger).FontSize(8.5f).FontColor(DarkText);
+                               if (spec.Bold) span.Bold();
+                               if (spec.Italic) span.Italic();
+                           });
                     });
                     alt = !alt;
                 }
@@ -607,8 +622,9 @@ namespace YALCINDORSE
                        .PaddingVertical(1.5f)
                        .Text(t =>
                        {
-                           if (li.Bold) t.Span(li.Metin).Bold().FontSize(8.5f).FontColor(BodyText);
-                           else        t.Span(li.Metin).FontSize(8.5f).FontColor(BodyText);
+                           var span = t.Span(li.Metin).FontSize(8.5f).FontColor(BodyText);
+                           if (li.Bold) span.Bold();
+                           if (li.Italic) span.Italic();
                        });
                 });
             }

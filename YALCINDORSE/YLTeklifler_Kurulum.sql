@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS "YLTeklifKalemleri" (
     "Id" SERIAL PRIMARY KEY,
     "TeklifId" INT NOT NULL REFERENCES "YLTeklifler"("Id") ON DELETE CASCADE,
     "BaslikMi" BOOLEAN DEFAULT false,
+    "ItalicMi" BOOLEAN NOT NULL DEFAULT false,
     "Aciklama" TEXT NOT NULL,
     "SiraNo" INT DEFAULT 0
 );

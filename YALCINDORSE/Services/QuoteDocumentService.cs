@@ -220,7 +220,13 @@ namespace YALCINDORSE.Services
                     specGroups.Add(new TeklifQuestPdfReport.SpecGroup
                     {
                         GrupAdi = header.Aciklama,
-                        Rows    = specRows.Select(r => (r.Aciklama, r.Birim ?? "")).ToList()
+                        Rows    = specRows.Select(r => new TeklifQuestPdfReport.SpecRow
+                        {
+                            Ozellik = r.Aciklama,
+                            Deger = r.Birim ?? "",
+                            Bold = r.BaslikMi,
+                            Italic = r.ItalicMi
+                        }).ToList()
                     });
             }
 
@@ -242,7 +248,7 @@ namespace YALCINDORSE.Services
                 {
                     cNum++;
                     listItems.Add(new TeklifQuestPdfReport.ListItem(
-                        $"{hNum}.{cNum}.", child.Aciklama, child.BaslikMi, false));
+                        $"{hNum}.{cNum}.", child.Aciklama, false, child.BaslikMi, child.ItalicMi));
                 }
             }
 

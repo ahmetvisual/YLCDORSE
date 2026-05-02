@@ -74,6 +74,7 @@
                     <div class="item-desc">
                         <input type="text" value="@item.Aciklama"
                                @onchange="(e) => UpdateField(item, nameof(item.Aciklama), e.Value?.ToString())"
+                               style="@(item.KalemTipi == "ITEM" ? GetTextStyle(item) : null)"
                                placeholder="@(item.KalemTipi == "HEADER" ? "Urun adi (orn: Deveboynu)" : item.KalemTipi == "SPEC" ? "Ozellik adi" : item.KalemTipi == "OPTION" ? "Opsiyon aciklamasi" : "Kalem aciklamasi")" />
                     </div>
 
@@ -83,6 +84,7 @@
                             <span class="spec-colon">:</span>
                             <input type="text" value="@item.Birim"
                                    @onchange="(e) => UpdateField(item, nameof(item.Birim), e.Value?.ToString())"
+                                   style="@GetTextStyle(item)"
                                    placeholder="Değer" />
                         </div>
                         <div class="item-price"></div>
@@ -131,6 +133,18 @@
                             <button class="item-action-btn @(item.BaslikMi ? "item-bold-active" : "")"
                                     title="@(item.BaslikMi ? "Kalin (PDF'de bold)" : "Normal (PDF'de thin)")"
                                     @onclick="() => ToggleBold(item)"><b>B</b></button>
+                            <button class="item-action-btn @(item.ItalicMi ? "item-italic-active" : "")"
+                                    title="@(item.ItalicMi ? "Italik aktif" : "Italik yap")"
+                                    @onclick="() => ToggleItalic(item)"><i>I</i></button>
+                        }
+                        @if (item.KalemTipi == "SPEC")
+                        {
+                            <button class="item-action-btn @(item.BaslikMi ? "item-bold-active" : "")"
+                                    title="@(item.BaslikMi ? "Deger kalin" : "Degeri kalin yap")"
+                                    @onclick="() => ToggleBold(item)"><b>B</b></button>
+                            <button class="item-action-btn @(item.ItalicMi ? "item-italic-active" : "")"
+                                    title="@(item.ItalicMi ? "Deger italik" : "Degeri italik yap")"
+                                    @onclick="() => ToggleItalic(item)"><i>I</i></button>
                         }
                         <button class="item-action-btn delete" title="Sil" @onclick="() => RemoveItem(item)">&#10005;</button>
                     </div>
@@ -683,6 +697,19 @@
     {
         item.BaslikMi = !item.BaslikMi;
         NotifyChanged();
+    }
+
+    private void ToggleItalic(QuoteItemModel item)
+    {
+        item.ItalicMi = !item.ItalicMi;
+        NotifyChanged();
+    }
+
+    private static string GetTextStyle(QuoteItemModel item)
+    {
+        var weight = item.BaslikMi ? "700" : "inherit";
+        var style = item.ItalicMi ? "italic" : "normal";
+        return $"font-weight:{weight};font-style:{style}";
     }
 
     private void RemoveItem(QuoteItemModel item)

@@ -102,6 +102,7 @@ namespace YALCINDORSE.Services
         public decimal? BirimFiyat { get; set; }
         public decimal? Tutar { get; set; }
         public bool OpsiyonMu { get; set; }
+        public bool ItalicMi { get; set; }
         public string KalemTipi { get; set; } = "ITEM"; // HEADER, ITEM, SUB_ITEM, OPTION
     }
 
@@ -171,6 +172,7 @@ namespace YALCINDORSE.Services
                     """UPDATE "YLTeklifler" SET "OnOdemeYuzdesi" = 0 WHERE "OnOdemeYuzdesi" IS NULL""",
                     """UPDATE "YLTeklifler" SET "OnOdemeTutari"  = 0 WHERE "OnOdemeTutari"  IS NULL""",
                     """UPDATE "YLTeklifler" SET "BakiyeTutari"   = 0 WHERE "BakiyeTutari"   IS NULL""",
+                    """ALTER TABLE "YLTeklifKalemleri" ADD COLUMN IF NOT EXISTS "ItalicMi" BOOLEAN NOT NULL DEFAULT FALSE""",
                 };
 
                 foreach (var sql in migrations)
@@ -277,10 +279,12 @@ namespace YALCINDORSE.Services
             var items = new List<QuoteItemModel>();
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
 
             const string sql = """
                 SELECT "Id", "TeklifId", "BaslikMi", "Aciklama", "SiraNo",
-                       "UstKalemId", "UrunKodu", "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi"
+                       "UstKalemId", "UrunKodu", "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi",
+                       "ItalicMi"
                 FROM "YLTeklifKalemleri"
                 WHERE "TeklifId" = @quoteId
                 ORDER BY "SiraNo";
@@ -306,7 +310,8 @@ namespace YALCINDORSE.Services
                     BirimFiyat = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                     Tutar = reader.IsDBNull(10) ? null : reader.GetDecimal(10),
                     OpsiyonMu = !reader.IsDBNull(11) && reader.GetBoolean(11),
-                    KalemTipi = reader.IsDBNull(12) ? "ITEM" : reader.GetString(12)
+                    KalemTipi = reader.IsDBNull(12) ? "ITEM" : reader.GetString(12),
+                    ItalicMi = !reader.IsDBNull(13) && reader.GetBoolean(13)
                 });
             }
             return items;
@@ -412,14 +417,15 @@ namespace YALCINDORSE.Services
         {
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
 
             const string sql = """
                 INSERT INTO "YLTeklifKalemleri"
                 ("TeklifId", "BaslikMi", "Aciklama", "SiraNo", "UstKalemId", "UrunKodu",
-                 "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi")
+                 "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi", "ItalicMi")
                 VALUES
                 (@TeklifId, @BaslikMi, @Aciklama, @SiraNo, @UstKalemId, @UrunKodu,
-                 @Miktar, @Birim, @BirimFiyat, @Tutar, @OpsiyonMu, @KalemTipi)
+                 @Miktar, @Birim, @BirimFiyat, @Tutar, @OpsiyonMu, @KalemTipi, @ItalicMi)
                 RETURNING "Id";
                 """;
 
@@ -436,6 +442,7 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("Tutar", (object?)item.Tutar ?? DBNull.Value);
             cmd.Parameters.AddWithValue("OpsiyonMu", item.OpsiyonMu);
             cmd.Parameters.AddWithValue("KalemTipi", item.KalemTipi);
+            cmd.Parameters.AddWithValue("ItalicMi", item.ItalicMi);
 
             var idResult = await cmd.ExecuteScalarAsync();
             item.Id = Convert.ToInt32(idResult);

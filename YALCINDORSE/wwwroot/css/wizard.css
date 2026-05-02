@@ -717,6 +717,8 @@
 .item-action-btn.delete:hover { background: #FCEBEB; color: #A32D2D; }
 .item-action-btn.item-bold-active { background: var(--yl-primary); color: #fff; border-color: var(--yl-primary); }
 .item-action-btn.item-bold-active:hover { background: #2563aa; border-color: #2563aa; }
+.item-action-btn.item-italic-active { background: #64748b; color: #fff; border-color: #64748b; }
+.item-action-btn.item-italic-active:hover { background: #475569; border-color: #475569; }
 
 .items-empty {
     text-align: center;
