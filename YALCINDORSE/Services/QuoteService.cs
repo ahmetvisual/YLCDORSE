@@ -122,6 +122,7 @@ namespace YALCINDORSE.Services
         private readonly AuthService _auth;
         private readonly SemaphoreSlim _schemaLock = new(1, 1);
         private static bool _schemaEnsured;   // static: Transient servis olsa da bir kez calisir
+        private static bool _quoteItemStyleSchemaEnsured;
 
         public QuoteService(DatabaseHelper db, AuthService auth)
         {
@@ -184,6 +185,22 @@ namespace YALCINDORSE.Services
                     }
                     catch { /* kolon zaten varsa atla */ }
                 }
+            }
+            finally { _schemaLock.Release(); }
+        }
+
+        private async Task EnsureQuoteItemStyleSchemaAsync(NpgsqlConnection conn)
+        {
+            if (_quoteItemStyleSchemaEnsured) return;
+            await _schemaLock.WaitAsync();
+            try
+            {
+                if (_quoteItemStyleSchemaEnsured) return;
+                using var cmd = new NpgsqlCommand(
+                    """ALTER TABLE "YLTeklifKalemleri" ADD COLUMN IF NOT EXISTS "ItalicMi" BOOLEAN NOT NULL DEFAULT FALSE""",
+                    conn);
+                await cmd.ExecuteNonQueryAsync();
+                _quoteItemStyleSchemaEnsured = true;
             }
             finally { _schemaLock.Release(); }
         }
@@ -280,6 +297,7 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
+            await EnsureQuoteItemStyleSchemaAsync(conn);
 
             const string sql = """
                 SELECT "Id", "TeklifId", "BaslikMi", "Aciklama", "SiraNo",
@@ -322,6 +340,7 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
+            await EnsureQuoteItemStyleSchemaAsync(conn);
             SyncLegacyLastikField(quote);
 
             const string sql = """
@@ -418,6 +437,7 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
+            await EnsureQuoteItemStyleSchemaAsync(conn);
 
             const string sql = """
                 INSERT INTO "YLTeklifKalemleri"
