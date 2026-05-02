@@ -476,6 +476,84 @@ namespace YALCINDORSE.Services
             catch { await tx.RollbackAsync(); throw; }
         }
 
+        /// <summary>Undo/redo icin sablon listesini verilen snapshot'a geri alir.</summary>
+        public async Task RestoreTemplatesAsync(
+            List<ArabaslikGrupModel> gruplar,
+            Dictionary<int, List<ArabaslikDetayModel>> detaylarByGrupId)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+            using var tx = await conn.BeginTransactionAsync();
+
+            try
+            {
+                using (var deleteDetails = new NpgsqlCommand("""DELETE FROM "YLArabaslikDetaylar";""", conn, tx))
+                    await deleteDetails.ExecuteNonQueryAsync();
+
+                using (var deleteGroups = new NpgsqlCommand("""DELETE FROM "YLArabaslikGruplar";""", conn, tx))
+                    await deleteGroups.ExecuteNonQueryAsync();
+
+                foreach (var grup in gruplar.OrderBy(g => g.SortOrder).ThenBy(g => g.GrupAdi))
+                {
+                    const string insertGroupSql = """
+                        INSERT INTO "YLArabaslikGruplar"
+                            ("GrupAdi","GrupAdi_EN","GrupAdi_FR","GrupAdi_DE","GrupAdi_RO","GrupAdi_AR","GrupAdi_RU",
+                             "TablTipi","SortOrder","IsActive","CreatedDate","CreatedBy")
+                        VALUES (@grupAdi,@en,@fr,@de,@ro,@ar,@ru,@tablTipi,@sortOrder,@isActive,@createdDate,@createdBy)
+                        RETURNING "Id";
+                        """;
+                    using var insertGroup = new NpgsqlCommand(insertGroupSql, conn, tx);
+                    insertGroup.Parameters.AddWithValue("grupAdi", grup.GrupAdi ?? "");
+                    insertGroup.Parameters.AddWithValue("en", grup.GrupAdi_EN ?? "");
+                    insertGroup.Parameters.AddWithValue("fr", grup.GrupAdi_FR ?? "");
+                    insertGroup.Parameters.AddWithValue("de", grup.GrupAdi_DE ?? "");
+                    insertGroup.Parameters.AddWithValue("ro", grup.GrupAdi_RO ?? "");
+                    insertGroup.Parameters.AddWithValue("ar", grup.GrupAdi_AR ?? "");
+                    insertGroup.Parameters.AddWithValue("ru", grup.GrupAdi_RU ?? "");
+                    insertGroup.Parameters.AddWithValue("tablTipi", grup.TablTipi);
+                    insertGroup.Parameters.AddWithValue("sortOrder", grup.SortOrder);
+                    insertGroup.Parameters.AddWithValue("isActive", grup.IsActive);
+                    insertGroup.Parameters.AddWithValue("createdDate", grup.CreatedDate == default ? DateTime.Now : grup.CreatedDate);
+                    insertGroup.Parameters.AddWithValue("createdBy", grup.CreatedBy ?? "");
+                    var newGroupId = Convert.ToInt32(await insertGroup.ExecuteScalarAsync() ?? 0);
+
+                    if (!detaylarByGrupId.TryGetValue(grup.Id, out var detaylar))
+                        continue;
+
+                    foreach (var detay in detaylar.OrderBy(d => d.SortOrder))
+                    {
+                        const string insertDetailSql = """
+                            INSERT INTO "YLArabaslikDetaylar"
+                                ("GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
+                                 "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
+                            VALUES (@grupId,@tr,@en,@fr,@de,@ro,@ar,@ru,@fiyat,@para,@sort);
+                            """;
+                        using var insertDetail = new NpgsqlCommand(insertDetailSql, conn, tx);
+                        insertDetail.Parameters.AddWithValue("grupId", newGroupId);
+                        insertDetail.Parameters.AddWithValue("tr", detay.SatirMetni ?? "");
+                        insertDetail.Parameters.AddWithValue("en", detay.SatirMetni_EN ?? "");
+                        insertDetail.Parameters.AddWithValue("fr", detay.SatirMetni_FR ?? "");
+                        insertDetail.Parameters.AddWithValue("de", detay.SatirMetni_DE ?? "");
+                        insertDetail.Parameters.AddWithValue("ro", detay.SatirMetni_RO ?? "");
+                        insertDetail.Parameters.AddWithValue("ar", detay.SatirMetni_AR ?? "");
+                        insertDetail.Parameters.AddWithValue("ru", detay.SatirMetni_RU ?? "");
+                        insertDetail.Parameters.AddWithValue("fiyat", (object?)detay.Fiyat ?? DBNull.Value);
+                        insertDetail.Parameters.AddWithValue("para", (object?)detay.ParaBirimi ?? DBNull.Value);
+                        insertDetail.Parameters.AddWithValue("sort", detay.SortOrder);
+                        await insertDetail.ExecuteNonQueryAsync();
+                    }
+                }
+
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        }
+
         /// <summary>Yeni bir detay satiri ekler ve uretilen Id'yi doner.</summary>
         public async Task<int> AddDetayAsync(ArabaslikDetayModel d)
         {

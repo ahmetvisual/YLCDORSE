@@ -551,11 +551,23 @@
     private bool dragInProgress;
 
     private const int HistoryLimit = 80;
-    private readonly List<List<QuoteItemModel>> undoHistory = new();
-    private readonly List<List<QuoteItemModel>> redoHistory = new();
+    private readonly List<EditorHistorySnapshot> undoHistory = new();
+    private readonly List<EditorHistorySnapshot> redoHistory = new();
     private bool isApplyingHistory;
     private bool CanUndo => undoHistory.Count > 0;
     private bool CanRedo => redoHistory.Count > 0;
+
+    private sealed class EditorHistorySnapshot
+    {
+        public List<QuoteItemModel> Items { get; set; } = new();
+        public TemplateHistorySnapshot? Templates { get; set; }
+    }
+
+    private sealed class TemplateHistorySnapshot
+    {
+        public List<ArabaslikGrupModel> Gruplar { get; set; } = new();
+        public Dictionary<int, List<ArabaslikDetayModel>> DetaylarByGrupId { get; set; } = new();
+    }
 
     private DotNetObjectReference<QuoteItemsEditor>? dotNetRef;
     private bool jsHookInstalled = false;
@@ -710,7 +722,17 @@
     {
         if (isApplyingHistory) return;
 
-        undoHistory.Add(CloneItems(Items));
+        undoHistory.Add(new EditorHistorySnapshot { Items = CloneItems(Items) });
+        if (undoHistory.Count > HistoryLimit)
+            undoHistory.RemoveAt(0);
+        redoHistory.Clear();
+    }
+
+    private async Task CaptureUndoSnapshotAsync(bool includeTemplates)
+    {
+        if (isApplyingHistory) return;
+
+        undoHistory.Add(await CreateHistorySnapshotAsync(includeTemplates));
         if (undoHistory.Count > HistoryLimit)
             undoHistory.RemoveAt(0);
         redoHistory.Clear();
@@ -723,11 +745,10 @@
         isApplyingHistory = true;
         try
         {
-            redoHistory.Add(CloneItems(Items));
             var previous = undoHistory[^1];
             undoHistory.RemoveAt(undoHistory.Count - 1);
-            Items = CloneItems(previous);
-            await NotifyChangedAsync();
+            redoHistory.Add(await CreateHistorySnapshotAsync(previous.Templates != null));
+            await RestoreHistorySnapshotAsync(previous);
         }
         finally
         {
@@ -742,16 +763,76 @@
         isApplyingHistory = true;
         try
         {
-            undoHistory.Add(CloneItems(Items));
             var next = redoHistory[^1];
             redoHistory.RemoveAt(redoHistory.Count - 1);
-            Items = CloneItems(next);
-            await NotifyChangedAsync();
+            undoHistory.Add(await CreateHistorySnapshotAsync(next.Templates != null));
+            await RestoreHistorySnapshotAsync(next);
         }
         finally
         {
             isApplyingHistory = false;
         }
+    }
+
+    private async Task<EditorHistorySnapshot> CreateHistorySnapshotAsync(bool includeTemplates)
+    {
+        var snapshot = new EditorHistorySnapshot { Items = CloneItems(Items) };
+        if (includeTemplates)
+            snapshot.Templates = await CreateTemplateHistorySnapshotAsync();
+        return snapshot;
+    }
+
+    private async Task RestoreHistorySnapshotAsync(EditorHistorySnapshot snapshot)
+    {
+        Items = CloneItems(snapshot.Items);
+
+        if (snapshot.Templates != null)
+        {
+            await ArabaslikSvc.RestoreTemplatesAsync(snapshot.Templates.Gruplar, snapshot.Templates.DetaylarByGrupId);
+            await ReloadTemplatesAfterHistoryRestoreAsync();
+        }
+
+        await NotifyChangedAsync();
+    }
+
+    private async Task<TemplateHistorySnapshot> CreateTemplateHistorySnapshotAsync()
+    {
+        var gruplar = await ArabaslikSvc.GetGruplarAsync();
+        var detaylarByGrupId = new Dictionary<int, List<ArabaslikDetayModel>>();
+
+        foreach (var grup in gruplar)
+        {
+            try
+            {
+                var detaylar = await ArabaslikSvc.GetDetaylarAsync(grup.Id);
+                detaylarByGrupId[grup.Id] = detaylar.Select(CloneDetay).ToList();
+            }
+            catch
+            {
+                detaylarByGrupId[grup.Id] = new();
+            }
+        }
+
+        return new TemplateHistorySnapshot
+        {
+            Gruplar = gruplar.Select(CloneGrup).ToList(),
+            DetaylarByGrupId = detaylarByGrupId
+        };
+    }
+
+    private async Task ReloadTemplatesAfterHistoryRestoreAsync()
+    {
+        groupDetailsCache.Clear();
+        groupQueries.Clear();
+        newKalemText.Clear();
+        editingGrup = null;
+        editingDetay = null;
+        editingDetayGrup = null;
+        showGrupEdit = false;
+        showDetayEdit = false;
+        confirmDeleteGrupId = null;
+        confirmDeleteDetayId = null;
+        await LoadGruplarAsync();
     }
 
     private static List<QuoteItemModel> CloneItems(IEnumerable<QuoteItemModel> source) =>
@@ -773,6 +854,39 @@
         OpsiyonMu = item.OpsiyonMu,
         ItalicMi = item.ItalicMi,
         KalemTipi = item.KalemTipi
+    };
+
+    private static ArabaslikGrupModel CloneGrup(ArabaslikGrupModel grup) => new()
+    {
+        Id = grup.Id,
+        GrupAdi = grup.GrupAdi,
+        GrupAdi_EN = grup.GrupAdi_EN,
+        GrupAdi_FR = grup.GrupAdi_FR,
+        GrupAdi_DE = grup.GrupAdi_DE,
+        GrupAdi_RO = grup.GrupAdi_RO,
+        GrupAdi_AR = grup.GrupAdi_AR,
+        GrupAdi_RU = grup.GrupAdi_RU,
+        TablTipi = grup.TablTipi,
+        SortOrder = grup.SortOrder,
+        IsActive = grup.IsActive,
+        CreatedDate = grup.CreatedDate,
+        CreatedBy = grup.CreatedBy
+    };
+
+    private static ArabaslikDetayModel CloneDetay(ArabaslikDetayModel detay) => new()
+    {
+        Id = detay.Id,
+        GrupId = detay.GrupId,
+        SatirMetni = detay.SatirMetni,
+        SatirMetni_EN = detay.SatirMetni_EN,
+        SatirMetni_FR = detay.SatirMetni_FR,
+        SatirMetni_DE = detay.SatirMetni_DE,
+        SatirMetni_RO = detay.SatirMetni_RO,
+        SatirMetni_AR = detay.SatirMetni_AR,
+        SatirMetni_RU = detay.SatirMetni_RU,
+        Fiyat = detay.Fiyat,
+        ParaBirimi = detay.ParaBirimi,
+        SortOrder = detay.SortOrder
     };
 
     private void AddItemUnder(QuoteItemModel header)
@@ -1007,6 +1121,8 @@
         else if (!string.IsNullOrWhiteSpace(raw) && decimal.TryParse(raw, out var v2))
             newPrice = v2;
 
+        if (d.Fiyat == newPrice) return;
+        await CaptureUndoSnapshotAsync(includeTemplates: true);
         d.Fiyat = newPrice;
         try { await ArabaslikSvc.UpdateDetayFiyatAsync(d.Id, newPrice); }
         catch { /* sessiz: kullanici yenilediginde mevcut deger geri yuklenir */ }
@@ -1014,7 +1130,10 @@
 
     private async Task UpdateDetayDeger(ArabaslikDetayModel d, string? raw)
     {
-        d.Deger = raw ?? "";
+        var newValue = raw ?? "";
+        if (d.Deger == newValue) return;
+        await CaptureUndoSnapshotAsync(includeTemplates: true);
+        d.Deger = newValue;
         try { await ArabaslikSvc.UpdateDetayDegerAsync(d.Id, d.Deger); }
         catch { }
     }
@@ -1315,6 +1434,7 @@
         if (string.IsNullOrWhiteSpace(newGroupName)) return;
         try
         {
+            await CaptureUndoSnapshotAsync(includeTemplates: true);
             var maxSort = (allGruplar?.Select(x => x.SortOrder).DefaultIfEmpty(0).Max() ?? 0) + 10;
             var newGrup = new ArabaslikGrupModel
             {
@@ -1369,6 +1489,7 @@
         if (editingGrup == null || string.IsNullOrWhiteSpace(editingGrup.GrupAdi)) return;
         try
         {
+            await CaptureUndoSnapshotAsync(includeTemplates: true);
             await ArabaslikSvc.SaveGrupAsync(editingGrup);
             // Local cache guncelle
             var idx = allGruplar?.FindIndex(g => g.Id == editingGrup.Id) ?? -1;
@@ -1383,6 +1504,7 @@
     {
         try
         {
+            await CaptureUndoSnapshotAsync(includeTemplates: true);
             await ArabaslikSvc.DeleteGrupAsync(grupId);
             allGruplar?.RemoveAll(g => g.Id == grupId);
             expandedGroupIds.Remove(grupId);
@@ -1428,6 +1550,7 @@
         if (editingDetay == null || editingDetayGrup == null || string.IsNullOrWhiteSpace(editingDetay.SatirMetni)) return;
         try
         {
+            await CaptureUndoSnapshotAsync(includeTemplates: true);
             // TablTipi'ye gore Fiyat veya Deger uygula
             if (editingDetayGrup.TablTipi == 1)
                 editingDetay.Deger = detayDegerBuffer ?? "";
@@ -1452,6 +1575,7 @@
     {
         try
         {
+            await CaptureUndoSnapshotAsync(includeTemplates: true);
             await ArabaslikSvc.DeleteDetayAsync(detayId);
             foreach (var kvp in groupDetailsCache.ToList())
                 kvp.Value.RemoveAll(x => x.Id == detayId);
@@ -1484,6 +1608,7 @@
         var d = new ArabaslikDetayModel { GrupId = g.Id, SatirMetni = txt.Trim(), SortOrder = nextSort };
         try
         {
+            await CaptureUndoSnapshotAsync(includeTemplates: true);
             await ArabaslikSvc.AddDetayAsync(d);
             details.Add(d);
             newKalemText[g.Id] = "";
