@@ -615,8 +615,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    min-width: 180px;
-    max-width: 240px;
+    flex: 0 1 430px;
+    min-width: 320px;
+    max-width: 520px;
     padding: 0 6px;
 }
 .item-spec-val .spec-colon {
@@ -639,6 +640,11 @@
     border-color: var(--yl-border);
     background: #fff;
     outline: none;
+}
+
+.item-row-spec .item-price,
+.item-row-spec .item-total {
+    display: none;
 }
 
 .item-sira {
@@ -1588,7 +1594,7 @@
 
 .items-editor.v2 .detail-value-edit,
 .items-editor.v2 .detail-price-edit {
-    width: 90px;
+    width: 180px;
     border: 1px solid transparent;
     background: transparent;
     font-size: 0.74rem;
