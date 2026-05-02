@@ -208,7 +208,6 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
-            await CleanupDuplicateTemplateGroupsAsync(conn);
 
             var sql = """
                 SELECT "Id", "GrupAdi", "GrupAdi_EN", "GrupAdi_FR", "GrupAdi_DE",
@@ -603,6 +602,115 @@ namespace YALCINDORSE.Services
                 await ResetTemplateSequenceAsync(conn, tx, "YLArabaslikGruplar", "Id");
                 await ResetTemplateSequenceAsync(conn, tx, "YLArabaslikDetaylar", "Id");
 
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        }
+
+        /// <summary>Undo/redo icin sadece degisen sablon gruplarini geri alir.</summary>
+        public async Task RestoreTemplateGroupsAsync(
+            List<ArabaslikGrupModel> gruplar,
+            Dictionary<int, List<ArabaslikDetayModel>> detaylarByGrupId,
+            List<int> deletedGroupIds)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+            using var tx = await conn.BeginTransactionAsync();
+
+            try
+            {
+                var targetIds = gruplar.Select(g => g.Id)
+                    .Concat(deletedGroupIds)
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList();
+
+                foreach (var groupId in targetIds)
+                {
+                    using var deleteDetails = new NpgsqlCommand("""DELETE FROM "YLArabaslikDetaylar" WHERE "GrupId" = @id;""", conn, tx);
+                    deleteDetails.Parameters.AddWithValue("id", groupId);
+                    await deleteDetails.ExecuteNonQueryAsync();
+                }
+
+                foreach (var groupId in deletedGroupIds.Where(id => id > 0).Distinct())
+                {
+                    using var deleteGroup = new NpgsqlCommand("""DELETE FROM "YLArabaslikGruplar" WHERE "Id" = @id;""", conn, tx);
+                    deleteGroup.Parameters.AddWithValue("id", groupId);
+                    await deleteGroup.ExecuteNonQueryAsync();
+                }
+
+                foreach (var grup in gruplar.OrderBy(g => g.SortOrder).ThenBy(g => g.GrupAdi))
+                {
+                    const string upsertGroupSql = """
+                        INSERT INTO "YLArabaslikGruplar"
+                            ("Id","GrupAdi","GrupAdi_EN","GrupAdi_FR","GrupAdi_DE","GrupAdi_RO","GrupAdi_AR","GrupAdi_RU",
+                             "TablTipi","SortOrder","IsActive","CreatedDate","CreatedBy")
+                        VALUES (@id,@grupAdi,@en,@fr,@de,@ro,@ar,@ru,@tablTipi,@sortOrder,@isActive,@createdDate,@createdBy)
+                        ON CONFLICT ("Id") DO UPDATE SET
+                            "GrupAdi" = EXCLUDED."GrupAdi",
+                            "GrupAdi_EN" = EXCLUDED."GrupAdi_EN",
+                            "GrupAdi_FR" = EXCLUDED."GrupAdi_FR",
+                            "GrupAdi_DE" = EXCLUDED."GrupAdi_DE",
+                            "GrupAdi_RO" = EXCLUDED."GrupAdi_RO",
+                            "GrupAdi_AR" = EXCLUDED."GrupAdi_AR",
+                            "GrupAdi_RU" = EXCLUDED."GrupAdi_RU",
+                            "TablTipi" = EXCLUDED."TablTipi",
+                            "SortOrder" = EXCLUDED."SortOrder",
+                            "IsActive" = EXCLUDED."IsActive",
+                            "CreatedDate" = EXCLUDED."CreatedDate",
+                            "CreatedBy" = EXCLUDED."CreatedBy";
+                        """;
+                    using var upsertGroup = new NpgsqlCommand(upsertGroupSql, conn, tx);
+                    upsertGroup.Parameters.AddWithValue("id", grup.Id);
+                    upsertGroup.Parameters.AddWithValue("grupAdi", grup.GrupAdi ?? "");
+                    upsertGroup.Parameters.AddWithValue("en", grup.GrupAdi_EN ?? "");
+                    upsertGroup.Parameters.AddWithValue("fr", grup.GrupAdi_FR ?? "");
+                    upsertGroup.Parameters.AddWithValue("de", grup.GrupAdi_DE ?? "");
+                    upsertGroup.Parameters.AddWithValue("ro", grup.GrupAdi_RO ?? "");
+                    upsertGroup.Parameters.AddWithValue("ar", grup.GrupAdi_AR ?? "");
+                    upsertGroup.Parameters.AddWithValue("ru", grup.GrupAdi_RU ?? "");
+                    upsertGroup.Parameters.AddWithValue("tablTipi", grup.TablTipi);
+                    upsertGroup.Parameters.AddWithValue("sortOrder", grup.SortOrder);
+                    upsertGroup.Parameters.AddWithValue("isActive", grup.IsActive);
+                    upsertGroup.Parameters.AddWithValue("createdDate", grup.CreatedDate == default ? DateTime.Now : grup.CreatedDate);
+                    upsertGroup.Parameters.AddWithValue("createdBy", grup.CreatedBy ?? "");
+                    await upsertGroup.ExecuteNonQueryAsync();
+
+                    if (!detaylarByGrupId.TryGetValue(grup.Id, out var detaylar))
+                        continue;
+
+                    foreach (var detay in detaylar.OrderBy(d => d.SortOrder))
+                    {
+                        const string insertDetailSql = """
+                            INSERT INTO "YLArabaslikDetaylar"
+                                ("Id","GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
+                                 "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
+                            VALUES (@id,@grupId,@tr,@en,@fr,@de,@ro,@ar,@ru,@fiyat,@para,@sort);
+                            """;
+                        using var insertDetail = new NpgsqlCommand(insertDetailSql, conn, tx);
+                        insertDetail.Parameters.AddWithValue("id", detay.Id);
+                        insertDetail.Parameters.AddWithValue("grupId", grup.Id);
+                        insertDetail.Parameters.AddWithValue("tr", detay.SatirMetni ?? "");
+                        insertDetail.Parameters.AddWithValue("en", detay.SatirMetni_EN ?? "");
+                        insertDetail.Parameters.AddWithValue("fr", detay.SatirMetni_FR ?? "");
+                        insertDetail.Parameters.AddWithValue("de", detay.SatirMetni_DE ?? "");
+                        insertDetail.Parameters.AddWithValue("ro", detay.SatirMetni_RO ?? "");
+                        insertDetail.Parameters.AddWithValue("ar", detay.SatirMetni_AR ?? "");
+                        insertDetail.Parameters.AddWithValue("ru", detay.SatirMetni_RU ?? "");
+                        insertDetail.Parameters.AddWithValue("fiyat", (object?)detay.Fiyat ?? DBNull.Value);
+                        insertDetail.Parameters.AddWithValue("para", (object?)detay.ParaBirimi ?? DBNull.Value);
+                        insertDetail.Parameters.AddWithValue("sort", detay.SortOrder);
+                        await insertDetail.ExecuteNonQueryAsync();
+                    }
+                }
+
+                await ResetTemplateSequenceAsync(conn, tx, "YLArabaslikGruplar", "Id");
+                await ResetTemplateSequenceAsync(conn, tx, "YLArabaslikDetaylar", "Id");
                 await tx.CommitAsync();
             }
             catch
