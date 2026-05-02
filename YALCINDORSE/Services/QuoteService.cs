@@ -128,6 +128,17 @@ namespace YALCINDORSE.Services
             _auth = auth;
         }
 
+        private static void SyncLegacyLastikField(QuoteModel quote)
+        {
+            var lastikParts = new[] { quote.LastikType, quote.LastikDrum }
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!.Trim());
+            var combinedLastik = string.Join(" ", lastikParts);
+
+            if (!string.IsNullOrWhiteSpace(combinedLastik))
+                quote.Lastik = combinedLastik;
+        }
+
         /// <summary>YLTeklifler tablosuna eksik kolonlari ekler (her kolonu ayri komutla).</summary>
         private async Task EnsureSchemaAsync(NpgsqlConnection conn)
         {
@@ -306,6 +317,7 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
+            SyncLegacyLastikField(quote);
 
             const string sql = """
                 INSERT INTO "YLTeklifler"
@@ -434,6 +446,7 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
+            SyncLegacyLastikField(quote);
 
             const string sql = """
                 UPDATE "YLTeklifler" SET
@@ -744,6 +757,8 @@ namespace YALCINDORSE.Services
             CompareField(changes, "Teklif Kanali", oldQuote.TeklifKanali ?? "", newQuote.TeklifKanali ?? "");
             CompareField(changes, "Teklif Tipi", oldQuote.TeklifTipi ?? "", newQuote.TeklifTipi ?? "");
             CompareField(changes, "Aks Sayisi", oldQuote.AksSayisi, newQuote.AksSayisi);
+            CompareField(changes, "Lastik TYPE", oldQuote.LastikType ?? "", newQuote.LastikType ?? "");
+            CompareField(changes, "Lastik DRUM", oldQuote.LastikDrum ?? "", newQuote.LastikDrum ?? "");
             CompareField(changes, "Odeme Sistemi", oldQuote.OdemeSistemi ?? "", newQuote.OdemeSistemi ?? "");
             CompareField(changes, "Iskonto Aciklama", oldQuote.IskontoAciklama ?? "", newQuote.IskontoAciklama ?? "");
             CompareField(changes, "KDV Dahil", oldQuote.KdvDahilMi, newQuote.KdvDahilMi);

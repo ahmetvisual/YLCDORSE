@@ -12,7 +12,7 @@ ALTER TABLE "YLTeklifler" ADD COLUMN IF NOT EXISTS "LastikDrum" TEXT;
 -- 2. LASTIK_TYPE değerleri
 INSERT INTO "YLLookupValues" ("LookupType", "Value", "SortOrder") VALUES
     ('LASTIK_TYPE', '11',     10), ('LASTIK_TYPE', '12',     20),
-    ('LASTIK_TYPE', '12.00',  30), ('LASTIK_TYPE', '13',     40),
+    ('LASTIK_TYPE', '13',     30), ('LASTIK_TYPE', '12.00',  40),
     ('LASTIK_TYPE', '14.00',  50), ('LASTIK_TYPE', '185/55', 60),
     ('LASTIK_TYPE', '205/65', 70), ('LASTIK_TYPE', '205/75', 80),
     ('LASTIK_TYPE', '215/75', 90), ('LASTIK_TYPE', '225/75',100),
@@ -26,10 +26,12 @@ INSERT INTO "YLLookupValues" ("LookupType", "Value", "SortOrder") VALUES
     ('LASTIK_TYPE', '325/95',250), ('LASTIK_TYPE', '335/80',260),
     ('LASTIK_TYPE', '355/50',270), ('LASTIK_TYPE', '355/60',280),
     ('LASTIK_TYPE', '365/80',290), ('LASTIK_TYPE', '365/85',300),
-    ('LASTIK_TYPE', '385/55',310), ('LASTIK_TYPE', '385/65',320),
+    ('LASTIK_TYPE', '385/55',310),
     ('LASTIK_TYPE', '395/85',330), ('LASTIK_TYPE', '435/50',340),
-    ('LASTIK_TYPE', '445/45',350), ('LASTIK_TYPE', '445/60',360)
-ON CONFLICT ("LookupType", "Value") DO NOTHING;
+    ('LASTIK_TYPE', '445/45',350), ('LASTIK_TYPE', '445/60',360),
+    ('LASTIK_TYPE', '385/65',370)
+ON CONFLICT ("LookupType", "Value")
+DO UPDATE SET "SortOrder" = EXCLUDED."SortOrder";
 
 -- 3. LASTIK_DRUM değerleri
 INSERT INTO "YLLookupValues" ("LookupType", "Value", "SortOrder") VALUES
@@ -38,4 +40,5 @@ INSERT INTO "YLLookupValues" ("LookupType", "Value", "SortOrder") VALUES
     ('LASTIK_DRUM', 'R 20',   30),
     ('LASTIK_DRUM', 'R 22.5', 40),
     ('LASTIK_DRUM', 'R 24',   50)
-ON CONFLICT ("LookupType", "Value") DO NOTHING;
+ON CONFLICT ("LookupType", "Value")
+DO UPDATE SET "SortOrder" = EXCLUDED."SortOrder";
