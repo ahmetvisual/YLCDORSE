@@ -123,6 +123,7 @@ namespace YALCINDORSE.Services
         private readonly SemaphoreSlim _schemaLock = new(1, 1);
         private static bool _schemaEnsured;   // static: Transient servis olsa da bir kez calisir
         private static bool _quoteItemStyleSchemaEnsured;
+        private static bool _quoteItemStyleColumnExists;
 
         public QuoteService(DatabaseHelper db, AuthService auth)
         {
@@ -189,18 +190,46 @@ namespace YALCINDORSE.Services
             finally { _schemaLock.Release(); }
         }
 
-        private async Task EnsureQuoteItemStyleSchemaAsync(NpgsqlConnection conn)
+        private async Task<bool> EnsureQuoteItemStyleSchemaAsync(NpgsqlConnection conn)
         {
-            if (_quoteItemStyleSchemaEnsured) return;
+            if (_quoteItemStyleSchemaEnsured) return _quoteItemStyleColumnExists;
             await _schemaLock.WaitAsync();
             try
             {
-                if (_quoteItemStyleSchemaEnsured) return;
-                using var cmd = new NpgsqlCommand(
-                    """ALTER TABLE "YLTeklifKalemleri" ADD COLUMN IF NOT EXISTS "ItalicMi" BOOLEAN NOT NULL DEFAULT FALSE""",
-                    conn);
-                await cmd.ExecuteNonQueryAsync();
+                if (_quoteItemStyleSchemaEnsured) return _quoteItemStyleColumnExists;
+
+                using (var existsCmd = new NpgsqlCommand(
+                    """
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name = 'YLTeklifKalemleri'
+                          AND column_name = 'ItalicMi'
+                    )
+                    """,
+                    conn))
+                {
+                    _quoteItemStyleColumnExists = Convert.ToBoolean(await existsCmd.ExecuteScalarAsync() ?? false);
+                }
+
+                if (!_quoteItemStyleColumnExists)
+                {
+                    try
+                    {
+                        using var alterCmd = new NpgsqlCommand(
+                            """ALTER TABLE "YLTeklifKalemleri" ADD COLUMN IF NOT EXISTS "ItalicMi" BOOLEAN NOT NULL DEFAULT FALSE""",
+                            conn);
+                        await alterCmd.ExecuteNonQueryAsync();
+                        _quoteItemStyleColumnExists = true;
+                    }
+                    catch (PostgresException ex) when (ex.SqlState == "42501")
+                    {
+                        _quoteItemStyleColumnExists = false;
+                    }
+                }
+
                 _quoteItemStyleSchemaEnsured = true;
+                return _quoteItemStyleColumnExists;
             }
             finally { _schemaLock.Release(); }
         }
@@ -297,12 +326,13 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
-            await EnsureQuoteItemStyleSchemaAsync(conn);
+            var hasItalicColumn = await EnsureQuoteItemStyleSchemaAsync(conn);
+            var italicSelect = hasItalicColumn ? @"""ItalicMi""" : @"FALSE AS ""ItalicMi""";
 
-            const string sql = """
+            var sql = $"""
                 SELECT "Id", "TeklifId", "BaslikMi", "Aciklama", "SiraNo",
                        "UstKalemId", "UrunKodu", "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi",
-                       "ItalicMi"
+                       {italicSelect}
                 FROM "YLTeklifKalemleri"
                 WHERE "TeklifId" = @quoteId
                 ORDER BY "SiraNo";
@@ -437,15 +467,25 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
-            await EnsureQuoteItemStyleSchemaAsync(conn);
+            var hasItalicColumn = await EnsureQuoteItemStyleSchemaAsync(conn);
 
-            const string sql = """
+            var sql = hasItalicColumn
+                ? """
                 INSERT INTO "YLTeklifKalemleri"
                 ("TeklifId", "BaslikMi", "Aciklama", "SiraNo", "UstKalemId", "UrunKodu",
                  "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi", "ItalicMi")
                 VALUES
                 (@TeklifId, @BaslikMi, @Aciklama, @SiraNo, @UstKalemId, @UrunKodu,
                  @Miktar, @Birim, @BirimFiyat, @Tutar, @OpsiyonMu, @KalemTipi, @ItalicMi)
+                RETURNING "Id";
+                """
+                : """
+                INSERT INTO "YLTeklifKalemleri"
+                ("TeklifId", "BaslikMi", "Aciklama", "SiraNo", "UstKalemId", "UrunKodu",
+                 "Miktar", "Birim", "BirimFiyat", "Tutar", "OpsiyonMu", "KalemTipi")
+                VALUES
+                (@TeklifId, @BaslikMi, @Aciklama, @SiraNo, @UstKalemId, @UrunKodu,
+                 @Miktar, @Birim, @BirimFiyat, @Tutar, @OpsiyonMu, @KalemTipi)
                 RETURNING "Id";
                 """;
 
@@ -462,7 +502,8 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("Tutar", (object?)item.Tutar ?? DBNull.Value);
             cmd.Parameters.AddWithValue("OpsiyonMu", item.OpsiyonMu);
             cmd.Parameters.AddWithValue("KalemTipi", item.KalemTipi);
-            cmd.Parameters.AddWithValue("ItalicMi", item.ItalicMi);
+            if (hasItalicColumn)
+                cmd.Parameters.AddWithValue("ItalicMi", item.ItalicMi);
 
             var idResult = await cmd.ExecuteScalarAsync();
             item.Id = Convert.ToInt32(idResult);
