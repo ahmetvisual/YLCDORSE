@@ -207,6 +207,8 @@ namespace YALCINDORSE.Services
             var items = new List<ArabaslikGrupModel>();
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+            await CleanupDuplicateTemplateGroupsAsync(conn);
 
             var sql = """
                 SELECT "Id", "GrupAdi", "GrupAdi_EN", "GrupAdi_FR", "GrupAdi_DE",
@@ -246,6 +248,58 @@ namespace YALCINDORSE.Services
                 });
             }
             return items;
+        }
+
+        private static async Task CleanupDuplicateTemplateGroupsAsync(NpgsqlConnection conn)
+        {
+            const string sql = """
+                WITH ranked AS (
+                    SELECT
+                        "Id",
+                        MIN("Id") OVER (
+                            PARTITION BY LOWER(BTRIM("GrupAdi")), "TablTipi"
+                        ) AS keep_id
+                    FROM "YLArabaslikGruplar"
+                    WHERE "IsActive" = TRUE
+                      AND COALESCE(BTRIM("GrupAdi"), '') <> ''
+                ),
+                moved AS (
+                    INSERT INTO "YLArabaslikDetaylar"
+                        ("GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
+                         "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
+                    SELECT
+                        r.keep_id,
+                        d."SatirMetni", d."SatirMetni_EN", d."SatirMetni_FR", d."SatirMetni_DE",
+                        d."SatirMetni_RO", d."SatirMetni_AR", d."SatirMetni_RU",
+                        d."Fiyat", d."ParaBirimi", d."SortOrder"
+                    FROM "YLArabaslikDetaylar" d
+                    JOIN ranked r ON r."Id" = d."GrupId"
+                    WHERE r."Id" <> r.keep_id
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM "YLArabaslikDetaylar" e
+                          WHERE e."GrupId" = r.keep_id
+                            AND LOWER(BTRIM(e."SatirMetni")) = LOWER(BTRIM(d."SatirMetni"))
+                            AND COALESCE(e."ParaBirimi", '') = COALESCE(d."ParaBirimi", '')
+                            AND COALESCE(e."Fiyat", -999999999) = COALESCE(d."Fiyat", -999999999)
+                      )
+                    RETURNING 1
+                ),
+                deleted_details AS (
+                    DELETE FROM "YLArabaslikDetaylar" d
+                    USING ranked r
+                    WHERE d."GrupId" = r."Id"
+                      AND r."Id" <> r.keep_id
+                    RETURNING 1
+                )
+                DELETE FROM "YLArabaslikGruplar" g
+                USING ranked r
+                WHERE g."Id" = r."Id"
+                  AND r."Id" <> r.keep_id;
+                """;
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         public async Task<ArabaslikGrupModel?> GetGrupByIdAsync(int id)
@@ -498,12 +552,12 @@ namespace YALCINDORSE.Services
                 {
                     const string insertGroupSql = """
                         INSERT INTO "YLArabaslikGruplar"
-                            ("GrupAdi","GrupAdi_EN","GrupAdi_FR","GrupAdi_DE","GrupAdi_RO","GrupAdi_AR","GrupAdi_RU",
+                            ("Id","GrupAdi","GrupAdi_EN","GrupAdi_FR","GrupAdi_DE","GrupAdi_RO","GrupAdi_AR","GrupAdi_RU",
                              "TablTipi","SortOrder","IsActive","CreatedDate","CreatedBy")
-                        VALUES (@grupAdi,@en,@fr,@de,@ro,@ar,@ru,@tablTipi,@sortOrder,@isActive,@createdDate,@createdBy)
-                        RETURNING "Id";
+                        VALUES (@id,@grupAdi,@en,@fr,@de,@ro,@ar,@ru,@tablTipi,@sortOrder,@isActive,@createdDate,@createdBy);
                         """;
                     using var insertGroup = new NpgsqlCommand(insertGroupSql, conn, tx);
+                    insertGroup.Parameters.AddWithValue("id", grup.Id);
                     insertGroup.Parameters.AddWithValue("grupAdi", grup.GrupAdi ?? "");
                     insertGroup.Parameters.AddWithValue("en", grup.GrupAdi_EN ?? "");
                     insertGroup.Parameters.AddWithValue("fr", grup.GrupAdi_FR ?? "");
@@ -516,7 +570,7 @@ namespace YALCINDORSE.Services
                     insertGroup.Parameters.AddWithValue("isActive", grup.IsActive);
                     insertGroup.Parameters.AddWithValue("createdDate", grup.CreatedDate == default ? DateTime.Now : grup.CreatedDate);
                     insertGroup.Parameters.AddWithValue("createdBy", grup.CreatedBy ?? "");
-                    var newGroupId = Convert.ToInt32(await insertGroup.ExecuteScalarAsync() ?? 0);
+                    await insertGroup.ExecuteNonQueryAsync();
 
                     if (!detaylarByGrupId.TryGetValue(grup.Id, out var detaylar))
                         continue;
@@ -525,12 +579,13 @@ namespace YALCINDORSE.Services
                     {
                         const string insertDetailSql = """
                             INSERT INTO "YLArabaslikDetaylar"
-                                ("GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
+                                ("Id","GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
                                  "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
-                            VALUES (@grupId,@tr,@en,@fr,@de,@ro,@ar,@ru,@fiyat,@para,@sort);
+                            VALUES (@id,@grupId,@tr,@en,@fr,@de,@ro,@ar,@ru,@fiyat,@para,@sort);
                             """;
                         using var insertDetail = new NpgsqlCommand(insertDetailSql, conn, tx);
-                        insertDetail.Parameters.AddWithValue("grupId", newGroupId);
+                        insertDetail.Parameters.AddWithValue("id", detay.Id);
+                        insertDetail.Parameters.AddWithValue("grupId", grup.Id);
                         insertDetail.Parameters.AddWithValue("tr", detay.SatirMetni ?? "");
                         insertDetail.Parameters.AddWithValue("en", detay.SatirMetni_EN ?? "");
                         insertDetail.Parameters.AddWithValue("fr", detay.SatirMetni_FR ?? "");
@@ -545,6 +600,9 @@ namespace YALCINDORSE.Services
                     }
                 }
 
+                await ResetTemplateSequenceAsync(conn, tx, "YLArabaslikGruplar", "Id");
+                await ResetTemplateSequenceAsync(conn, tx, "YLArabaslikDetaylar", "Id");
+
                 await tx.CommitAsync();
             }
             catch
@@ -552,6 +610,20 @@ namespace YALCINDORSE.Services
                 await tx.RollbackAsync();
                 throw;
             }
+        }
+
+        private static async Task ResetTemplateSequenceAsync(NpgsqlConnection conn, NpgsqlTransaction tx, string tableName, string columnName)
+        {
+            var sql = $"""
+                SELECT setval(
+                    pg_get_serial_sequence('"{tableName}"', '{columnName}'),
+                    COALESCE((SELECT MAX("{columnName}") FROM "{tableName}"), 1),
+                    TRUE
+                )
+                WHERE pg_get_serial_sequence('"{tableName}"', '{columnName}') IS NOT NULL;
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn, tx);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         /// <summary>Yeni bir detay satiri ekler ve uretilen Id'yi doner.</summary>
