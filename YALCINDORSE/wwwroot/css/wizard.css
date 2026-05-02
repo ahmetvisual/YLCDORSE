@@ -1157,6 +1157,44 @@
     flex-shrink: 0;
 }
 
+.items-editor.v2 .pane-history-actions {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.items-editor.v2 .item-history-btn {
+    width: 26px;
+    height: 24px;
+    border: 1px solid var(--yl-border);
+    background: #fff;
+    color: var(--yl-primary);
+    cursor: pointer;
+    border-radius: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.12s;
+}
+
+.items-editor.v2 .item-history-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.items-editor.v2 .item-history-btn:hover:not(:disabled) {
+    background: #eef3ff;
+    border-color: var(--yl-primary);
+}
+
+.items-editor.v2 .item-history-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    color: var(--yl-text-light);
+}
+
 .items-editor.v2 .pane-btn {
     border: 1px solid var(--yl-border);
     background: #fff;
@@ -1729,6 +1767,15 @@
 }
 .app-root.dark .items-editor.v2 .pane-btn:hover {
     background: rgba(255,255,255,0.05);
+}
+.app-root.dark .items-editor.v2 .item-history-btn {
+    background: #161b22;
+    border-color: var(--yl-border);
+    color: #7db4f5;
+}
+.app-root.dark .items-editor.v2 .item-history-btn:hover:not(:disabled) {
+    background: rgba(59,125,221,0.16);
+    border-color: var(--yl-primary);
 }
 .app-root.dark .items-editor.v2 .group-node {
     border-bottom-color: rgba(255,255,255,0.05);

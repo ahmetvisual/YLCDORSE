@@ -3,7 +3,7 @@
 @inject IJSRuntime JS
 @implements IDisposable
 
-<div class="items-editor v2 @(dragInProgress ? "drag-active" : "")">
+<div class="items-editor v2 @(dragInProgress ? "drag-active" : "")" tabindex="0">
 
     @* ════════════════════════════════════════════════════════════
        SOL PANEL — Teklife Eklenen Kalemler
@@ -16,6 +16,20 @@
                 </svg>
                 <span>Eklenen Kalemler</span>
                 <span class="pane-count">@Items.Count</span>
+            </div>
+            <div class="pane-history-actions">
+                <button class="item-history-btn" title="Geri al (Ctrl+Z)" disabled="@(!CanUndo)" @onclick="UndoAsync">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 14L4 9l5-5"/>
+                        <path d="M4 9h10a6 6 0 010 12h-1"/>
+                    </svg>
+                </button>
+                <button class="item-history-btn" title="Ileri al (Ctrl+Y)" disabled="@(!CanRedo)" @onclick="RedoAsync">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 14l5-5-5-5"/>
+                        <path d="M20 9H10a6 6 0 000 12h1"/>
+                    </svg>
+                </button>
             </div>
             <div class="pane-hint" title="Sürükle-bırak ile sırayı değiştirin">
                 <svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;opacity:0.55">
@@ -536,6 +550,13 @@
     private bool dragOverLeftPane;
     private bool dragInProgress;
 
+    private const int HistoryLimit = 80;
+    private readonly List<List<QuoteItemModel>> undoHistory = new();
+    private readonly List<List<QuoteItemModel>> redoHistory = new();
+    private bool isApplyingHistory;
+    private bool CanUndo => undoHistory.Count > 0;
+    private bool CanRedo => redoHistory.Count > 0;
+
     private DotNetObjectReference<QuoteItemsEditor>? dotNetRef;
     private bool jsHookInstalled = false;
 
@@ -581,6 +602,12 @@
         ReorderQuoteItems(src, target, insertBefore);
         StateHasChanged();
     }
+
+    [JSInvokable]
+    public Task UndoFromShortcut() => UndoAsync();
+
+    [JSInvokable]
+    public Task RedoFromShortcut() => RedoAsync();
 
     private async Task LoadGruplarAsync()
     {
@@ -677,8 +704,80 @@
 
     // ─── ITEM CRUD ───────────────────────────────────────────
 
+    // --- GERI AL / ILERI AL --------------------------------------------------
+
+    private void CaptureUndoSnapshot()
+    {
+        if (isApplyingHistory) return;
+
+        undoHistory.Add(CloneItems(Items));
+        if (undoHistory.Count > HistoryLimit)
+            undoHistory.RemoveAt(0);
+        redoHistory.Clear();
+    }
+
+    private async Task UndoAsync()
+    {
+        if (!CanUndo) return;
+
+        isApplyingHistory = true;
+        try
+        {
+            redoHistory.Add(CloneItems(Items));
+            var previous = undoHistory[^1];
+            undoHistory.RemoveAt(undoHistory.Count - 1);
+            Items = CloneItems(previous);
+            await NotifyChangedAsync();
+        }
+        finally
+        {
+            isApplyingHistory = false;
+        }
+    }
+
+    private async Task RedoAsync()
+    {
+        if (!CanRedo) return;
+
+        isApplyingHistory = true;
+        try
+        {
+            undoHistory.Add(CloneItems(Items));
+            var next = redoHistory[^1];
+            redoHistory.RemoveAt(redoHistory.Count - 1);
+            Items = CloneItems(next);
+            await NotifyChangedAsync();
+        }
+        finally
+        {
+            isApplyingHistory = false;
+        }
+    }
+
+    private static List<QuoteItemModel> CloneItems(IEnumerable<QuoteItemModel> source) =>
+        source.Select(CloneItem).ToList();
+
+    private static QuoteItemModel CloneItem(QuoteItemModel item) => new()
+    {
+        Id = item.Id,
+        TeklifId = item.TeklifId,
+        BaslikMi = item.BaslikMi,
+        Aciklama = item.Aciklama,
+        SiraNo = item.SiraNo,
+        UstKalemId = item.UstKalemId,
+        UrunKodu = item.UrunKodu,
+        Miktar = item.Miktar,
+        Birim = item.Birim,
+        BirimFiyat = item.BirimFiyat,
+        Tutar = item.Tutar,
+        OpsiyonMu = item.OpsiyonMu,
+        ItalicMi = item.ItalicMi,
+        KalemTipi = item.KalemTipi
+    };
+
     private void AddItemUnder(QuoteItemModel header)
     {
+        CaptureUndoSnapshot();
         var maxSira = Items.Where(i => i.UstKalemId == header.Id && i.KalemTipi == "ITEM").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
         Items.Add(new QuoteItemModel
         {
@@ -695,12 +794,14 @@
 
     private void ToggleBold(QuoteItemModel item)
     {
+        CaptureUndoSnapshot();
         item.BaslikMi = !item.BaslikMi;
         NotifyChanged();
     }
 
     private void ToggleItalic(QuoteItemModel item)
     {
+        CaptureUndoSnapshot();
         item.ItalicMi = !item.ItalicMi;
         NotifyChanged();
     }
@@ -714,6 +815,7 @@
 
     private void RemoveItem(QuoteItemModel item)
     {
+        CaptureUndoSnapshot();
         var childIds = Items.Where(i => i.UstKalemId == item.Id).Select(i => i.Id).ToList();
         foreach (var childId in childIds)
         {
@@ -727,9 +829,20 @@
 
     private void UpdateField(QuoteItemModel item, string field, string? value)
     {
+        var oldValue = field switch
+        {
+            nameof(item.Aciklama) => item.Aciklama,
+            nameof(item.UrunKodu) => item.UrunKodu,
+            nameof(item.Birim) => item.Birim,
+            _ => null
+        };
+        var newValue = field == nameof(item.Aciklama) ? value ?? "" : value;
+        if (oldValue == newValue) return;
+
+        CaptureUndoSnapshot();
         switch (field)
         {
-            case nameof(item.Aciklama): item.Aciklama = value ?? ""; break;
+            case nameof(item.Aciklama): item.Aciklama = newValue ?? ""; break;
             case nameof(item.UrunKodu): item.UrunKodu = value; break;
             case nameof(item.Birim): item.Birim = value; break;
         }
@@ -740,6 +853,8 @@
     {
         if (decimal.TryParse(value, out var num))
         {
+            if (item.Miktar == num) return;
+            CaptureUndoSnapshot();
             item.Miktar = num;
             item.Tutar = (item.Miktar ?? 0) * (item.BirimFiyat ?? 0);
         }
@@ -750,13 +865,21 @@
     {
         if (decimal.TryParse(value, out var num))
         {
+            if (item.BirimFiyat == num) return;
+            CaptureUndoSnapshot();
             item.BirimFiyat = num;
             item.Tutar = (item.Miktar ?? 0) * (item.BirimFiyat ?? 0);
         }
         NotifyChanged();
     }
 
-    private void NotifyChanged() => ItemsChanged.InvokeAsync(Items);
+    private void NotifyChanged() => _ = NotifyChangedAsync();
+
+    private async Task NotifyChangedAsync()
+    {
+        await ItemsChanged.InvokeAsync(Items);
+        StateHasChanged();
+    }
 
     // ─── ŞABLON FİLTRE & LOKALİZASYON ──────────────────────────
 
@@ -905,6 +1028,7 @@
             try { detaylar = await ArabaslikSvc.GetDetaylarAsync(g.Id); groupDetailsCache[g.Id] = detaylar; }
             catch { detaylar = new(); }
         }
+        CaptureUndoSnapshot();
         ImportGroupInternal(g, detaylar);
         NotifyChanged();
     }
@@ -963,6 +1087,7 @@
     /// <summary>Tek bir detay satırını kalem olarak ekler. parentHeader verilmezse uygun başlık seçilir/oluşturulur.</summary>
     private void AddDetayAsItem(ArabaslikGrupModel g, ArabaslikDetayModel d, QuoteItemModel? parentHeader = null)
     {
+        CaptureUndoSnapshot();
         // Hedef başlığı bul: verilen, son uygun olan veya yeni oluşturulan
         QuoteItemModel? header = parentHeader;
         if (header == null)
@@ -1161,6 +1286,7 @@
         siblings.Remove(src);
         var destIdx = siblings.IndexOf(dest);
         if (destIdx < 0) return;
+        CaptureUndoSnapshot();
         siblings.Insert(insertBefore ? destIdx : destIdx + 1, src);
 
         // SiraNo'ları yeniden ata

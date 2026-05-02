@@ -146,6 +146,26 @@ window.yldate = window.yldate || {
         if (e.key === 'Escape' && isDragging) {
             clearVisuals();
             reset();
+            return;
         }
+
+        const key = (e.key || '').toLowerCase();
+        const isUndo = e.ctrlKey && !e.altKey && !e.metaKey && key === 'z' && !e.shiftKey;
+        const isRedo = e.ctrlKey && !e.altKey && !e.metaKey && (key === 'y' || (key === 'z' && e.shiftKey));
+        if (!dotnetRef || (!isUndo && !isRedo)) return;
+
+        const target = e.target;
+        const inEditor = target && target.closest && target.closest('.items-editor.v2');
+        if (!inEditor) return;
+
+        const tag = target.tagName ? target.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+            dotnetRef.invokeMethodAsync(isUndo ? 'UndoFromShortcut' : 'RedoFromShortcut');
+        } catch { }
     });
 })();
