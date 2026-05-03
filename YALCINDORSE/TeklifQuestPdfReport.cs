@@ -20,6 +20,8 @@ namespace YALCINDORSE
         const string BodyText    = "#334155";
         const string MutedText   = "#64748B";
         const string BorderClr   = "#CBD5E1";
+        const string SoftBorder  = "#E2E8F0";
+        const string SectionBg   = "#F8FAFC";
         const string AltRowBg    = "#F1F5F9";
         const string CyanTxt     = "#0EA5E9";
         const string FooterBg    = "#0D1F3C";
@@ -610,19 +612,23 @@ namespace YALCINDORSE
 
             void RenderHeader(QContainer c, ListItem h)
             {
-                c.BorderLeft(3)
-                 .BorderBottom(0.75f)
-                 .BorderColor(BlueAccent)
+                c.Background(SectionBg)
+                 .Border(0.5f)
+                 .BorderColor(SoftBorder)
+                 .PaddingVertical(2.2f)
+                 .PaddingHorizontal(4)
                  .Row(row =>
                  {
-                     row.ConstantItem(3, Unit.Millimetre);
-                     row.ConstantItem(14, Unit.Millimetre)
+                     row.ConstantItem(11, Unit.Millimetre)
+                        .Background(NavyDark)
+                        .PaddingVertical(1)
+                        .AlignCenter()
                         .AlignMiddle()
-                        .Text(t => t.Span(h.Numara).Bold().FontSize(8.5f).FontColor(BlueAccent));
+                        .Text(t => t.Span(h.Numara).Bold().FontSize(7.5f).FontColor(White));
+                     row.ConstantItem(4, Unit.Millimetre);
                      row.RelativeItem()
-                        .PaddingVertical(2.5f)
                         .AlignMiddle()
-                        .Text(t => t.Span(h.Metin.ToUpperInvariant()).Bold().FontSize(9).FontColor(NavyDark));
+                        .Text(t => t.Span(h.Metin.ToUpperInvariant()).Bold().FontSize(8.8f).FontColor(NavyDark));
                  });
             }
 
