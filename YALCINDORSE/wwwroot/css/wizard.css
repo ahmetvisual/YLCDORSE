@@ -627,8 +627,8 @@
 .item-row:hover { background: #f9fbfd; }
 .item-row:last-child { border-bottom: none; }
 
-.item-row-header { background: #eef4ff; }
-.item-row-header .item-desc { font-weight: 700; color: #123e73; }
+.item-row-header { background: #c8f1f3; }
+.item-row-header .item-desc { font-weight: 700; color: #075b63; }
 .item-row-subitem { padding-left: 30px; }
 .item-row-option { padding-left: 30px; font-style: italic; font-weight: 700; }
 .item-row-option .item-desc { font-style: italic; font-weight: 700; }
@@ -920,7 +920,7 @@
 .app-root.dark .items-editor { border-color: var(--yl-border); }
 .app-root.dark .items-toolbar { background: var(--yl-bg); }
 .app-root.dark .item-row:hover { background: rgba(255,255,255,0.03); }
-.app-root.dark .item-row-header { background: rgba(59,125,221,0.14); }
+.app-root.dark .item-row-header { background: rgba(20,184,166,0.18); }
 .app-root.dark .quick-modal-content { background: var(--yl-bg); }
 .app-root.dark .wizard-summary { background: #1a1e2e; }
 .app-root.dark .custom-select-trigger { background: var(--yl-bg); }
