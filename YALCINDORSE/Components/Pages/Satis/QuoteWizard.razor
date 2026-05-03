@@ -1,4 +1,5 @@
 @page "/satis/teklif-olustur"
+@using System.Threading
 @using YALCINDORSE.Services
 @inject QuoteService QuoteSvc
 @inject QuoteAttachmentService AttachSvc
@@ -966,18 +967,22 @@
         <div class="wizard-footer">
             <div class="wizard-footer-left">
                 <button class="wizard-btn wizard-btn-cancel" @onclick="Cancel">Iptal</button>
+                @if (!string.IsNullOrWhiteSpace(autoSaveStatus))
+                {
+                    <span class="auto-save-status @(isAutoSaving ? "saving" : autoSaveStatusIsError ? "error" : "")">@autoSaveStatus</span>
+                }
             </div>
             <div class="wizard-footer-right">
                 @if (currentStep < 4)
                 {
-                    <button class="wizard-btn wizard-btn-save-progress" @onclick="SaveProgress" disabled="@isSaving"
+                    <button class="wizard-btn wizard-btn-save-progress" @onclick="SaveProgress" disabled="@(isSaving || isAutoSaving)"
                             title="Suankini kaydet, pencerede kalmaya devam et">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                              style="width:13px;height:13px;margin-right:4px;vertical-align:text-bottom;">
                             <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
                             <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
                         </svg>
-                        @(isSaving && !showConfirmDialog ? "Kaydediliyor..." : "Kaydet")
+                        @((isSaving || isAutoSaving) && !showConfirmDialog ? "Kaydediliyor..." : "Kaydet")
                     </button>
                 }
                 @if (currentStep > 1)
@@ -990,9 +995,9 @@
                 }
                 @if (currentStep == 4)
                 {
-                    <button class="wizard-btn" @onclick="SaveDraftConfirm" disabled="@isSaving">@(isEditMode ? "Guncelle" : "Taslak Kaydet")</button>
-                    <button class="wizard-btn wizard-btn-success" @onclick="SaveAndSendConfirm" disabled="@isSaving">
-                        @(isSaving ? "Kaydediliyor..." : isEditMode ? "Guncelle ve Gonder" : "Kaydet ve Gonder")
+                    <button class="wizard-btn" @onclick="SaveDraftConfirm" disabled="@(isSaving || isAutoSaving)">@(isEditMode ? "Guncelle" : "Taslak Kaydet")</button>
+                    <button class="wizard-btn wizard-btn-success" @onclick="SaveAndSendConfirm" disabled="@(isSaving || isAutoSaving)">
+                        @(isSaving || isAutoSaving ? "Kaydediliyor..." : isEditMode ? "Guncelle ve Gonder" : "Kaydet ve Gonder")
                     </button>
                 }
             </div>
@@ -1023,12 +1028,12 @@
                     </p>
                 </div>
                 <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--yl-border)">
-                    <button class="wizard-btn" @onclick="() => showUnsavedDialog = false" disabled="@isSaving">Vazgec</button>
-                    <button class="wizard-btn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca" @onclick="DiscardAndClose" disabled="@isSaving">
+                    <button class="wizard-btn" @onclick="() => showUnsavedDialog = false" disabled="@(isSaving || isAutoSaving)">Vazgec</button>
+                    <button class="wizard-btn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca" @onclick="DiscardAndClose" disabled="@(isSaving || isAutoSaving)">
                         Kaydetmeden Cik
                     </button>
-                    <button class="wizard-btn wizard-btn-success" @onclick="SaveAndCloseFromDialog" disabled="@isSaving">
-                        @(isSaving ? "Kaydediliyor..." : "Kaydet ve Cik")
+                    <button class="wizard-btn wizard-btn-success" @onclick="SaveAndCloseFromDialog" disabled="@(isSaving || isAutoSaving)">
+                        @(isSaving || isAutoSaving ? "Kaydediliyor..." : "Kaydet ve Cik")
                     </button>
                 </div>
             </div>
@@ -1054,8 +1059,8 @@
                 </div>
                 <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--yl-border)">
                     <button class="wizard-btn" @onclick="() => showConfirmDialog = false">Vazgec</button>
-                    <button class="wizard-btn wizard-btn-success" @onclick="ConfirmSaveAsync" disabled="@isSaving">
-                        @(isSaving ? "Kaydediliyor..." : "Evet, Kaydet")
+                    <button class="wizard-btn wizard-btn-success" @onclick="ConfirmSaveAsync" disabled="@(isSaving || isAutoSaving)">
+                        @(isSaving || isAutoSaving ? "Kaydediliyor..." : "Evet, Kaydet")
                     </button>
                 </div>
             </div>
@@ -1207,6 +1212,11 @@
     private bool isLoaded = false;          // ilk yukleme bittikten sonra true; yukleme @oninput'leri dirty saymasin
     private bool showUnsavedDialog = false; // X tiklayinca veya Iptal'de dirty ise gosterilir
     private bool guardRegistered = false;
+    private CancellationTokenSource? autoSaveCts;
+    private bool isAutoSaving = false;
+    private bool autoSaveStatusIsError = false;
+    private string autoSaveStatus = "";
+    private static readonly TimeSpan AutoSaveInterval = TimeSpan.FromSeconds(45);
 
     // Custom dropdown state
     private string? openDropdown;
@@ -1340,6 +1350,7 @@
         // Yukleme tamamlandi: bundan sonraki @oninput / @onchange "dirty" sayilsin
         isLoaded = true;
         isDirty = false;
+        StartAutoSaveLoop();
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -1364,10 +1375,85 @@
 
     public void Dispose()
     {
+        StopAutoSaveLoop();
         if (guardRegistered)
         {
             WindowSvc.UnregisterCloseGuard<QuoteWizard>();
             guardRegistered = false;
+        }
+    }
+
+    private void StartAutoSaveLoop()
+    {
+        autoSaveCts?.Cancel();
+        autoSaveCts?.Dispose();
+        autoSaveCts = new CancellationTokenSource();
+        _ = RunAutoSaveLoopAsync(autoSaveCts.Token);
+    }
+
+    private void StopAutoSaveLoop()
+    {
+        try { autoSaveCts?.Cancel(); } catch { }
+        autoSaveCts?.Dispose();
+        autoSaveCts = null;
+    }
+
+    private async Task RunAutoSaveLoopAsync(CancellationToken token)
+    {
+        using var timer = new PeriodicTimer(AutoSaveInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                await InvokeAsync(() => AutoSaveIfNeededAsync(token));
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task AutoSaveIfNeededAsync(CancellationToken token)
+    {
+        if (token.IsCancellationRequested || !isLoaded || !isDirty || isSaving || isAutoSaving) return;
+        if (quote.MusteriId <= 0)
+        {
+            autoSaveStatusIsError = true;
+            autoSaveStatus = "Auto kayit icin musteri secilmeli";
+            StateHasChanged();
+            return;
+        }
+
+        isAutoSaving = true;
+        autoSaveStatusIsError = false;
+        autoSaveStatus = "Auto kaydediliyor...";
+        StateHasChanged();
+
+        try
+        {
+            await SaveQuoteAsync(
+                closeAfter: false,
+                durum: string.IsNullOrEmpty(quote.Durum) ? "Draft" : quote.Durum,
+                showFeedback: false,
+                trackRevision: false,
+                isAutoSave: true);
+
+            if (!token.IsCancellationRequested)
+            {
+                autoSaveStatusIsError = false;
+                autoSaveStatus = $"Auto kaydedildi {DateTime.Now:HH:mm}";
+            }
+        }
+        catch (Exception ex)
+        {
+            if (!token.IsCancellationRequested)
+            {
+                autoSaveStatusIsError = true;
+                autoSaveStatus = $"Auto kayit basarisiz: {ex.Message}";
+            }
+        }
+        finally
+        {
+            isAutoSaving = false;
+            StateHasChanged();
         }
     }
 
@@ -1783,7 +1869,7 @@
     /// </summary>
     private async Task SaveProgress()
     {
-        if (isSaving) return;
+        if (isSaving || isAutoSaving) return;
         await SaveQuoteAsync(closeAfter: false, durum: string.IsNullOrEmpty(quote.Durum) ? "Draft" : quote.Durum);
     }
 
@@ -1898,12 +1984,12 @@
         catch (Exception ex) { errorMessage = $"Lastik silinemedi: {ex.Message}"; }
     }
 
-    private void SaveDraftConfirm()  { if (!isSaving) { pendingDurum = "Draft"; showConfirmDialog = true; } }
-    private void SaveAndSendConfirm() { if (!isSaving) { pendingDurum = "Sent";  showConfirmDialog = true; } }
+    private void SaveDraftConfirm()  { if (!isSaving && !isAutoSaving) { pendingDurum = "Draft"; showConfirmDialog = true; } }
+    private void SaveAndSendConfirm() { if (!isSaving && !isAutoSaving) { pendingDurum = "Sent";  showConfirmDialog = true; } }
 
     private async Task ConfirmSaveAsync()
     {
-        if (isSaving) return;   // çift tıklama / çoklu kayıt koruması
+        if (isSaving || isAutoSaving) return;   // çift tıklama / çoklu kayıt koruması
         isSaving = true;
         showConfirmDialog = false;
         await SaveQuoteAsync(closeAfter: true, durum: pendingDurum);
@@ -1913,7 +1999,7 @@
     /// Teklifi (varsa kalemleriyle birlikte) kaydeder. closeAfter=true ise pencereyi kapatip
     /// listeye doner; false ise toast gosterip ekranda kalir (ara kayit).
     /// </summary>
-    private async Task SaveQuoteAsync(bool closeAfter, string durum)
+    private async Task SaveQuoteAsync(bool closeAfter, string durum, bool showFeedback = true, bool trackRevision = true, bool isAutoSave = false)
     {
         if (quote.MusteriId <= 0)
         {
@@ -1924,7 +2010,7 @@
         }
 
         errorMessage = null; successMessage = null;
-        isSaving = true;
+        if (!isAutoSave) isSaving = true;
 
         try
         {
@@ -1934,7 +2020,10 @@
             if (isEditMode)
             {
                 quoteId = quote.Id;
-                await QuoteSvc.UpdateQuoteWithRevisionAsync(quote);
+                if (trackRevision)
+                    await QuoteSvc.UpdateQuoteWithRevisionAsync(quote);
+                else
+                    await QuoteSvc.UpdateQuoteAsync(quote);
                 await QuoteSvc.DeleteQuoteItemsByQuoteIdAsync(quoteId);
             }
             else
@@ -1945,7 +2034,7 @@
 
             // Kalemleri kaydet - once header'lar, sonra alt kalemler (UstKalemId mapping)
             var idMap = new Dictionary<int, int>();
-            foreach (var item in quoteItems.OrderBy(i => i.UstKalemId.HasValue ? 1 : 0).ThenBy(i => i.SiraNo))
+            foreach (var item in GetQuoteItemsInSaveOrder(quoteItems))
             {
                 var oldId = item.Id;
                 item.TeklifId = quoteId;
@@ -1968,36 +2057,73 @@
 
             isDirty = false; // basarili kayit: dirty bayragini sifirla
 
-            toastIsSuccess = true;
-            toastMessage = closeAfter
-                ? (isEditMode ? "Teklif basariyla guncellendi." : "Teklif basariyla kaydedildi.")
-                : "Degisiklikler kaydedildi.";
-            showToast = true;
-            errorMessage = null;
-            StateHasChanged();
-            await Task.Delay(closeAfter ? 1200 : 900);
-            showToast = false;
+            if (showFeedback)
+            {
+                toastIsSuccess = true;
+                toastMessage = closeAfter
+                    ? (isEditMode ? "Teklif basariyla guncellendi." : "Teklif basariyla kaydedildi.")
+                    : "Degisiklikler kaydedildi.";
+                showToast = true;
+                errorMessage = null;
+                StateHasChanged();
+                await Task.Delay(closeAfter ? 1200 : 900);
+                showToast = false;
+            }
 
             if (closeAfter)
             {
+                StopAutoSaveLoop();
                 WindowSvc.CloseWindow<QuoteWizard>();
                 Nav.NavigateTo("/satis/teklif-listesi");
             }
         }
         catch (Exception ex)
         {
-            toastIsSuccess = false;
-            toastMessage = ex.Message;
-            showToast = true;
-            StateHasChanged();
-            await Task.Delay(2500);
-            showToast = false;
+            if (showFeedback)
+            {
+                toastIsSuccess = false;
+                toastMessage = ex.Message;
+                showToast = true;
+                StateHasChanged();
+                await Task.Delay(2500);
+                showToast = false;
+            }
             errorMessage = ex.Message;
+            if (!showFeedback) throw;
         }
         finally
         {
-            isSaving = false;
+            if (!isAutoSave) isSaving = false;
         }
+    }
+
+    private static List<QuoteItemModel> GetQuoteItemsInSaveOrder(IEnumerable<QuoteItemModel> source)
+    {
+        var items = source.ToList();
+        var ordered = new List<QuoteItemModel>();
+        var visited = new HashSet<int>();
+
+        void AddWithChildren(QuoteItemModel item)
+        {
+            if (!visited.Add(item.Id)) return;
+            ordered.Add(item);
+
+            var children = items
+                .Where(i => i.UstKalemId == item.Id)
+                .OrderBy(i => i.SiraNo)
+                .ToList();
+
+            foreach (var child in children)
+                AddWithChildren(child);
+        }
+
+        foreach (var root in items.Where(i => !i.UstKalemId.HasValue).OrderBy(i => i.SiraNo))
+            AddWithChildren(root);
+
+        foreach (var orphan in items.Where(i => !visited.Contains(i.Id)).OrderBy(i => i.SiraNo))
+            AddWithChildren(orphan);
+
+        return ordered;
     }
 
     private async Task QuickAddCustomer()

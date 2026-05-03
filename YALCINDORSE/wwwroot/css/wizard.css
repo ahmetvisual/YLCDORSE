@@ -515,7 +515,23 @@
 .wizard-footer-left,
 .wizard-footer-right {
     display: flex;
+    align-items: center;
     gap: 8px;
+}
+
+.auto-save-status {
+    color: var(--yl-text-light);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.auto-save-status.saving {
+    color: var(--yl-primary);
+}
+
+.auto-save-status.error {
+    color: #b42318;
 }
 
 .wizard-btn {
