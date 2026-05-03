@@ -1654,12 +1654,13 @@
 }
 
 .items-editor.v2 .detail-note-label {
-    width: 68px;
+    width: 72px;
     flex-shrink: 0;
     color: var(--yl-text-light);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .items-editor.v2 .detail-note-edit {
