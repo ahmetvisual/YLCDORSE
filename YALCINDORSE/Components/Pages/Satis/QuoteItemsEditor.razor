@@ -1222,7 +1222,6 @@
 
     private void ImportGroupInternal(ArabaslikGrupModel g, List<ArabaslikDetayModel> detaylar)
     {
-        var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
         var headerText = Dil != "TR" ? GetGrupLocalizedName(g) : "";
         var displayName = !string.IsNullOrEmpty(headerText) ? headerText : g.GrupAdi;
 
@@ -1232,7 +1231,7 @@
             Id = headerId,
             KalemTipi = "HEADER",
             BaslikMi = true,
-            SiraNo = maxSira + 10,
+            SiraNo = GetNewHeaderSiraNo(addToTop: g.TablTipi == 1),
             Aciklama = displayName
         });
 
@@ -1285,13 +1284,12 @@
                                               string.Equals(i.Aciklama, displayName, StringComparison.OrdinalIgnoreCase));
             if (header == null)
             {
-                var maxSira = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).DefaultIfEmpty(0).Max();
                 header = new QuoteItemModel
                 {
                     Id = nextTempId--,
                     KalemTipi = "HEADER",
                     BaslikMi = true,
-                    SiraNo = maxSira + 10,
+                    SiraNo = GetNewHeaderSiraNo(addToTop: g.TablTipi == 1),
                     Aciklama = displayName
                 };
                 Items.Add(header);
@@ -1334,6 +1332,13 @@
     }
 
     // ─── DRAG & DROP ───────────────────────────────────────
+
+    private int GetNewHeaderSiraNo(bool addToTop)
+    {
+        var headerOrders = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).ToList();
+        if (!headerOrders.Any()) return 10;
+        return addToTop ? headerOrders.Min() - 10 : headerOrders.Max() + 10;
+    }
 
     private void OnDragStartGroup(ArabaslikGrupModel g)
     {
