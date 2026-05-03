@@ -1644,6 +1644,56 @@
 .items-editor.v2 .detail-node:last-child { border-bottom: none; }
 .items-editor.v2 .detail-node:active { cursor: grabbing; }
 
+.items-editor.v2 .detail-note-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px 6px 47px;
+    border-bottom: 1px solid #f3f5f8;
+    background: #fbfdff;
+}
+
+.items-editor.v2 .detail-note-label {
+    width: 68px;
+    flex-shrink: 0;
+    color: var(--yl-text-light);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.items-editor.v2 .detail-note-edit {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid #dce3ec;
+    background: #fff;
+    color: var(--yl-text);
+    font-size: 0.74rem;
+    padding: 3px 5px;
+    outline: none;
+}
+
+.items-editor.v2 .detail-note-edit:focus {
+    border-color: var(--yl-primary);
+    box-shadow: 0 0 0 2px rgba(24,95,165,0.1);
+}
+
+.items-editor.v2 .detail-note-style-btn {
+    width: 24px;
+    height: 22px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--yl-text-light);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.items-editor.v2 .detail-note-style-btn.active {
+    background: var(--yl-primary);
+    border-color: var(--yl-primary);
+    color: #fff;
+}
+
 .items-editor.v2 .detail-bullet {
     color: var(--yl-text-light);
     font-weight: 700;
@@ -1707,6 +1757,28 @@
     margin: 0;
 }
 .items-editor.v2 .detail-price-edit { -moz-appearance: textfield; }
+
+.detail-note-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.detail-note-modal input[type="text"] {
+    border: 1px solid var(--yl-border);
+    padding: 6px 8px;
+    font-weight: 400;
+}
+
+.detail-note-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.78rem;
+}
 
 .items-editor.v2 .detail-loading,
 .items-editor.v2 .detail-empty {
@@ -1821,6 +1893,16 @@
 }
 .app-root.dark .items-editor.v2 .detail-node:hover {
     background: rgba(59,125,221,0.08);
+}
+.app-root.dark .items-editor.v2 .detail-note-row {
+    background: rgba(255,255,255,0.02);
+    border-bottom-color: rgba(255,255,255,0.04);
+}
+.app-root.dark .items-editor.v2 .detail-note-edit,
+.app-root.dark .detail-note-modal input[type="text"] {
+    background: #161b22;
+    border-color: var(--yl-border);
+    color: var(--yl-text);
 }
 .app-root.dark .items-editor.v2 .group-badge {
     background: rgba(59,125,221,0.18);

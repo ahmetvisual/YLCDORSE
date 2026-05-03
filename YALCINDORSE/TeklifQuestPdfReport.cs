@@ -97,6 +97,9 @@ namespace YALCINDORSE
             public string Deger { get; set; } = "";
             public bool Bold { get; set; }
             public bool Italic { get; set; }
+            public string AltAciklama { get; set; } = "";
+            public bool AltBold { get; set; }
+            public bool AltItalic { get; set; }
         }
 
         public class ListItem
@@ -535,6 +538,18 @@ namespace YALCINDORSE
                                if (spec.Italic) span.Italic();
                            });
                     });
+                    if (!string.IsNullOrWhiteSpace(spec.AltAciklama))
+                    {
+                        col.Item().Background(bg)
+                           .BorderBottom(0.5f).BorderColor(BorderClr)
+                           .PaddingLeft(14).PaddingRight(4).PaddingBottom(2)
+                           .Text(t =>
+                           {
+                               var span = t.Span(spec.AltAciklama).FontSize(7.5f).FontColor(MutedText);
+                               if (spec.AltBold) span.Bold();
+                               if (spec.AltItalic) span.Italic();
+                           });
+                    }
                     alt = !alt;
                 }
 

@@ -220,12 +220,23 @@ namespace YALCINDORSE.Services
                     specGroups.Add(new TeklifQuestPdfReport.SpecGroup
                     {
                         GrupAdi = header.Aciklama,
-                        Rows    = specRows.Select(r => new TeklifQuestPdfReport.SpecRow
+                        Rows    = specRows.Select(r =>
                         {
-                            Ozellik = r.Aciklama,
-                            Deger = r.Birim ?? "",
-                            Bold = r.BaslikMi,
-                            Italic = r.ItalicMi
+                            var note = items
+                                .Where(i => i.UstKalemId == r.Id && i.KalemTipi == "SUB_ITEM")
+                                .OrderBy(i => i.SiraNo)
+                                .FirstOrDefault();
+
+                            return new TeklifQuestPdfReport.SpecRow
+                            {
+                                Ozellik = r.Aciklama,
+                                Deger = r.Birim ?? "",
+                                Bold = r.BaslikMi,
+                                Italic = r.ItalicMi,
+                                AltAciklama = note?.Aciklama ?? "",
+                                AltBold = note?.BaslikMi ?? false,
+                                AltItalic = note?.ItalicMi ?? false
+                            };
                         }).ToList()
                     });
             }

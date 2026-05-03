@@ -35,6 +35,9 @@ namespace YALCINDORSE.Services
         public decimal? Fiyat { get; set; }
         public string? ParaBirimi { get; set; }
         public int SortOrder { get; set; }
+        public string? AltAciklama { get; set; }
+        public bool AltAciklamaBoldMu { get; set; }
+        public bool AltAciklamaItalicMi { get; set; }
 
         /// <summary>
         /// TablTipi=1 (iki kolon tablo) icin evrensel deger alani — "9.500 mm" gibi.
@@ -96,6 +99,15 @@ namespace YALCINDORSE.Services
                             ALTER TABLE "YLTeklifKalemleri"
                                 ALTER COLUMN "Birim" TYPE TEXT;
                         END IF;
+
+                        ALTER TABLE "YLArabaslikDetaylar"
+                            ADD COLUMN IF NOT EXISTS "AltAciklama" TEXT;
+
+                        ALTER TABLE "YLArabaslikDetaylar"
+                            ADD COLUMN IF NOT EXISTS "AltAciklamaBoldMu" BOOLEAN NOT NULL DEFAULT FALSE;
+
+                        ALTER TABLE "YLArabaslikDetaylar"
+                            ADD COLUMN IF NOT EXISTS "AltAciklamaItalicMi" BOOLEAN NOT NULL DEFAULT FALSE;
                     END$$;
                     """;
                 using var cmd = new NpgsqlCommand(sql, conn);
@@ -109,6 +121,33 @@ namespace YALCINDORSE.Services
             // sablon olarak gorunur. Mevcut grup varsa atlar (kullanici silmis olabilir).
             try { await SeedOmSablonAsync(conn); }
             catch { /* seed hatasi: kullanici manuel SQL calistirabilir */ }
+        }
+
+        private static async Task<bool> HasColumnAsync(NpgsqlConnection conn, string tableName, string columnName, NpgsqlTransaction? tx = null)
+        {
+            const string sql = """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = @tableName
+                      AND column_name = @columnName
+                );
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn, tx);
+            cmd.Parameters.AddWithValue("tableName", tableName);
+            cmd.Parameters.AddWithValue("columnName", columnName);
+            var result = await cmd.ExecuteScalarAsync();
+            return result is bool exists && exists;
+        }
+
+        private static Task<bool> HasDetayAltColumnsAsync(NpgsqlConnection conn, NpgsqlTransaction? tx = null) =>
+            HasColumnAsync(conn, "YLArabaslikDetaylar", "AltAciklamaItalicMi", tx);
+
+        private static void AddAltAciklamaParams(NpgsqlCommand cmd, ArabaslikDetayModel detay)
+        {
+            cmd.Parameters.AddWithValue("altAciklama", (object?)detay.AltAciklama ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("altBold", detay.AltAciklamaBoldMu);
+            cmd.Parameters.AddWithValue("altItalic", detay.AltAciklamaItalicMi);
         }
 
         /// <summary>
@@ -414,11 +453,15 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
+            var hasAltColumns = await HasDetayAltColumnsAsync(conn);
+            var altSelect = hasAltColumns
+                ? @"""AltAciklama"", ""AltAciklamaBoldMu"", ""AltAciklamaItalicMi"""
+                : @"NULL AS ""AltAciklama"", FALSE AS ""AltAciklamaBoldMu"", FALSE AS ""AltAciklamaItalicMi""";
 
-            const string sql = """
+            var sql = $"""
                 SELECT "Id", "GrupId", "SatirMetni", "SatirMetni_EN", "SatirMetni_FR",
                        "SatirMetni_DE", "SatirMetni_RO", "SatirMetni_AR", "SatirMetni_RU",
-                       "Fiyat", "ParaBirimi", "SortOrder"
+                       "Fiyat", "ParaBirimi", "SortOrder", {altSelect}
                 FROM "YLArabaslikDetaylar"
                 WHERE "GrupId" = @grupId
                 ORDER BY "SortOrder";
@@ -443,7 +486,10 @@ namespace YALCINDORSE.Services
                     SatirMetni_RU = reader.GetString(8),
                     Fiyat = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                     ParaBirimi = reader.IsDBNull(10) ? null : reader.GetString(10),
-                    SortOrder = reader.GetInt32(11)
+                    SortOrder = reader.GetInt32(11),
+                    AltAciklama = reader.IsDBNull(12) ? null : reader.GetString(12),
+                    AltAciklamaBoldMu = !reader.IsDBNull(13) && reader.GetBoolean(13),
+                    AltAciklamaItalicMi = !reader.IsDBNull(14) && reader.GetBoolean(14)
                     // Deger: ParaBirimi uzerinden computed property — ek alan gerektirmez
                 });
             }
@@ -538,6 +584,9 @@ namespace YALCINDORSE.Services
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
             using var tx = await conn.BeginTransactionAsync();
+            var hasAltColumns = await HasDetayAltColumnsAsync(conn, tx);
+            var altColumns = hasAltColumns ? @",""AltAciklama"",""AltAciklamaBoldMu"",""AltAciklamaItalicMi""" : "";
+            var altValues = hasAltColumns ? ",@altAciklama,@altBold,@altItalic" : "";
 
             try
             {
@@ -576,11 +625,11 @@ namespace YALCINDORSE.Services
 
                     foreach (var detay in detaylar.OrderBy(d => d.SortOrder))
                     {
-                        const string insertDetailSql = """
+                        var insertDetailSql = $"""
                             INSERT INTO "YLArabaslikDetaylar"
                                 ("Id","GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
-                                 "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
-                            VALUES (@id,@grupId,@tr,@en,@fr,@de,@ro,@ar,@ru,@fiyat,@para,@sort);
+                                 "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder"{altColumns})
+                            VALUES (@id,@grupId,@tr,@en,@fr,@de,@ro,@ar,@ru,@fiyat,@para,@sort{altValues});
                             """;
                         using var insertDetail = new NpgsqlCommand(insertDetailSql, conn, tx);
                         insertDetail.Parameters.AddWithValue("id", detay.Id);
@@ -595,6 +644,7 @@ namespace YALCINDORSE.Services
                         insertDetail.Parameters.AddWithValue("fiyat", (object?)detay.Fiyat ?? DBNull.Value);
                         insertDetail.Parameters.AddWithValue("para", (object?)detay.ParaBirimi ?? DBNull.Value);
                         insertDetail.Parameters.AddWithValue("sort", detay.SortOrder);
+                        if (hasAltColumns) AddAltAciklamaParams(insertDetail, detay);
                         await insertDetail.ExecuteNonQueryAsync();
                     }
                 }
@@ -621,6 +671,9 @@ namespace YALCINDORSE.Services
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
             using var tx = await conn.BeginTransactionAsync();
+            var hasAltColumns = await HasDetayAltColumnsAsync(conn, tx);
+            var altColumns = hasAltColumns ? @",""AltAciklama"",""AltAciklamaBoldMu"",""AltAciklamaItalicMi""" : "";
+            var altValues = hasAltColumns ? ",@altAciklama,@altBold,@altItalic" : "";
 
             try
             {
@@ -686,11 +739,11 @@ namespace YALCINDORSE.Services
 
                     foreach (var detay in detaylar.OrderBy(d => d.SortOrder))
                     {
-                        const string insertDetailSql = """
+                        var insertDetailSql = $"""
                             INSERT INTO "YLArabaslikDetaylar"
                                 ("Id","GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
-                                 "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
-                            VALUES (@id,@grupId,@tr,@en,@fr,@de,@ro,@ar,@ru,@fiyat,@para,@sort);
+                                 "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder"{altColumns})
+                            VALUES (@id,@grupId,@tr,@en,@fr,@de,@ro,@ar,@ru,@fiyat,@para,@sort{altValues});
                             """;
                         using var insertDetail = new NpgsqlCommand(insertDetailSql, conn, tx);
                         insertDetail.Parameters.AddWithValue("id", detay.Id);
@@ -705,6 +758,7 @@ namespace YALCINDORSE.Services
                         insertDetail.Parameters.AddWithValue("fiyat", (object?)detay.Fiyat ?? DBNull.Value);
                         insertDetail.Parameters.AddWithValue("para", (object?)detay.ParaBirimi ?? DBNull.Value);
                         insertDetail.Parameters.AddWithValue("sort", detay.SortOrder);
+                        if (hasAltColumns) AddAltAciklamaParams(insertDetail, detay);
                         await insertDetail.ExecuteNonQueryAsync();
                     }
                 }
@@ -740,11 +794,14 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
-            const string sql = """
+            var hasAltColumns = await HasDetayAltColumnsAsync(conn);
+            var altColumns = hasAltColumns ? @",""AltAciklama"",""AltAciklamaBoldMu"",""AltAciklamaItalicMi""" : "";
+            var altValues = hasAltColumns ? ",@altAciklama,@altBold,@altItalic" : "";
+            var sql = $"""
                 INSERT INTO "YLArabaslikDetaylar"
                     ("GrupId","SatirMetni","SatirMetni_EN","SatirMetni_FR","SatirMetni_DE",
-                     "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder")
-                VALUES (@grupId, @tr, @en, @fr, @de, @ro, @ar, @ru, @fiyat, @para, @sort)
+                     "SatirMetni_RO","SatirMetni_AR","SatirMetni_RU","Fiyat","ParaBirimi","SortOrder"{altColumns})
+                VALUES (@grupId, @tr, @en, @fr, @de, @ro, @ar, @ru, @fiyat, @para, @sort{altValues})
                 RETURNING "Id";
                 """;
             using var cmd = new NpgsqlCommand(sql, conn);
@@ -759,6 +816,7 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("fiyat", (object?)d.Fiyat ?? DBNull.Value);
             cmd.Parameters.AddWithValue("para", (object?)d.ParaBirimi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("sort", d.SortOrder);
+            if (hasAltColumns) AddAltAciklamaParams(cmd, d);
             var result = await cmd.ExecuteScalarAsync();
             d.Id = Convert.ToInt32(result);
             return d.Id;
@@ -770,11 +828,16 @@ namespace YALCINDORSE.Services
             using var conn = _db.GetConnection();
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
-            const string sql = """
+            var hasAltColumns = await HasDetayAltColumnsAsync(conn);
+            var altSet = hasAltColumns
+                ? @",
+                    ""AltAciklama"" = @altAciklama, ""AltAciklamaBoldMu"" = @altBold, ""AltAciklamaItalicMi"" = @altItalic"
+                : "";
+            var sql = $"""
                 UPDATE "YLArabaslikDetaylar" SET
                     "SatirMetni" = @tr, "SatirMetni_EN" = @en, "SatirMetni_FR" = @fr,
                     "SatirMetni_DE" = @de, "SatirMetni_RO" = @ro, "SatirMetni_AR" = @ar, "SatirMetni_RU" = @ru,
-                    "Fiyat" = @fiyat, "ParaBirimi" = @para, "SortOrder" = @sort
+                    "Fiyat" = @fiyat, "ParaBirimi" = @para, "SortOrder" = @sort{altSet}
                 WHERE "Id" = @id;
                 """;
             using var cmd = new NpgsqlCommand(sql, conn);
@@ -789,6 +852,29 @@ namespace YALCINDORSE.Services
             cmd.Parameters.AddWithValue("fiyat", (object?)d.Fiyat ?? DBNull.Value);
             cmd.Parameters.AddWithValue("para", (object?)d.ParaBirimi ?? DBNull.Value);
             cmd.Parameters.AddWithValue("sort", d.SortOrder);
+            if (hasAltColumns) AddAltAciklamaParams(cmd, d);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task UpdateDetayAltAciklamaAsync(int detayId, string? altAciklama, bool bold, bool italic)
+        {
+            using var conn = _db.GetConnection();
+            await conn.OpenAsync();
+            await EnsureSchemaAsync(conn);
+            if (!await HasDetayAltColumnsAsync(conn)) return;
+
+            const string sql = """
+                UPDATE "YLArabaslikDetaylar" SET
+                    "AltAciklama" = @altAciklama,
+                    "AltAciklamaBoldMu" = @altBold,
+                    "AltAciklamaItalicMi" = @altItalic
+                WHERE "Id" = @id;
+                """;
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("id", detayId);
+            cmd.Parameters.AddWithValue("altAciklama", (object?)altAciklama ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("altBold", bold);
+            cmd.Parameters.AddWithValue("altItalic", italic);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -855,6 +941,9 @@ namespace YALCINDORSE.Services
             await conn.OpenAsync();
             await EnsureSchemaAsync(conn);
             using var tx = await conn.BeginTransactionAsync();
+            var hasAltColumns = await HasDetayAltColumnsAsync(conn, tx);
+            var altColumns = hasAltColumns ? @",""AltAciklama"",""AltAciklamaBoldMu"",""AltAciklamaItalicMi""" : "";
+            var altValues = hasAltColumns ? ",@altAciklama,@altBold,@altItalic" : "";
 
             try
             {
@@ -917,12 +1006,12 @@ namespace YALCINDORSE.Services
                 for (int i = 0; i < detaylar.Count; i++)
                 {
                     var d = detaylar[i];
-                    const string detaySql = """
+                    var detaySql = $"""
                         INSERT INTO "YLArabaslikDetaylar"
                             ("GrupId", "SatirMetni", "SatirMetni_EN", "SatirMetni_FR",
                              "SatirMetni_DE", "SatirMetni_RO", "SatirMetni_AR", "SatirMetni_RU",
-                             "Fiyat", "ParaBirimi", "SortOrder")
-                        VALUES (@grupId, @tr, @en, @fr, @de, @ro, @ar, @ru, @fiyat, @para, @sort);
+                             "Fiyat", "ParaBirimi", "SortOrder"{altColumns})
+                        VALUES (@grupId, @tr, @en, @fr, @de, @ro, @ar, @ru, @fiyat, @para, @sort{altValues});
                         """;
                     // Not: TablTipi=1 satirlarinda d.Deger setter'i d.ParaBirimi'yi doldurur,
                     // @para parametresi hem Deger hem de klasik para birimi degerini tasir.
@@ -938,6 +1027,7 @@ namespace YALCINDORSE.Services
                     detayCmd.Parameters.AddWithValue("fiyat", (object?)d.Fiyat ?? DBNull.Value);
                     detayCmd.Parameters.AddWithValue("para", (object?)d.ParaBirimi ?? DBNull.Value);
                     detayCmd.Parameters.AddWithValue("sort", i);
+                    if (hasAltColumns) AddAltAciklamaParams(detayCmd, d);
                     await detayCmd.ExecuteNonQueryAsync();
                 }
 

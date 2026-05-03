@@ -88,7 +88,7 @@
                     <div class="item-desc">
                         <input type="text" value="@item.Aciklama"
                                @onchange="(e) => UpdateField(item, nameof(item.Aciklama), e.Value?.ToString())"
-                               style="@(item.KalemTipi == "ITEM" ? GetTextStyle(item) : null)"
+                               style="@((item.KalemTipi == "ITEM" || item.KalemTipi == "SUB_ITEM" || item.KalemTipi == "OPTION") ? GetTextStyle(item) : null)"
                                placeholder="@(item.KalemTipi == "HEADER" ? "Urun adi (orn: Deveboynu)" : item.KalemTipi == "SPEC" ? "Ozellik adi" : item.KalemTipi == "OPTION" ? "Opsiyon aciklamasi" : "Kalem aciklamasi")" />
                     </div>
 
@@ -101,6 +101,13 @@
                                    style="@GetTextStyle(item)"
                                    placeholder="Değer" />
                         </div>
+                        <div class="item-price"></div>
+                        <div class="item-total"></div>
+                    }
+                    else if (item.KalemTipi == "SUB_ITEM" || item.KalemTipi == "OPTION")
+                    {
+                        <div class="item-qty"></div>
+                        <div class="item-unit"></div>
                         <div class="item-price"></div>
                         <div class="item-total"></div>
                     }
@@ -142,7 +149,7 @@
                         {
                             <button class="item-action-btn" title="Kalem ekle" @onclick="() => AddItemUnder(item)">+</button>
                         }
-                        @if (item.KalemTipi == "ITEM")
+                        @if (item.KalemTipi == "ITEM" || item.KalemTipi == "SUB_ITEM" || item.KalemTipi == "OPTION")
                         {
                             <button class="item-action-btn @(item.BaslikMi ? "item-bold-active" : "")"
                                     title="@(item.BaslikMi ? "Kalin (PDF'de bold)" : "Normal (PDF'de thin)")"
@@ -312,6 +319,7 @@
                                         </div>
                                     }
                                     var visibleDetails = FilterGroupDetails(g.Id, details);
+                                    var isCapacityGroup = IsCapacityGroup(g);
                                     @if (!visibleDetails.Any())
                                     {
                                         <div class="detail-empty">Eşleşen kayıt yok.</div>
@@ -355,6 +363,26 @@
                                             </button>
                                             <button class="detail-add-btn" @onclick:stopPropagation="true" @onclick="() => AddDetayAsItem(g, dt)" title="Bu kalemi teklife ekle">+</button>
                                         </div>
+                                        @if (isCapacityGroup)
+                                        {
+                                            <div class="detail-note-row">
+                                                <span class="detail-note-label">Alt aciklama</span>
+                                                <input type="text" class="detail-note-edit"
+                                                       value="@dt.AltAciklama" draggable="false"
+                                                       style="@GetTemplateNoteStyle(dt)"
+                                                       @onchange="(e) => UpdateDetayAltAciklama(dt, e.Value?.ToString())"
+                                                       @onclick:stopPropagation="true"
+                                                       placeholder="Sabit alt aciklama..." />
+                                                <button class="detail-note-style-btn @(dt.AltAciklamaBoldMu ? "active" : "")"
+                                                        @onclick:stopPropagation="true"
+                                                        @onclick="() => ToggleDetayAltBold(dt)"
+                                                        title="Alt aciklamayi kalin yap"><b>B</b></button>
+                                                <button class="detail-note-style-btn @(dt.AltAciklamaItalicMi ? "active" : "")"
+                                                        @onclick:stopPropagation="true"
+                                                        @onclick="() => ToggleDetayAltItalic(dt)"
+                                                        title="Alt aciklamayi italik yap"><i>I</i></button>
+                                            </div>
+                                        }
                                     }
                                 }
 
@@ -446,6 +474,17 @@
                             </label>
                         }
                     </div>
+                    @if (IsCapacityGroup(editingDetayGrup))
+                    {
+                        <label class="detail-note-modal">
+                            <span>Alt aciklama</span>
+                            <input type="text" @bind="editingDetay.AltAciklama" placeholder="Sabit alt aciklama..." />
+                        </label>
+                        <div class="detail-note-modal-actions">
+                            <label><input type="checkbox" @bind="editingDetay.AltAciklamaBoldMu" /> Bold</label>
+                            <label><input type="checkbox" @bind="editingDetay.AltAciklamaItalicMi" /> Italic</label>
+                        </div>
+                    }
                 </div>
                 <div style="display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--yl-border)">
                     <button class="wizard-btn" @onclick="CancelDetayEdit">İptal</button>
@@ -653,7 +692,7 @@
             foreach (var child in children)
             {
                 result.Add(child);
-                if (child.KalemTipi == "ITEM")
+                if (child.KalemTipi == "ITEM" || child.KalemTipi == "SPEC")
                 {
                     var subs = Items.Where(i => i.UstKalemId == child.Id)
                                    .OrderBy(i => i.SiraNo).ToList();
@@ -698,6 +737,7 @@
         else if ((item.KalemTipi == "SUB_ITEM" || item.KalemTipi == "OPTION") && item.UstKalemId.HasValue)
         {
             var parent = Items.FirstOrDefault(i => i.Id == item.UstKalemId);
+            if (parent?.KalemTipi == "SPEC") return "";
             if (parent?.UstKalemId.HasValue == true)
             {
                 var grandParent = Items.FirstOrDefault(i => i.Id == parent.UstKalemId);
@@ -705,7 +745,7 @@
                 {
                     var headers = Items.Where(i => i.KalemTipi == "HEADER").OrderBy(i => i.SiraNo).ToList();
                     var hIdx = headers.IndexOf(grandParent) + 1;
-                    var parentSiblings = Items.Where(i => i.UstKalemId == grandParent.Id && i.KalemTipi == "ITEM").OrderBy(i => i.SiraNo).ToList();
+                    var parentSiblings = Items.Where(i => i.UstKalemId == grandParent.Id && (i.KalemTipi == "ITEM" || i.KalemTipi == "SPEC")).OrderBy(i => i.SiraNo).ToList();
                     var pIdx = parentSiblings.IndexOf(parent) + 1;
                     var mySiblings = Items.Where(i => i.UstKalemId == parent.Id).OrderBy(i => i.SiraNo).ToList();
                     var myIdx = mySiblings.IndexOf(item) + 1;
@@ -954,7 +994,10 @@
         SatirMetni_RU = detay.SatirMetni_RU,
         Fiyat = detay.Fiyat,
         ParaBirimi = detay.ParaBirimi,
-        SortOrder = detay.SortOrder
+        SortOrder = detay.SortOrder,
+        AltAciklama = detay.AltAciklama,
+        AltAciklamaBoldMu = detay.AltAciklamaBoldMu,
+        AltAciklamaItalicMi = detay.AltAciklamaItalicMi
     };
 
     private void AddItemUnder(QuoteItemModel header)
@@ -1206,6 +1249,60 @@
         catch { }
     }
 
+    private static bool IsCapacityGroup(ArabaslikGrupModel? g)
+    {
+        if (g == null) return false;
+        return IsCapacityName(g.GrupAdi)
+            || IsCapacityName(g.GrupAdi_EN)
+            || IsCapacityName(g.GrupAdi_DE)
+            || IsCapacityName(g.GrupAdi_FR)
+            || IsCapacityName(g.GrupAdi_RO)
+            || IsCapacityName(g.GrupAdi_RU);
+    }
+
+    private static bool IsCapacityName(string? value)
+    {
+        var key = (value ?? "")
+            .Trim()
+            .ToUpperInvariant()
+            .Replace('İ', 'I')
+            .Replace(" ", "");
+        return key == "KAPASITE" || key == "CAPACITY";
+    }
+
+    private static string GetTemplateNoteStyle(ArabaslikDetayModel d)
+    {
+        var weight = d.AltAciklamaBoldMu ? "700" : "400";
+        var style = d.AltAciklamaItalicMi ? "italic" : "normal";
+        return $"font-weight:{weight};font-style:{style}";
+    }
+
+    private async Task UpdateDetayAltAciklama(ArabaslikDetayModel d, string? raw)
+    {
+        var newValue = raw ?? "";
+        if ((d.AltAciklama ?? "") == newValue) return;
+        await CaptureTemplateUndoSnapshotAsync(d.GrupId);
+        d.AltAciklama = newValue;
+        try { await ArabaslikSvc.UpdateDetayAltAciklamaAsync(d.Id, d.AltAciklama, d.AltAciklamaBoldMu, d.AltAciklamaItalicMi); }
+        catch { }
+    }
+
+    private async Task ToggleDetayAltBold(ArabaslikDetayModel d)
+    {
+        await CaptureTemplateUndoSnapshotAsync(d.GrupId);
+        d.AltAciklamaBoldMu = !d.AltAciklamaBoldMu;
+        try { await ArabaslikSvc.UpdateDetayAltAciklamaAsync(d.Id, d.AltAciklama, d.AltAciklamaBoldMu, d.AltAciklamaItalicMi); }
+        catch { }
+    }
+
+    private async Task ToggleDetayAltItalic(ArabaslikDetayModel d)
+    {
+        await CaptureTemplateUndoSnapshotAsync(d.GrupId);
+        d.AltAciklamaItalicMi = !d.AltAciklamaItalicMi;
+        try { await ArabaslikSvc.UpdateDetayAltAciklamaAsync(d.Id, d.AltAciklama, d.AltAciklamaBoldMu, d.AltAciklamaItalicMi); }
+        catch { }
+    }
+
     // ─── EKLE: Grup veya Tek Kalem ──────────────────────────
 
     private async Task AddGroupAsHeader(ArabaslikGrupModel g)
@@ -1236,21 +1333,24 @@
         });
 
         int childSira = 0;
+        var isCapacityGroup = IsCapacityGroup(g);
         foreach (var d in detaylar)
         {
             childSira += 10;
             var itemText = GetDetayLocalizedText(d);
             if (g.TablTipi == 1)
             {
+                var specId = nextTempId--;
                 Items.Add(new QuoteItemModel
                 {
-                    Id = nextTempId--,
+                    Id = specId,
                     KalemTipi = "SPEC",
                     UstKalemId = headerId,
                     SiraNo = childSira,
                     Aciklama = itemText,
                     Birim = d.Deger
                 });
+                AddCapacityAltAciklama(isCapacityGroup, d, specId);
             }
             else
             {
@@ -1303,15 +1403,17 @@
 
         if (g.TablTipi == 1)
         {
+            var specId = nextTempId--;
             Items.Add(new QuoteItemModel
             {
-                Id = nextTempId--,
+                Id = specId,
                 KalemTipi = "SPEC",
                 UstKalemId = header.Id,
                 SiraNo = childSira + 10,
                 Aciklama = itemText,
                 Birim = d.Deger
             });
+            AddCapacityAltAciklama(IsCapacityGroup(g), d, specId);
         }
         else
         {
@@ -1338,6 +1440,22 @@
         var headerOrders = Items.Where(i => i.KalemTipi == "HEADER").Select(i => i.SiraNo).ToList();
         if (!headerOrders.Any()) return 10;
         return addToTop ? headerOrders.Min() - 10 : headerOrders.Max() + 10;
+    }
+
+    private void AddCapacityAltAciklama(bool isCapacityGroup, ArabaslikDetayModel detay, int parentSpecId)
+    {
+        if (!isCapacityGroup || string.IsNullOrWhiteSpace(detay.AltAciklama)) return;
+
+        Items.Add(new QuoteItemModel
+        {
+            Id = nextTempId--,
+            KalemTipi = "SUB_ITEM",
+            UstKalemId = parentSpecId,
+            SiraNo = 5,
+            Aciklama = detay.AltAciklama.Trim(),
+            BaslikMi = detay.AltAciklamaBoldMu,
+            ItalicMi = detay.AltAciklamaItalicMi
+        });
     }
 
     private void OnDragStartGroup(ArabaslikGrupModel g)
@@ -1613,6 +1731,9 @@
             SatirMetni_DE = d.SatirMetni_DE, SatirMetni_RO = d.SatirMetni_RO,
             SatirMetni_AR = d.SatirMetni_AR, SatirMetni_RU = d.SatirMetni_RU,
             Fiyat = d.Fiyat, ParaBirimi = d.ParaBirimi, SortOrder = d.SortOrder,
+            AltAciklama = d.AltAciklama,
+            AltAciklamaBoldMu = d.AltAciklamaBoldMu,
+            AltAciklamaItalicMi = d.AltAciklamaItalicMi,
         };
         detayDegerBuffer = d.Deger;
         detayFiyatBuffer = d.Fiyat;
