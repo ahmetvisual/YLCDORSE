@@ -186,9 +186,16 @@ namespace YALCINDORSE
         // ════════════════════════════════════════════════════════════════════
         private void BuildHeader(ColumnDescriptor col)
         {
+            var firmaBaslik = string.IsNullOrWhiteSpace(FirmaUnvan) ? "YALÇIN DORSE" : FirmaUnvan;
+            var firmaDetay = new List<string>();
+            if (!string.IsNullOrWhiteSpace(FirmaAdresTam)) firmaDetay.Add(FirmaAdresTam);
+            if (!string.IsNullOrWhiteSpace(FirmaTelefon)) firmaDetay.Add("Tel: " + FirmaTelefon);
+            if (!string.IsNullOrWhiteSpace(FirmaWeb)) firmaDetay.Add(FirmaWeb);
+
             col.Item().Background(White)
                .PaddingHorizontal(12, Unit.Millimetre)
-               .PaddingVertical(6, Unit.Millimetre)
+               .PaddingTop(7, Unit.Millimetre)
+               .PaddingBottom(5, Unit.Millimetre)
                .Row(row =>
                {
                    // Logo
@@ -208,20 +215,34 @@ namespace YALCINDORSE
 
                    row.ConstantItem(5, Unit.Millimetre);
 
-                   row.RelativeItem();
+                   row.RelativeItem().AlignMiddle().Column(c =>
+                   {
+                       c.Item().Text(t =>
+                           t.Span(firmaBaslik.ToUpperInvariant()).Bold().FontSize(14).FontColor(NavyDark));
+                       if (firmaDetay.Count > 0)
+                       {
+                           c.Item().Height(1.5f);
+                           c.Item().Text(t =>
+                               t.Span(string.Join("  |  ", firmaDetay))
+                                .FontSize(7.2f).FontColor(MutedText));
+                       }
+                   });
 
                    row.ConstantItem(5, Unit.Millimetre);
 
                    // TEKLİF rozeti
-                   row.ConstantItem(28, Unit.Millimetre)
+                   row.ConstantItem(34, Unit.Millimetre)
                       .AlignMiddle()
                       .AlignRight()
+                      .Border(0.75f)
+                      .BorderColor(TableHeaderBorder)
+                      .Padding(3, Unit.Millimetre)
                       .Column(c =>
                       {
                           c.Item().Text(t =>
                           {
                               t.AlignRight();
-                              t.Span("TEKLİF").Bold().FontSize(20).FontColor(BlueAccent);
+                              t.Span("TEKLİF FORMU").Bold().FontSize(13.5f).FontColor(BlueAccent);
                           });
                           c.Item().Height(1.5f).Background(AccentLine);
                           c.Item().Height(2);
@@ -233,7 +254,10 @@ namespace YALCINDORSE
                       });
                });
 
-            col.Item().Height(4);
+            col.Item().PaddingHorizontal(12, Unit.Millimetre)
+               .Height(1.2f)
+               .Background(AccentLine);
+            col.Item().Height(5);
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -247,7 +271,12 @@ namespace YALCINDORSE
                 // ── SOL: Cari'nin tum aktif ilgili kisileri ────────────────────
                 // Referans (HARPUT docx) duzeni: her kisi icin "Sayin {Ad}" basligi
                 // altinda Unvan / E-mail / Mobil / Tel. Cogul kisi -> ust uste blok blok.
-                row.RelativeItem().Column(c =>
+                row.RelativeItem()
+                   .Background(NearWhite)
+                   .Border(0.5f)
+                   .BorderColor(SoftBorder)
+                   .Padding(4, Unit.Millimetre)
+                   .Column(c =>
                 {
                     // Cogul liste yoksa eski tek-kisi alanindan tek elemanli liste yap (geri uyumluluk)
                     var kisiler = IlgiliKisiler.Count > 0
@@ -273,6 +302,10 @@ namespace YALCINDORSE
                         !string.IsNullOrWhiteSpace(SaticiTelefon);
 
                     if (kisiler.Count == 0 && !hasAracBilgi && !hasSaticiBilgi) return;
+
+                    c.Item().Text(t =>
+                        t.Span("İLGİLİ KİŞİ").Bold().FontSize(7).FontColor(BlueAccent));
+                    c.Item().Height(2);
 
                     bool firstKisi = true;
                     foreach (var k in kisiler)
@@ -355,9 +388,23 @@ namespace YALCINDORSE
                         });
                 });
 
-                // ── SAĞ: Teklif meta + SDU + Müşteri ──────────────────────
-                row.RelativeItem().Column(c =>
+                row.ConstantItem(5, Unit.Millimetre);
+
+                // ── SAĞ: Teklif meta + Müşteri ──────────────────────
+                row.RelativeItem()
+                   .Background(NearWhite)
+                   .Border(0.5f)
+                   .BorderColor(SoftBorder)
+                   .Padding(4, Unit.Millimetre)
+                   .Column(c =>
                 {
+                    c.Item().Text(t =>
+                    {
+                        t.AlignRight();
+                        t.Span("TEKLİF BİLGİLERİ").Bold().FontSize(7).FontColor(BlueAccent);
+                    });
+                    c.Item().Height(2);
+
                     // Tarih, Geçerlilik
                     c.Item().Text(t =>
                     {
@@ -389,8 +436,9 @@ namespace YALCINDORSE
                 });
             });
 
-            col.Item().Height(5);
+            col.Item().Height(7);
             col.Item().Height(0.5f).Background(BorderClr);
+            col.Item().Height(7);
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -497,6 +545,8 @@ namespace YALCINDORSE
 
             foreach (var grp in activeGroups)
             {
+                col.Item().EnsureSpace(128);
+
                 // Grup basligi
                 col.Item()
                    .Background(TableHeaderBg)
