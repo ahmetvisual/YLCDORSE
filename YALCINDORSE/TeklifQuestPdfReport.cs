@@ -14,6 +14,8 @@ namespace YALCINDORSE
         // ─── Marka Renk Paleti ───────────────────────────────────────────────
         const string NavyDark    = "#0D1F3C";
         const string ListHeaderNavy = "#143A66";
+        const string TableHeaderBg = "#EEF6FF";
+        const string TableHeaderBorder = "#B7CCE2";
         const string BlueAccent  = "#1D4ED8";
         const string AccentLine  = "#38BDF8";
         const string NearWhite   = "#F8FAFC";
@@ -500,16 +502,23 @@ namespace YALCINDORSE
 
             foreach (var grp in activeGroups)
             {
-                // Grup basligi — sol mavi cubuk + metin + alt cizgi (BorderBottom)
+                // Grup basligi
                 col.Item()
-                   .BorderLeft(3)
-                   .BorderBottom(0.75f)
-                   .BorderColor(BlueAccent)
-                   .PaddingLeft(3, Unit.Millimetre)
-                   .PaddingVertical(2.5f)
-                   .Text(t =>
-                       t.Span(grp.GrupAdi.ToUpperInvariant())
-                        .Bold().FontSize(9).FontColor(NavyDark));
+                   .Background(TableHeaderBg)
+                   .Border(0.5f)
+                   .BorderColor(TableHeaderBorder)
+                   .PaddingVertical(2.2f)
+                   .Row(row =>
+                   {
+                       row.ConstantItem(2.5f, Unit.Millimetre)
+                          .Background(ListHeaderNavy);
+                       row.ConstantItem(3, Unit.Millimetre);
+                       row.RelativeItem()
+                          .AlignMiddle()
+                          .Text(t =>
+                              t.Span(grp.GrupAdi.ToUpperInvariant())
+                               .Bold().FontSize(8.8f).FontColor(NavyDark));
+                   });
 
                 bool alt = false;
                 foreach (var spec in grp.Rows)
@@ -557,7 +566,7 @@ namespace YALCINDORSE
                 }
 
                 // Grup altı ince çizgi
-                col.Item().Height(1).Background(BlueAccent);
+                col.Item().Height(0.5f).Background(TableHeaderBorder);
                 col.Item().Height(3);
             }
 
