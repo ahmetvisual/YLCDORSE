@@ -13,6 +13,7 @@ namespace YALCINDORSE
     {
         // ─── Marka Renk Paleti ───────────────────────────────────────────────
         const string NavyDark    = "#0D1F3C";
+        const string ListHeaderNavy = "#143A66";
         const string BlueAccent  = "#1D4ED8";
         const string AccentLine  = "#38BDF8";
         const string NearWhite   = "#F8FAFC";
@@ -612,9 +613,9 @@ namespace YALCINDORSE
 
             void RenderHeader(QContainer c, ListItem h)
             {
-                c.Background(NavyDark)
+                c.Background(ListHeaderNavy)
                  .Border(0.5f)
-                 .BorderColor(NavyDark)
+                 .BorderColor(ListHeaderNavy)
                  .PaddingVertical(2.2f)
                  .PaddingHorizontal(4)
                  .Row(row =>
@@ -624,7 +625,7 @@ namespace YALCINDORSE
                         .PaddingVertical(1)
                         .AlignCenter()
                         .AlignMiddle()
-                        .Text(t => t.Span(h.Numara).Bold().FontSize(7.5f).FontColor(NavyDark));
+                        .Text(t => t.Span(h.Numara).Bold().FontSize(7.5f).FontColor(ListHeaderNavy));
                      row.ConstantItem(4, Unit.Millimetre);
                      row.RelativeItem()
                         .AlignMiddle()
