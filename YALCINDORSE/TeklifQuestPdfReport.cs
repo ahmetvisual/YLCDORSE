@@ -444,14 +444,21 @@ namespace YALCINDORSE
             bool hasImage = UrunFoto1?.Length > 0 && !string.IsNullOrWhiteSpace(UrunBaslik);
             if (!hasImage) return;
 
-            // Urun basligi — diger bolum basliklariyla hizali (12mm padding) + alt cizgi
+            // Urun basligi
             col.Item().PaddingHorizontal(12, Unit.Millimetre)
-               .BorderLeft(3)
-               .BorderBottom(0.75f)
-               .BorderColor(BlueAccent)
-               .PaddingLeft(3, Unit.Millimetre)
-               .PaddingVertical(2, Unit.Millimetre)
-               .Text(t => t.Span(UrunBaslik).Bold().FontSize(10).FontColor(NavyDark));
+               .Background(TableHeaderBg)
+               .Border(0.5f)
+               .BorderColor(TableHeaderBorder)
+               .PaddingVertical(2.4f)
+               .Row(row =>
+               {
+                   row.ConstantItem(3, Unit.Millimetre)
+                      .Background(ListHeaderNavy);
+                   row.ConstantItem(4, Unit.Millimetre);
+                   row.RelativeItem()
+                      .AlignMiddle()
+                      .Text(t => t.Span(UrunBaslik.ToUpperInvariant()).Bold().FontSize(9.5f).FontColor(NavyDark));
+               });
             col.Item().Height(3);
 
             // Fotograf(lar)
