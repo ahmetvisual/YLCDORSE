@@ -208,24 +208,7 @@ namespace YALCINDORSE
 
                    row.ConstantItem(5, Unit.Millimetre);
 
-                   // Şirket adı + iletişim
-                   row.RelativeItem().AlignMiddle().Column(c =>
-                   {
-                       c.Item().Text(t =>
-                           t.Span("Satış Destek Uzmanı").Bold().FontSize(8).FontColor(MutedText));
-                       c.Item().Text(t =>
-                           t.Span(SaticiAdi).Bold().FontSize(10).FontColor(NavyDark));
-
-                       var sduParts = new List<string>();
-                       if (!string.IsNullOrWhiteSpace(SaticiEmail)) sduParts.Add(SaticiEmail);
-                       if (!string.IsNullOrWhiteSpace(SaticiTelefon)) sduParts.Add(SaticiTelefon);
-                       if (sduParts.Count > 0)
-                       {
-                           c.Item().Text(t =>
-                               t.Span(string.Join("  |  ", sduParts))
-                                .FontSize(7.5f).FontColor(MutedText));
-                       }
-                   });
+                   row.RelativeItem();
 
                    row.ConstantItem(5, Unit.Millimetre);
 
@@ -284,8 +267,12 @@ namespace YALCINDORSE
                     bool hasAracBilgi =
                         !string.IsNullOrWhiteSpace(SasiNo) ||
                         !string.IsNullOrWhiteSpace(ModelYili);
+                    bool hasSaticiBilgi =
+                        !string.IsNullOrWhiteSpace(SaticiAdi) ||
+                        !string.IsNullOrWhiteSpace(SaticiEmail) ||
+                        !string.IsNullOrWhiteSpace(SaticiTelefon);
 
-                    if (kisiler.Count == 0 && !hasAracBilgi) return;
+                    if (kisiler.Count == 0 && !hasAracBilgi && !hasSaticiBilgi) return;
 
                     bool firstKisi = true;
                     foreach (var k in kisiler)
@@ -327,6 +314,28 @@ namespace YALCINDORSE
                                 t.Span("Tel : ").FontSize(8).FontColor(MutedText);
                                 t.Span(k.Telefon).FontSize(8).FontColor(BodyText);
                             });
+                    }
+
+                    if (hasSaticiBilgi)
+                    {
+                        if (kisiler.Count > 0) c.Item().Height(5);
+                        c.Item().Text(t =>
+                            t.Span("Satış Destek Uzmanı").Bold().FontSize(8).FontColor(MutedText));
+                        if (!string.IsNullOrWhiteSpace(SaticiAdi))
+                        {
+                            c.Item().Text(t =>
+                                t.Span(SaticiAdi).Bold().FontSize(9.5f).FontColor(DarkText));
+                        }
+
+                        var sduParts = new List<string>();
+                        if (!string.IsNullOrWhiteSpace(SaticiEmail)) sduParts.Add(SaticiEmail);
+                        if (!string.IsNullOrWhiteSpace(SaticiTelefon)) sduParts.Add(SaticiTelefon);
+                        if (sduParts.Count > 0)
+                        {
+                            c.Item().Text(t =>
+                                t.Span(string.Join("  |  ", sduParts))
+                                 .FontSize(7.5f).FontColor(BodyText));
+                        }
                     }
 
                     if (!string.IsNullOrWhiteSpace(SasiNo))
