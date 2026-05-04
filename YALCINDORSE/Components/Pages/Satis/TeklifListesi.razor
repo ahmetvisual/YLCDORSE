@@ -738,13 +738,13 @@
         StateHasChanged();
         try
         {
-            await ShowToastSuccess("QuestPDF hazirlaniyor...");
+            await ShowToastSuccess("Teklif hazirlaniyor...");
             await DocSvc.OpenQuestPdfAsync(quoteId);
-            await ShowToastSuccess("QuestPDF acildi.");
+            await ShowToastSuccess("Teklif acildi.");
         }
         catch (Exception ex)
         {
-            await ShowToastError($"QuestPDF hatasi: {ex.Message}");
+            await ShowToastError($"Teklif hazirlanirken hata: {ex.Message}");
         }
         finally
         {
