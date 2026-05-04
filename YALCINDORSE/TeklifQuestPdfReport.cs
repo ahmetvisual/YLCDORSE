@@ -446,18 +446,17 @@ namespace YALCINDORSE
 
             // Urun basligi
             col.Item().PaddingHorizontal(12, Unit.Millimetre)
-               .Background(TableHeaderBg)
-               .Border(0.5f)
-               .BorderColor(TableHeaderBorder)
-               .PaddingVertical(2.4f)
                .Row(row =>
                {
-                   row.ConstantItem(3, Unit.Millimetre)
-                      .Background(ListHeaderNavy);
-                   row.ConstantItem(4, Unit.Millimetre);
+                   row.AutoItem()
+                      .Background(ListHeaderNavy)
+                      .PaddingHorizontal(4, Unit.Millimetre)
+                      .PaddingVertical(1.8f)
+                      .Text(t => t.Span(UrunBaslik.ToUpperInvariant()).Bold().FontSize(9).FontColor(White));
                    row.RelativeItem()
-                      .AlignMiddle()
-                      .Text(t => t.Span(UrunBaslik.ToUpperInvariant()).Bold().FontSize(9.5f).FontColor(NavyDark));
+                      .AlignBottom()
+                      .Height(0.9f)
+                      .Background(AccentLine);
                });
             col.Item().Height(3);
 
