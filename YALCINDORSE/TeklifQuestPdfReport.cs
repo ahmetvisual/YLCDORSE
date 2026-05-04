@@ -481,28 +481,30 @@ namespace YALCINDORSE
             bool hasImage = UrunFoto1?.Length > 0 && !string.IsNullOrWhiteSpace(UrunBaslik);
             if (!hasImage) return;
 
-            // Urun basligi
-            col.Item().PaddingHorizontal(12, Unit.Millimetre)
-               .Row(row =>
-               {
-                   row.AutoItem()
-                      .Background(ListHeaderNavy)
-                      .PaddingHorizontal(4, Unit.Millimetre)
-                      .PaddingVertical(1.8f)
-                      .Text(t => t.Span(UrunBaslik.ToUpperInvariant()).Bold().FontSize(9).FontColor(White));
-                   row.RelativeItem()
-                      .AlignBottom()
-                      .Height(0.9f)
-                      .Background(AccentLine);
-               });
-            col.Item().Height(3);
+            col.Item().ShowEntire().Column(block =>
+            {
+                // Urun basligi
+                block.Item().PaddingHorizontal(12, Unit.Millimetre)
+                   .Row(row =>
+                   {
+                       row.AutoItem()
+                          .Background(ListHeaderNavy)
+                          .PaddingHorizontal(4, Unit.Millimetre)
+                          .PaddingVertical(1.8f)
+                          .Text(t => t.Span(UrunBaslik.ToUpperInvariant()).Bold().FontSize(9).FontColor(White));
+                       row.RelativeItem()
+                          .AlignBottom()
+                          .Height(0.9f)
+                          .Background(AccentLine);
+                   });
+                block.Item().Height(3);
 
             // Fotograf(lar)
             bool hasImg2 = UrunFoto2?.Length > 0;
             if (hasImg2)
             {
                 // Cift foto: ic icerik alaninda (12mm padding) yan yana
-                col.Item().PaddingHorizontal(12, Unit.Millimetre).Row(row =>
+                block.Item().PaddingHorizontal(12, Unit.Millimetre).Row(row =>
                 {
                     row.RelativeItem().Height(95, Unit.Millimetre).Image(UrunFoto1!).FitArea();
                     row.ConstantItem(3, Unit.Millimetre);
@@ -516,14 +518,14 @@ namespace YALCINDORSE
                 // oturur, her iki yanda 15mm esit bosluk kalir. AlignCenter+FitArea
                 // QuestPDF'te bazen icerigi sol-uste hizaliyor; bu pattern
                 // matematiksel olarak hatasiz simetri saglar.
-                col.Item().PaddingHorizontal(15, Unit.Millimetre)
+                block.Item().PaddingHorizontal(15, Unit.Millimetre)
                    .Image(UrunFoto1!).FitWidth();
             }
 
             // Alt yazi — basliklarla hizali olmasi icin 12mm yatay padding
             if (!string.IsNullOrWhiteSpace(UrunAltYazi))
             {
-                col.Item().PaddingHorizontal(12, Unit.Millimetre)
+                block.Item().PaddingHorizontal(12, Unit.Millimetre)
                    .PaddingVertical(2, Unit.Millimetre)
                    .Text(t =>
                    {
@@ -531,6 +533,7 @@ namespace YALCINDORSE
                        t.Span(UrunAltYazi).Italic().FontSize(7.5f).FontColor(MutedText);
                    });
             }
+            });
 
             col.Item().Height(6);
         }
@@ -713,6 +716,19 @@ namespace YALCINDORSE
 
                 if (!firstGroup) col.Item().Height(4);
                 firstGroup = false;
+
+                if (grp.Count <= 14)
+                {
+                    col.Item().ShowEntire().Column(c =>
+                    {
+                        c.Item().Element(ctn => RenderHeader(ctn, header));
+                        foreach (var ch in children)
+                            c.Item().Element(ctn => RenderChild(ctn, ch));
+                    });
+                    continue;
+                }
+
+                col.Item().EnsureSpace(160);
 
                 // Header + ilk child birlikte (sayfada bolunmesinler)
                 col.Item().ShowEntire().Column(c =>
