@@ -212,14 +212,19 @@ namespace YALCINDORSE
                    row.RelativeItem().AlignMiddle().Column(c =>
                    {
                        c.Item().Text(t =>
-                           t.Span("YALÇIN DORSE").Bold().FontSize(16).FontColor(NavyDark));
-                       c.Item().Height(2);
+                           t.Span("Satış Destek Uzmanı").Bold().FontSize(8).FontColor(MutedText));
                        c.Item().Text(t =>
-                           t.Span("Fevzipaşa Mah. Erdoğan Sk. N:14 Silivri / İSTANBUL")
-                            .FontSize(7.5f).FontColor(MutedText));
-                       c.Item().Text(t =>
-                           t.Span("Tel: +90 212 735 39 49  |  www.yalcintrailer.com")
-                            .FontSize(7.5f).FontColor(MutedText));
+                           t.Span(SaticiAdi).Bold().FontSize(10).FontColor(NavyDark));
+
+                       var sduParts = new List<string>();
+                       if (!string.IsNullOrWhiteSpace(SaticiEmail)) sduParts.Add(SaticiEmail);
+                       if (!string.IsNullOrWhiteSpace(SaticiTelefon)) sduParts.Add(SaticiTelefon);
+                       if (sduParts.Count > 0)
+                       {
+                           c.Item().Text(t =>
+                               t.Span(string.Join("  |  ", sduParts))
+                                .FontSize(7.5f).FontColor(MutedText));
+                       }
                    });
 
                    row.ConstantItem(5, Unit.Millimetre);
@@ -245,8 +250,7 @@ namespace YALCINDORSE
                       });
                });
 
-            // İnce accent çizgisi
-            col.Item().Height(2).Background(AccentLine);
+            col.Item().Height(4);
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -358,30 +362,6 @@ namespace YALCINDORSE
                         t.Span("Geçerlilik : ").FontSize(8).FontColor(MutedText);
                         t.Span(GecerlilikTarihi).FontSize(8).FontColor(DarkText);
                     });
-
-                    c.Item().Height(4);
-
-                    // Satış Destek Uzmanı
-                    c.Item().Text(t =>
-                    {
-                        t.AlignRight();
-                        t.Span("Satış Destek Uzmanı : ").Bold().FontSize(8).FontColor(DarkText);
-                        t.Span(SaticiAdi).Bold().FontSize(8).FontColor(DarkText);
-                    });
-
-                    // SDU iletişim — tek satır: email | telefon
-                    var sduParts = new List<string>();
-                    if (!string.IsNullOrWhiteSpace(SaticiEmail)) sduParts.Add(SaticiEmail);
-                    if (!string.IsNullOrWhiteSpace(SaticiTelefon)) sduParts.Add(SaticiTelefon);
-                    if (sduParts.Count > 0)
-                    {
-                        c.Item().Text(t =>
-                        {
-                            t.AlignRight();
-                            t.Span(string.Join("  |  ", sduParts))
-                             .FontSize(7.5f).FontColor(MutedText);
-                        });
-                    }
 
                     c.Item().Height(6);
 
