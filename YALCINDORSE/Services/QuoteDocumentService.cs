@@ -169,7 +169,7 @@ namespace YALCINDORSE.Services
                 : "YALÇIN DORSE  ·  " + urunAdi.ToUpperInvariant()
                   + (quote.SatisTipi == "SecondHand" ? "  ·  2. EL ÜRÜN" : "");
             var urunAltYazi = string.IsNullOrWhiteSpace(urunAdi) ? ""
-                : $"(Fotoğraflar, {urunAdi.ToLowerInvariant()} ürününe aittir.)";
+                : "(Fotoğraflar temsilidir. Son ürün talep ettiğiniz özelliklere göre farklılık gösterebilir.)";
 
             // Firma bilgileri (singleton) — hesap cekme baslarken bagimsiz olsun
             FirmaBilgileriModel? firma = null;
