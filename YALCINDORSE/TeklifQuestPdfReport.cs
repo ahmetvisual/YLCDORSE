@@ -612,23 +612,23 @@ namespace YALCINDORSE
 
             void RenderHeader(QContainer c, ListItem h)
             {
-                c.Background(SectionBg)
+                c.Background(NavyDark)
                  .Border(0.5f)
-                 .BorderColor(SoftBorder)
+                 .BorderColor(NavyDark)
                  .PaddingVertical(2.2f)
                  .PaddingHorizontal(4)
                  .Row(row =>
                  {
                      row.ConstantItem(11, Unit.Millimetre)
-                        .Background(NavyDark)
+                        .Background(White)
                         .PaddingVertical(1)
                         .AlignCenter()
                         .AlignMiddle()
-                        .Text(t => t.Span(h.Numara).Bold().FontSize(7.5f).FontColor(White));
+                        .Text(t => t.Span(h.Numara).Bold().FontSize(7.5f).FontColor(NavyDark));
                      row.ConstantItem(4, Unit.Millimetre);
                      row.RelativeItem()
                         .AlignMiddle()
-                        .Text(t => t.Span(h.Metin.ToUpperInvariant()).Bold().FontSize(8.8f).FontColor(NavyDark));
+                        .Text(t => t.Span(h.Metin.ToUpperInvariant()).Bold().FontSize(8.8f).FontColor(White));
                  });
             }
 
